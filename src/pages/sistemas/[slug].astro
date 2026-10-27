@@ -1,0 +1,34 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import Paginador from '../../components/entrada/Paginador.astro';
+import Dificultad from '../../components/entrada/Dificultad.astro';
+import { porOrden, publicados, resolverEnlaces, urlDe, vecinos } from '../../lib/contenido';
+import { ldArticulo } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () => {
+  const todos = (await publicados('sistemas')).sort(porOrden);
+  return todos.map((e) => ({ params: { slug: e.id }, props: { e, ...vecinos(todos, e.id) } }));
+}) satisfies GetStaticPaths;
+
+const { e, anterior, siguiente } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+const patrones = resolverEnlaces(e.data.patrones);
+---
+<LecturaLayout entrada={e} headings={headings} seccion="sistemas" jsonld={ldArticulo(e)}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/sistemas/', texto: 'Sistemas' }, { texto: e.data.titulo }]}>
+  <div slot="cabecera" class="ficha-datos">
+    <dl class="datos">
+      <div><dt>Complejidad</dt><dd><Dificultad valor={e.data.complejidad} etiqueta="Complejidad" /> {e.data.complejidad} de 3</dd></div>
+      <div><dt>Tiempo</dt><dd>{e.data.tiempo}</dd></div>
+      {e.data.stack.length > 0 && <div><dt>Stack</dt><dd>{e.data.stack.join(' · ')}</dd></div>}
+      {e.data.componentes.length > 0 && <div><dt>Componentes</dt><dd>{e.data.componentes.join(' · ')}</dd></div>}
+      {patrones.length > 0 && <div><dt>Patrones</dt><dd>{patrones.map((r, i) => <>{i > 0 && ' · '}<a href={r.url}>{r.titulo}</a></>)}</dd></div>}
+    </dl>
+  </div>
+  <Content />
+  <Paginador slot="paginador"
+    anterior={anterior && { href: urlDe(anterior), titulo: anterior.data.titulo }}
+    siguiente={siguiente && { href: urlDe(siguiente), titulo: siguiente.data.titulo }} />
+</LecturaLayout>

@@ -1,0 +1,43 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import FiltroChips from '../../components/listados/FiltroChips.astro';
+import { fecha, fechaISO, porFechaDesc, publicados, urlDe } from '../../lib/contenido';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'radar'))!;
+const { Content } = await render(s);
+const notas = (await publicados('radar')).sort(porFechaDesc);
+const CATEGORIA: Record<string, string> = { modelos: 'Modelos', herramientas: 'Herramientas', practicas: 'Prácticas', seguridad: 'Seguridad', evals: 'Evals' };
+const MES = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const meses = new Map<string, typeof notas>();
+for (const n of notas) { const k = fechaISO(n.data.creado).slice(0, 7); meses.set(k, [...(meses.get(k) ?? []), n]); }
+---
+<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="radar"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/radar/')}>
+  <Content />
+  <section slot="despues" class="wrap narrow listado" aria-labelledby="h-radar">
+    <div class="listado-cab"><h2 id="h-radar">Línea temporal</h2><span class="mono">más reciente primero</span></div>
+    <FiltroChips objetivo="linea-radar" total={notas.length} nombre="notas"
+      grupos={[{ clave: 'categoria', etiqueta: 'Tema', opciones: Object.entries(CATEGORIA).map(([valor, texto]) => ({ valor, texto, n: notas.filter((n) => n.data.categoria === valor).length })).filter((o) => o.n > 0) }]} />
+    <div class="linea" id="linea-radar">
+      {[...meses].map(([k, lista]) => (
+        <section class="mes" data-contenedor aria-labelledby={`mes-${k}`}>
+          <h2 id={`mes-${k}`}>{MES.format(lista[0].data.creado)}</h2>
+          <ol>
+            {lista.map((n) => (
+              <li class="hito" data-filtrable data-categoria={n.data.categoria}>
+                <div class="meta"><time datetime={fechaISO(n.data.creado)}>{fecha(n.data.creado)}</time><span class="tag">{CATEGORIA[n.data.categoria]}</span></div>
+                <h3><a href={urlDe(n)}>{n.data.titulo}</a></h3>
+                <p>{n.data.descripcion}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
+  </section>
+</PaginaLayout>
+<script>
+  import '../../scripts/filtros.ts';
+</script>

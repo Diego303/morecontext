@@ -1,0 +1,59 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import TarjetaEntrada from '../../components/listados/TarjetaEntrada.astro';
+import Dificultad from '../../components/entrada/Dificultad.astro';
+import { porOrden, publicados, urlDe } from '../../lib/contenido';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'patrones'))!;
+const { Content } = await render(s);
+const patrones = (await publicados('patrones')).sort(porOrden);
+const TIPOS = [
+  { tipo: 'fundamento', titulo: 'Fundamentos' },
+  { tipo: 'workflow', titulo: 'Workflows' },
+  { tipo: 'agente', titulo: 'Agentes' },
+] as const;
+const comparables = patrones.filter((p) => p.data.cuandoUsar || p.data.coste || p.data.latencia);
+---
+<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="patrones"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/patrones/')}>
+  <Content />
+  <div slot="despues" class="wrap listado">
+    {TIPOS.map(({ tipo, titulo }) => {
+      const lista = patrones.filter((p) => p.data.tipo === tipo);
+      return lista.length > 0 && (
+        <section class="bloque-tipo" aria-labelledby={`h-${tipo}`}>
+          <div class="listado-cab"><h2 id={`h-${tipo}`}>{titulo}</h2><span class="mono">{lista.length}</span></div>
+          <ul class="tarjetas">
+            {lista.map((p) => (
+              <TarjetaEntrada href={urlDe(p)} titulo={p.data.titulo} descripcion={p.data.descripcion}>
+                <Fragment slot="meta"><span class="tag">{p.data.tipo}</span>{p.data.aliases[0] && <span>{p.data.aliases[0]}</span>}</Fragment>
+              </TarjetaEntrada>
+            ))}
+          </ul>
+        </section>
+      );
+    })}
+    {comparables.length > 0 && (
+      <section aria-labelledby="h-comparativa">
+        <div class="listado-cab"><h2 id="h-comparativa">Comparativa</h2><span class="mono">coste y latencia relativos, de 1 a 3</span></div>
+        <div class="table-wrap">
+          <table class="dg">
+            <thead><tr><th scope="col">Patrón</th><th scope="col">Cuándo usar</th><th scope="col">Coste</th><th scope="col">Latencia</th></tr></thead>
+            <tbody>
+              {comparables.map((p) => (
+                <tr>
+                  <th scope="row"><a href={urlDe(p)}>{p.data.titulo}</a></th>
+                  <td>{p.data.cuandoUsar ?? '—'}</td>
+                  <td>{p.data.coste ? <Dificultad valor={p.data.coste} etiqueta="Coste" /> : '—'}</td>
+                  <td>{p.data.latencia ? <Dificultad valor={p.data.latencia} etiqueta="Latencia" /> : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )}
+  </div>
+</PaginaLayout>

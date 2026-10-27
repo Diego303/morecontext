@@ -1,0 +1,33 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import FormularioBoletin from '../../components/boletin/FormularioBoletin.astro';
+import { fecha, fechaISO, publicados, urlDe } from '../../lib/contenido';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'boletin'))!;
+const { Content } = await render(s);
+const numeros = (await publicados('boletin')).sort((a, b) => b.data.numero - a.data.numero);
+---
+<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="boletin"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/boletin/')}>
+  <div slot="antes" class="wrap narrow" style="padding-top:var(--s8)">
+    <div class="panel" style="padding:24px"><FormularioBoletin id="boletin-pagina" titulo="Suscríbete" nivelTitulo={2} /></div>
+  </div>
+  <Content />
+  <section slot="despues" class="wrap narrow listado" aria-labelledby="h-archivo">
+    <div class="listado-cab"><h2 id="h-archivo">Archivo</h2><span class="mono">{numeros.length} envíos</span></div>
+    <ol class="filas">
+      {numeros.map((n) => (
+        <li>
+          <a class="fila compacta" href={urlDe(n)}>
+            <span class="num" aria-hidden="true">{String(n.data.numero).padStart(3, '0')}</span>
+            <span class="t"><span class="sr-only">Número {n.data.numero}: </span>{n.data.titulo}</span>
+            <span class="d"><time datetime={fechaISO(n.data.creado)}>{fecha(n.data.creado)}</time></span>
+            <p class="x">{n.data.descripcion}</p>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+</PaginaLayout>

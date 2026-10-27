@@ -1,0 +1,77 @@
+---
+// /docs/<grupo>/ (introducción + artículos) y /docs/<grupo>/<articulo>/ (con la navegación de toda la documentación)
+import type { GetStaticPaths } from 'astro';
+import { render, type CollectionEntry } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import Dificultad from '../../components/entrada/Dificultad.astro';
+import Paginador from '../../components/entrada/Paginador.astro';
+import Relacionados from '../../components/entrada/Relacionados.astro';
+import Retroenlaces from '../../components/entrada/Retroenlaces.astro';
+import EditarEnGitHub from '../../components/entrada/EditarEnGitHub.astro';
+import { minutosLectura, urlDe, vecinos } from '../../lib/contenido';
+import { temarioDocs, navDocs } from '../../lib/navegacion';
+import { ldArticulo, ldColeccion } from '../../lib/jsonld';
+
+type Grupo = CollectionEntry<'docsGrupos'>;
+type Doc = CollectionEntry<'docs'>;
+type Props =
+  | { tipo: 'grupo'; grupo: Grupo; docs: Doc[]; anterior?: Grupo; siguiente?: Grupo }
+  | { tipo: 'doc'; doc: Doc; grupo: Grupo; anterior?: Doc; siguiente?: Doc };
+
+export const getStaticPaths = (async () => {
+  const temario = await temarioDocs();
+  const grupos = temario.map((t) => t.grupo);
+  const todos = temario.flatMap((t) => t.docs);
+  return [
+    ...temario.map(({ grupo, docs }) => ({ params: { slug: grupo.id }, props: { tipo: 'grupo' as const, grupo, docs, ...vecinos(grupos, grupo.id) } })),
+    ...temario.flatMap(({ grupo, docs }) => docs.map((doc) => ({ params: { slug: doc.id }, props: { tipo: 'doc' as const, doc, grupo, ...vecinos(todos, doc.id) } }))),
+  ];
+}) satisfies GetStaticPaths;
+
+const p = Astro.props as Props;
+const nav = p.tipo === 'doc' ? await navDocs() : null;
+const { Content, headings } = await render(p.tipo === 'grupo' ? p.grupo : p.doc);
+---
+{p.tipo === 'grupo' && (
+  <PaginaLayout titulo={p.grupo.data.titulo} descripcion={p.grupo.data.descripcion} lead={p.grupo.data.descripcion} seccion="docs"
+    migas={[{ href: '/', texto: 'Inicio' }, { href: '/docs/', texto: 'Docs' }, { texto: p.grupo.data.titulo }]}
+    jsonld={ldColeccion(p.grupo.data.titulo, p.grupo.data.descripcion, urlDe(p.grupo))}>
+    <Content />
+    <div slot="despues" class="wrap narrow listado" style="padding-top:0">
+      <section aria-labelledby="h-articulos">
+        <div class="listado-cab"><h2 id="h-articulos">Artículos</h2><span class="mono">{p.docs.length}</span></div>
+        <ol class="filas">
+          {p.docs.map((d, i) => (
+            <li>
+              <a class="fila compacta" href={urlDe(d)}>
+                <span class="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <span class="t">{d.data.titulo}</span>
+                <span class="d"><Dificultad valor={d.data.nivel} /> {minutosLectura(d.body)} min</span>
+                <p class="x">{d.data.descripcion}</p>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+      <footer class="pie-entrada" data-pagefind-ignore="all">
+        <Relacionados lista={p.grupo.data.relacionados} />
+        <Retroenlaces url={urlDe(p.grupo)} />
+        <Paginador
+          anterior={p.anterior && { href: urlDe(p.anterior), titulo: p.anterior.data.titulo, etiqueta: 'Tema anterior' }}
+          siguiente={p.siguiente && { href: urlDe(p.siguiente), titulo: p.siguiente.data.titulo, etiqueta: 'Tema siguiente' }} />
+        <EditarEnGitHub filePath={p.grupo.filePath} />
+      </footer>
+    </div>
+  </PaginaLayout>
+)}
+{p.tipo === 'doc' && nav && (
+  <DocsLayout entrada={p.doc} headings={headings} seccion="docs" navegacion={nav}
+    migas={[{ href: '/', texto: 'Inicio' }, { href: '/docs/', texto: 'Docs' }, { href: urlDe(p.grupo), texto: p.grupo.data.titulo }, { texto: p.doc.data.titulo }]}
+    jsonld={ldArticulo(p.doc)}>
+    <Content />
+    <Paginador slot="paginador"
+      anterior={p.anterior && { href: urlDe(p.anterior), titulo: p.anterior.data.titulo }}
+      siguiente={p.siguiente && { href: urlDe(p.siguiente), titulo: p.siguiente.data.titulo }} />
+  </DocsLayout>
+)}

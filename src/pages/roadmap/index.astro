@@ -1,0 +1,47 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import ProgresoNivel from '../../components/aprender/ProgresoNivel.astro';
+import { urlDe } from '../../lib/contenido';
+import { temarioRoadmap, idLeccion, numNivel } from '../../lib/navegacion';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'roadmap'))!;
+const { Content } = await render(s);
+const temario = await temarioRoadmap();
+const todas = temario.flatMap((t) => t.lecciones.map(idLeccion));
+const horas = temario.reduce((n, t) => n + t.nivel.data.horas, 0);
+const nombre = (titulo: string) => titulo.replace(/^Nivel \d+ · /, '');
+---
+<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="roadmap"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/roadmap/')}>
+  <dl class="datos" slot="cabecera" style="margin-top:24px">
+    <div><dt>Niveles</dt><dd>{temario.length}</dd></div>
+    <div><dt>Lecciones</dt><dd>{todas.length}</dd></div>
+    <div><dt>Dedicación</dt><dd>~{horas} h</dd></div>
+  </dl>
+  <Content />
+  <section slot="despues" class="wrap listado" aria-labelledby="h-niveles">
+    <div class="panel progreso-global">
+      <ProgresoNivel ids={todas} etiqueta="Tu progreso en el roadmap" />
+      <p class="mono faint" style="margin:10px 0 0;font-size:12px">Tu progreso se guarda solo en este navegador.</p>
+    </div>
+    <div class="listado-cab">
+      <h2 id="h-niveles">Los {temario.length} niveles</h2>
+      <span class="note">no te saltes el 20</span>
+    </div>
+    <ol class="filas">
+      {temario.map(({ nivel, lecciones }) => (
+        <li>
+          <a class="fila" href={urlDe(nivel)}>
+            <span class="num" aria-hidden="true">{numNivel(nivel.data.nivel)}</span>
+            <span class="t"><span class="sr-only">Nivel {nivel.data.nivel}: </span>{nombre(nivel.data.titulo)}</span>
+            <span class="d">{lecciones.length} lec · {nivel.data.horas} h</span>
+            <p class="x">{nivel.data.objetivo}</p>
+            <ProgresoNivel ids={lecciones.map(idLeccion)} etiqueta="Progreso" />
+          </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+</PaginaLayout>

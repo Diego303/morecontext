@@ -1,0 +1,26 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import Paginador from '../../components/entrada/Paginador.astro';
+import FormularioBoletin from '../../components/boletin/FormularioBoletin.astro';
+import { publicados, urlDe, vecinos } from '../../lib/contenido';
+import { ldBlog } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () => {
+  const todos = (await publicados('boletin')).sort((a, b) => a.data.numero - b.data.numero);
+  return todos.map((e) => ({ params: { slug: e.id }, props: { e, ...vecinos(todos, e.id) } }));
+}) satisfies GetStaticPaths;
+
+const { e, anterior, siguiente } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+---
+<LecturaLayout entrada={e} headings={headings} seccion="boletin" jsonld={ldBlog(e)}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/boletin/', texto: 'Boletín' }, { texto: `N.º ${e.data.numero}` }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo"><b>Boletín</b> · n.º {e.data.numero}</span>
+  <Content />
+  <div slot="antes-pie" class="panel" style="padding:22px"><FormularioBoletin id="boletin-numero" nivelTitulo={2} /></div>
+  <Paginador slot="paginador"
+    anterior={anterior && { href: urlDe(anterior), titulo: anterior.data.titulo, etiqueta: `N.º ${anterior.data.numero}` }}
+    siguiente={siguiente && { href: urlDe(siguiente), titulo: siguiente.data.titulo, etiqueta: `N.º ${siguiente.data.numero}` }} />
+</LecturaLayout>

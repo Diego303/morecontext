@@ -1,0 +1,13 @@
+---
+// Fila de una lección en la ficha de un nivel o curso: número, título, minutos y tipo, casilla de hecha.
+import MarcarHecha from './MarcarHecha.astro';
+interface Props { numero: string; href: string; titulo: string; minutos: number; tipo: string; leccion: string }
+const { numero, href, titulo, minutos, tipo, leccion } = Astro.props;
+const TIPO: Record<string, string> = { teoria: 'teoría', practica: 'práctica', proyecto: 'proyecto' };
+---
+<li class="fila-leccion">
+  <span class="n">{numero}</span>
+  <a href={href}>{titulo}</a>
+  <span class="d">{minutos} min · {TIPO[tipo] ?? tipo}</span>
+  <MarcarHecha leccion={leccion} titulo={titulo} compacta />
+</li>

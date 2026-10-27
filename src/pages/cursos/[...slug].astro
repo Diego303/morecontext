@@ -1,0 +1,102 @@
+---
+// /cursos/<curso>/ (ficha) y /cursos/<curso>/<leccion>/ (lección con la navegación del curso)
+import type { GetStaticPaths } from 'astro';
+import { render, type CollectionEntry } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import BarraCurso from '../../components/aprender/BarraCurso.astro';
+import FilaLeccion from '../../components/aprender/FilaLeccion.astro';
+import MarcarHecha from '../../components/aprender/MarcarHecha.astro';
+import Paginador from '../../components/entrada/Paginador.astro';
+import Relacionados from '../../components/entrada/Relacionados.astro';
+import Retroenlaces from '../../components/entrada/Retroenlaces.astro';
+import EditarEnGitHub from '../../components/entrada/EditarEnGitHub.astro';
+import { resolverEnlaces, urlDe, vecinos } from '../../lib/contenido';
+import { temarioCursos, navCurso, idLeccion } from '../../lib/navegacion';
+import { ldAprendizaje } from '../../lib/jsonld';
+
+type Curso = CollectionEntry<'cursos'>;
+type Leccion = CollectionEntry<'leccionesCurso'>;
+type Props =
+  | { tipo: 'curso'; curso: Curso; lecciones: Leccion[]; anterior?: Curso; siguiente?: Curso }
+  | { tipo: 'leccion'; leccion: Leccion; curso: Curso; anterior?: Leccion; siguiente?: Leccion };
+
+export const getStaticPaths = (async () => {
+  const temario = await temarioCursos();
+  const cursos = temario.map((t) => t.curso);
+  return [
+    ...temario.map(({ curso, lecciones }) => ({
+      params: { slug: curso.id },
+      props: { tipo: 'curso' as const, curso, lecciones, ...vecinos(cursos, curso.id) },
+    })),
+    ...temario.flatMap(({ curso, lecciones }) => lecciones.map((leccion) => ({
+      params: { slug: leccion.id },
+      props: { tipo: 'leccion' as const, leccion, curso, ...vecinos(lecciones, leccion.id) },
+    }))),
+  ];
+}) satisfies GetStaticPaths;
+
+const p = Astro.props as Props;
+const nav = p.tipo === 'leccion' ? await navCurso(p.curso.id) : null;
+const { Content, headings } = await render(p.tipo === 'curso' ? p.curso : p.leccion);
+const TIPO = { teoria: 'teoría', practica: 'práctica', proyecto: 'proyecto' } as const;
+---
+{p.tipo === 'curso' && (
+  <PaginaLayout titulo={p.curso.data.titulo} descripcion={p.curso.data.descripcion} lead={p.curso.data.descripcion} seccion="cursos"
+    migas={[{ href: '/', texto: 'Inicio' }, { href: '/cursos/', texto: 'Cursos' }, { texto: p.curso.data.titulo }]}
+    jsonld={ldAprendizaje(p.curso, { nivel: p.curso.data.nivel, horas: p.curso.data.horas })}>
+    <BarraCurso slot="cabecera" horas={p.curso.data.horas} nivel={p.curso.data.nivel} lecciones={p.lecciones.map(idLeccion)}
+      minutos={p.lecciones.reduce((n, l) => n + l.data.minutos, 0)} />
+    <div slot="antes" class="wrap narrow">
+      <section class="ficha-objetivo panel" style="margin-top:var(--s8)" aria-label="Objetivo y requisitos">
+        <span class="label">Objetivo</span>
+        <p>{p.curso.data.objetivo}</p>
+        {resolverEnlaces(p.curso.data.requiere).length > 0 && (
+          <>
+            <span class="label" style="display:block;margin-top:16px">Antes conviene</span>
+            <ul class="lista-flecha">{resolverEnlaces(p.curso.data.requiere).map((r) => <li><a href={r.url}>{r.titulo}</a></li>)}</ul>
+          </>
+        )}
+      </section>
+    </div>
+    <Content />
+    <div slot="despues" class="wrap narrow listado" style="padding-top:0">
+      <section aria-labelledby="h-lecciones">
+        <div class="listado-cab"><h2 id="h-lecciones">Lecciones</h2><span class="mono">{p.lecciones.length} · marca las que termines</span></div>
+        <ol class="lecciones">
+          {p.lecciones.map((l) => (
+            <FilaLeccion numero={`${p.curso.data.orden}.${l.data.orden}`} href={urlDe(l)} titulo={l.data.titulo}
+              minutos={l.data.minutos} tipo={l.data.tipo} leccion={idLeccion(l)} />
+          ))}
+        </ol>
+      </section>
+      <footer class="pie-entrada" data-pagefind-ignore="all">
+        <Relacionados lista={p.curso.data.relacionados} />
+        <Retroenlaces url={urlDe(p.curso)} />
+        <Paginador
+          anterior={p.anterior && { href: urlDe(p.anterior), titulo: p.anterior.data.titulo, etiqueta: 'Curso anterior' }}
+          siguiente={p.siguiente && { href: urlDe(p.siguiente), titulo: p.siguiente.data.titulo, etiqueta: 'Curso siguiente' }} />
+        <EditarEnGitHub filePath={p.curso.filePath} />
+      </footer>
+    </div>
+  </PaginaLayout>
+)}
+{p.tipo === 'leccion' && nav && (
+  <DocsLayout entrada={p.leccion} headings={headings} seccion="cursos" navegacion={nav}
+    migas={[{ href: '/', texto: 'Inicio' }, { href: '/cursos/', texto: 'Cursos' }, { href: urlDe(p.curso), texto: p.curso.data.titulo }, { texto: p.leccion.data.titulo }]}
+    jsonld={ldAprendizaje(p.leccion, { nivel: p.curso.data.nivel, minutos: p.leccion.data.minutos })}>
+    <span slot="sobre-titulo" class="label sobre-titulo"><b>Lección {p.curso.data.orden}.{p.leccion.data.orden}</b> · {TIPO[p.leccion.data.tipo]}</span>
+    <section slot="antes" class="objetivos panel" aria-labelledby="h-objetivos">
+      <span class="label" id="h-objetivos">Al terminar podrás</span>
+      <ul>{p.leccion.data.objetivos.map((o) => <li>{o}</li>)}</ul>
+      {resolverEnlaces(p.leccion.data.requiere).length > 0 && (
+        <p class="requiere">Requiere: {resolverEnlaces(p.leccion.data.requiere).map((r, i) => <>{i > 0 && ' · '}<a href={r.url}>{r.titulo}</a></>)}</p>
+      )}
+    </section>
+    <Content />
+    <MarcarHecha slot="antes-pie" leccion={idLeccion(p.leccion)} />
+    <Paginador slot="paginador"
+      anterior={p.anterior ? { href: urlDe(p.anterior), titulo: p.anterior.data.titulo } : { href: urlDe(p.curso), titulo: p.curso.data.titulo, etiqueta: 'Ficha del curso' }}
+      siguiente={p.siguiente ? { href: urlDe(p.siguiente), titulo: p.siguiente.data.titulo } : { href: '/cursos/', titulo: 'Todos los cursos', etiqueta: 'Fin del curso' }} />
+  </DocsLayout>
+)}

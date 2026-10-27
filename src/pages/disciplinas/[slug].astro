@@ -1,0 +1,24 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import Paginador from '../../components/entrada/Paginador.astro';
+import { porOrden, publicados, urlDe, vecinos } from '../../lib/contenido';
+import { ldArticulo } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () => {
+  const todos = (await publicados('disciplinas')).sort(porOrden);
+  return todos.map((e) => ({ params: { slug: e.id }, props: { e, ...vecinos(todos, e.id) } }));
+}) satisfies GetStaticPaths;
+
+const { e, anterior, siguiente } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+---
+<LecturaLayout entrada={e} headings={headings} seccion="disciplinas" jsonld={ldArticulo(e)}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/disciplinas/', texto: 'Disciplinas' }, { texto: e.data.titulo }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo">{e.data.tipo === 'disciplina' ? 'Disciplina' : 'Forma de trabajar'}</span>
+  <Content />
+  <Paginador slot="paginador"
+    anterior={anterior && { href: urlDe(anterior), titulo: anterior.data.titulo }}
+    siguiente={siguiente && { href: urlDe(siguiente), titulo: siguiente.data.titulo }} />
+</LecturaLayout>

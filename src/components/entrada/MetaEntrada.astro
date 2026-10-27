@@ -8,7 +8,7 @@ import Etiquetas from './Etiquetas.astro';
 
 interface Props { entrada: CollectionEntry<CollectionKey>; etiquetas?: boolean }
 const { entrada, etiquetas = true } = Astro.props;
-const d = entrada.data as typeof entrada.data & { actualizado?: Date; minutos?: number; nivel?: unknown; complejidad?: number };
+const d = entrada.data as typeof entrada.data & { actualizado?: Date; minutos?: number; nivel?: unknown; };
 const minutos = d.minutos ?? minutosLectura(entrada.body);
 const nivel = typeof d.nivel === 'string' && ['inicial', 'intermedio', 'avanzado'].includes(d.nivel) ? (d.nivel as 'inicial' | 'intermedio' | 'avanzado') : undefined;
 ---
@@ -20,6 +20,5 @@ const nivel = typeof d.nivel === 'string' && ['inicial', 'intermedio', 'avanzado
   </span>
   <span><Icono nombre="reloj" tamano={13} />{minutos} min{d.minutos ? '' : ' de lectura'}</span>
   {nivel && <span><Dificultad valor={nivel} texto /></span>}
-  {d.complejidad && <span><Dificultad valor={d.complejidad} etiqueta="Complejidad" />complejidad</span>}
   {etiquetas && <Etiquetas tags={d.tags} />}
 </div>

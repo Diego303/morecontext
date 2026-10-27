@@ -1,0 +1,28 @@
+---
+// Chips de filtro combinables (uno por grupo). filtros.ts oculta los elementos de `objetivo`
+// cuyo data-<clave> no coincide, actualiza el contador y muestra el estado vacío.
+interface Opcion { valor: string; texto: string; n: number }
+interface Props {
+  grupos: { clave: string; etiqueta: string; opciones: Opcion[] }[];
+  objetivo: string;     // id de la lista filtrada
+  total: number;
+  nombre?: string;      // «recetas», «entradas»…
+}
+const { grupos, objetivo, total, nombre = 'entradas' } = Astro.props;
+---
+<div class="filtros" data-filtros={objetivo} data-nombre={nombre}>
+  {grupos.map((g) => (
+    <div class="filtro-grupo" role="group" aria-label={`Filtrar por ${g.etiqueta.toLowerCase()}`} data-clave={g.clave}>
+      <span class="label">{g.etiqueta}</span>
+      <div class="chips">
+        <button class="chip" type="button" aria-pressed="true" data-valor="">Todo</button>
+        {g.opciones.map((o) => <button class="chip" type="button" aria-pressed="false" data-valor={o.valor}>{o.texto}<span class="n">{o.n}</span></button>)}
+      </div>
+    </div>
+  ))}
+  <p class="filtro-cuenta mono faint" role="status" aria-live="polite" data-cuenta>{total} de {total} {nombre}</p>
+  <div class="vacio" data-vacio hidden>
+    <p>Nada con estos filtros.</p>
+    <button class="btn-sketch" type="button" data-ver-todo>Ver todas</button>
+  </div>
+</div>

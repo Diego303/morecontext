@@ -1,0 +1,28 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import TarjetaEntrada from '../../components/listados/TarjetaEntrada.astro';
+import Dificultad from '../../components/entrada/Dificultad.astro';
+import { urlDe } from '../../lib/contenido';
+import { temarioCursos } from '../../lib/navegacion';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'cursos'))!;
+const { Content } = await render(s);
+const cursos = await temarioCursos();
+---
+<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="cursos"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/cursos/')}>
+  <Content />
+  <section slot="despues" class="wrap listado" aria-labelledby="h-cursos">
+    <div class="listado-cab"><h2 id="h-cursos">{cursos.length} cursos</h2><span class="mono">~{cursos.reduce((n, c) => n + c.curso.data.horas, 0)} h en total</span></div>
+    <ul class="tarjetas">
+      {cursos.map(({ curso, lecciones }) => (
+        <TarjetaEntrada href={urlDe(curso)} titulo={curso.data.titulo} descripcion={curso.data.objetivo}>
+          <Fragment slot="meta"><Dificultad valor={curso.data.nivel} texto /><span>~{curso.data.horas} h · {lecciones.length} lec</span></Fragment>
+          <Fragment slot="pie"><span>{curso.data.tags.slice(0, 3).join(' · ')}</span><span aria-hidden="true">→</span></Fragment>
+        </TarjetaEntrada>
+      ))}
+    </ul>
+  </section>
+</PaginaLayout>

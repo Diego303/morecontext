@@ -1,0 +1,29 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import { minutosLectura, porOrden, publicados, urlDe } from '../../lib/contenido';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'modelos'))!;
+const { Content } = await render(s);
+const guias = (await publicados('modelos')).sort(porOrden);
+---
+<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="modelos"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/modelos/')}>
+  <Content />
+  <section slot="despues" class="wrap narrow listado" aria-labelledby="h-guias">
+    <div class="listado-cab"><h2 id="h-guias">{guias.length} guías, en orden</h2><span class="mono">{guias.reduce((n, g) => n + minutosLectura(g.body), 0)} min en total</span></div>
+    <ol class="filas">
+      {guias.map((g, i) => (
+        <li>
+          <a class="fila compacta" href={urlDe(g)}>
+            <span class="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <span class="t">{g.data.titulo}</span>
+            <span class="d">{minutosLectura(g.body)} min</span>
+            <p class="x">{g.data.descripcion}</p>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </section>
+</PaginaLayout>

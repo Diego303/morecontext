@@ -1,0 +1,41 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import { fecha, fechaISO, minutosLectura, porFechaDesc, publicados, urlDe } from '../../lib/contenido';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'blog'))!;
+const { Content } = await render(s);
+const entradas = (await publicados('blog')).sort(porFechaDesc);
+const destacada = entradas.find((e) => e.data.destacado) ?? entradas[0];
+const resto = entradas.filter((e) => e !== destacada);
+const TIPO: Record<string, string> = { ensayo: 'ensayo', analisis: 'análisis', 'nota-de-campo': 'nota de campo', tutorial: 'tutorial' };
+---
+<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="blog"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/blog/')}>
+  <Content />
+  <div slot="despues" class="wrap narrow listado">
+    {destacada && (
+      <article class="destacado panel" aria-labelledby="h-destacado">
+        <span class="label"><b>{destacada.data.destacado ? 'Destacado' : 'Lo último'}</b> · {TIPO[destacada.data.tipo]}</span>
+        <h2 id="h-destacado"><a href={urlDe(destacada)}>{destacada.data.titulo}</a></h2>
+        <p>{destacada.data.descripcion}</p>
+        <p class="mono faint" style="font-size:12px;margin:0"><time datetime={fechaISO(destacada.data.creado)}>{fecha(destacada.data.creado)}</time> · {minutosLectura(destacada.body)} min de lectura</p>
+      </article>
+    )}
+    {resto.length > 0 && (
+      <section aria-labelledby="h-entradas">
+        <div class="listado-cab"><h2 id="h-entradas">Todas las entradas</h2><span class="mono">{entradas.length}</span></div>
+        <ol class="entradas">
+          {resto.map((e) => (
+            <li>
+              <div class="meta"><time datetime={fechaISO(e.data.creado)}>{fecha(e.data.creado)}</time><span>{TIPO[e.data.tipo]}</span><span>{minutosLectura(e.body)} min</span>{e.data.estado === 'revision' && <span class="tag y">en revisión</span>}</div>
+              <h3><a href={urlDe(e)}>{e.data.titulo}</a></h3>
+              <p>{e.data.descripcion}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+  </div>
+</PaginaLayout>
