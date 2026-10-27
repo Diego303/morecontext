@@ -856,6 +856,7 @@ dl.datos > .ancho { flex-basis: 100%; }
   .search-mini .ph, .search-mini kbd { display: none; }
   .foot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mnav .wrap { grid-template-columns: minmax(0, 1fr); }
+  .form-boletin form .btn { flex: 1 1 100%; }
   .bus-s { display: none; }
 }
 @media (max-width: 420px) {

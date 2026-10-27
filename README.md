@@ -89,6 +89,16 @@ pnpm enlaces    # comprobar enlaces internos de dist/
 
 Stack: Astro 7 · Markdown con plugins propios (wikilinks, avisos, pestañas de código) · Shiki · Mermaid · Pagefind · GitHub Pages. Detalles en [`docs/PLAN-IMPLEMENTACION.md`](docs/PLAN-IMPLEMENTACION.md).
 
+### Boletín
+
+El formulario de suscripción solo aparece cuando `SITIO.boletin.action` (en `src/config/sitio.ts`) tiene una URL. Mientras esté vacío, la web muestra «Próximamente» y enlaza al RSS, sin formularios que no llevan a ninguna parte.
+
+1. Crea una cuenta y una lista en tu proveedor de correo (Buttondown, Brevo, MailerLite…).
+2. Busca su formulario HTML de suscripción. Copia la URL de su atributo `action` en `boletin.action`, y el `name` de su campo de email en `boletin.campoEmail`.
+3. `pnpm build` y comprueba el formulario en `/boletin/` y en la portada. Funciona sin JavaScript: envía por POST en una pestaña nueva.
+
+Cada número se escribe en `contenido/boletin/NNN.md` (plantilla `boletin`). Después se envía desde el proveedor, copiando la página publicada o importando el RSS (`/rss.xml`, que incluye blog, radar y boletín).
+
 ## Contribuir
 
 - **Errores y erratas**: abre un *issue* con la página y qué falla.
