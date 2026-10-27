@@ -12,4 +12,5 @@ const { horas, lecciones, minutos, nivel } = Astro.props;
     {nivel && <div><dt>Nivel</dt><dd><Dificultad valor={nivel} texto /></dd></div>}
   </dl>
   {lecciones.length > 0 && <ProgresoNivel ids={lecciones} />}
+  {lecciones.length > 0 && <p class="mono faint progreso-nota">Tu progreso se guarda solo en este navegador.</p>}
 </div>

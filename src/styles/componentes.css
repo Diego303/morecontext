@@ -678,6 +678,10 @@ a.fila:hover .num { color: var(--text-faint); }
 .progreso-cab { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
 .progreso-cab .mono { font-size: 12px; }
 .progreso-global { margin-bottom: var(--s7); padding: 20px 22px; }
+.continuar { margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border); }
+.continuar p { margin: 6px 0 0; color: var(--text-2); }
+.progreso-pie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 16px; margin-top: 14px; }
+.progreso-pie p, .progreso-nota { margin: 0; font-size: 12px; }
 
 .barra-curso { display: grid; gap: 18px; margin-top: var(--s5); max-width: 640px; }
 dl.datos { display: flex; flex-wrap: wrap; gap: 10px 32px; margin: 0; }

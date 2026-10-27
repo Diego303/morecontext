@@ -12,6 +12,7 @@ const temario = await temarioRoadmap();
 const todas = temario.flatMap((t) => t.lecciones.map(idLeccion));
 const horas = temario.reduce((n, t) => n + t.nivel.data.horas, 0);
 const nombre = (titulo: string) => titulo.replace(/^Nivel \d+ · /, '');
+const orden = temario.flatMap(({ nivel, lecciones }) => lecciones.map((l) => ({ id: idLeccion(l), url: urlDe(l), titulo: l.data.titulo, numero: `${nivel.data.nivel}.${l.data.orden}` })));
 ---
 <PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="roadmap"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/roadmap/')}>
@@ -24,7 +25,14 @@ const nombre = (titulo: string) => titulo.replace(/^Nivel \d+ · /, '');
   <section slot="despues" class="wrap listado" aria-labelledby="h-niveles">
     <div class="panel progreso-global">
       <ProgresoNivel ids={todas} etiqueta="Tu progreso en el roadmap" />
-      <p class="mono faint" style="margin:10px 0 0;font-size:12px">Tu progreso se guarda solo en este navegador.</p>
+      <div class="continuar" data-continuar={JSON.stringify(orden)} hidden>
+        <span class="label">Continúa donde lo dejaste</span>
+        <p><span data-continuar-texto></span> <a class="link" data-continuar-enlace href={orden[0]?.url ?? '/roadmap/'}>{orden[0] ? `Lección ${orden[0].numero} · ${orden[0].titulo}` : ''}</a></p>
+      </div>
+      <div class="progreso-pie">
+        <p class="mono faint">Tu progreso se guarda solo en este navegador.</p>
+        <button class="chip" type="button" data-borrar-progreso>Borrar progreso</button>
+      </div>
     </div>
     <div class="listado-cab">
       <h2 id="h-niveles">Los {temario.length} niveles</h2>
