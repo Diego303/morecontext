@@ -380,7 +380,7 @@ details.faq .a { padding: 0 0 18px; color: var(--text-muted); }
 .migas ol { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0; padding: 0; list-style: none; }
 .migas li { display: inline-flex; gap: 6px; min-width: 0; }
 .migas li + li::before { content: "/"; color: var(--text-ghost); }
-.migas a { color: var(--text-faint); }
+.migas a { display: inline-block; padding: 4px 0; color: var(--text-faint); }
 .migas a:hover { color: var(--text); }
 .migas [aria-current] { color: var(--text-muted); overflow-wrap: anywhere; }
 
@@ -656,6 +656,7 @@ a.fila:hover { color: var(--text); }
 a.fila:hover .t { color: var(--accent-pink); }
 .fila .num { grid-row: 1 / span 3; font-family: var(--font-mono); font-weight: 700; font-size: 34px; line-height: 1; letter-spacing: -.03em; color: var(--border-2); transition: color .12s ease; }
 a.fila:hover .num { color: var(--text-faint); }
+.fila .num::before { content: attr(data-num); }
 .fila .t { font-size: 18px; font-weight: 600; line-height: 1.35; transition: color .12s ease; }
 .fila .d { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); white-space: nowrap; text-align: right; }
 .fila .x { grid-column: 2 / -1; margin: 0; max-width: 70ch; font-size: 15px; color: var(--text-muted); }
@@ -719,7 +720,7 @@ dl.datos dd { margin: 2px 0 0; font-family: var(--font-mono); font-size: 13px; c
 .az a:hover { color: var(--accent-pink); border-color: var(--accent-pink); }
 .az span, .az a.atenuada { color: var(--text-ghost); border: 1px solid transparent; }
 .letra { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 0 24px; padding: var(--s5) 0; border-top: 1px solid var(--border); }
-.letra > h2 { font-family: var(--font-mono); font-size: 32px; font-weight: 700; line-height: 1; color: var(--border-2); }
+.letra > h2 { font-family: var(--font-mono); font-size: 32px; font-weight: 700; line-height: 1; color: var(--text-faint); }
 .terminos { margin: 0; padding: 0; list-style: none; }
 .termino { padding: 10px 0 14px; border-bottom: 1px dashed var(--border); scroll-margin-top: calc(var(--header-h) + 24px); }
 .termino:last-child { border-bottom: 0; }
@@ -735,7 +736,7 @@ dl.datos dd { margin: 2px 0 0; font-family: var(--font-mono); font-size: 13px; c
 .categorias dl { display: grid; gap: 10px; margin: 12px 0 2px; }
 .categorias dl > div { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 4px 16px; scroll-margin-top: calc(var(--header-h) + 24px); }
 .categorias dt { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
-.categorias dd { margin: 0; font-size: 14px; line-height: 1.7; color: var(--text-ghost); }
+.categorias dd { margin: 0; font-size: 14px; line-height: 1.7; color: var(--text-faint); }
 .categorias dd a { color: var(--text-2); }
 .categorias dd a:hover { color: var(--accent-pink); }
 
@@ -786,6 +787,7 @@ dl.datos dd { margin: 2px 0 0; font-family: var(--font-mono); font-size: 13px; c
 .form-boletin form .input { flex: 1 1 220px; }
 .form-boletin .proximamente { margin-top: 18px; color: var(--text-2); }
 .form-boletin .proximamente .tag { margin-right: 8px; vertical-align: 1px; }
+.form-boletin .proximamente a { text-decoration: underline; text-underline-offset: 3px; }
 .form-boletin .fine { margin-top: 14px; font-family: var(--font-mono); font-size: 12px; line-height: 1.7; color: var(--text-faint); }
 
 /* Test de nivel */
@@ -863,4 +865,19 @@ dl.datos > .ancho { flex-basis: 100%; }
   .hdr-in { gap: 10px; }
   .hdr .btn.sm { padding: 7px 9px; font-size: 12px; }
   .hdr .btn .pr { display: none; }
+}
+
+/* Pantallas táctiles: áreas de 36 px como mínimo (DISENO §15) */
+@media (pointer: coarse) {
+  .chip, .code .code__copy, .menu-btn, .search-mini, .btn.sm { min-height: 36px; }
+  .code__tab { min-height: 42px; }
+  .az a, .az span { min-width: 36px; height: 36px; }
+  .migas a, .migas [aria-current] { padding-block: 9px; }
+  .logo { padding-block: 4px; }
+  .link { padding-block: 8px; }
+  .termino h3 a { padding-block: 5px; }
+  .categorias > summary, .side-nav details.grupo > summary, details.callout > summary.callout__titulo { min-height: 36px; padding-block: 8px; align-items: center; }
+  a.tag { min-height: 36px; padding-inline: 10px; }
+  .side-nav li a, .toc li a { padding-block: 9px; }
+  .editar a { padding-block: 9px; }
 }

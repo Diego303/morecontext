@@ -42,7 +42,7 @@ const orden = temario.flatMap(({ nivel, lecciones }) => lecciones.map((l) => ({ 
       {temario.map(({ nivel, lecciones }) => (
         <li>
           <a class="fila" href={urlDe(nivel)}>
-            <span class="num" aria-hidden="true">{numNivel(nivel.data.nivel)}</span>
+            <span class="num" aria-hidden="true" data-num={numNivel(nivel.data.nivel)}></span>
             <span class="t"><span class="sr-only">Nivel {nivel.data.nivel}: </span>{nombre(nivel.data.titulo)}</span>
             <span class="d">{lecciones.length} lec · {nivel.data.horas} h</span>
             <p class="x">{nivel.data.objetivo}</p>

@@ -24,7 +24,7 @@ const rango = apendices.length ? `${apendices[0].n}–${apendices.at(-1)!.n}` : 
     {partes.map((p) => (
       <div class="ix-part" id={p.id}>
         <div class="ix-ph"><div class="in">
-          <span class="num" aria-hidden="true">{p.num}</span>
+          <span class="num" aria-hidden="true" data-num={p.num}></span>
           <h3><span class="sr-only">Parte {p.num}: </span>{p.titulo}</h3>
           <p>{p.texto}</p>
           <span class="count">{p.capitulos.length} capítulos</span>
@@ -36,7 +36,7 @@ const rango = apendices.length ? `${apendices[0].n}–${apendices.at(-1)!.n}` : 
     {apendices.length > 0 && (
       <div class="ix-part" id="apendices">
         <div class="ix-ph"><div class="in">
-          <span class="num" aria-hidden="true">{rango}</span>
+          <span class="num" aria-hidden="true" data-num={rango}></span>
           <h3>Apéndices</h3>
           <p>Las páginas del proyecto: por qué existe, cómo contribuir, quién lo hace, la licencia y cómo seguir las novedades.</p>
           <span class="count">{apendices.length} apéndices</span>

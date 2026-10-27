@@ -45,7 +45,7 @@ const { Content, headings } = await render(p.tipo === 'grupo' ? p.grupo : p.doc)
           {p.docs.map((d, i) => (
             <li>
               <a class="fila compacta" href={urlDe(d)}>
-                <span class="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <span class="num" aria-hidden="true" data-num={String(i + 1).padStart(2, '0')}></span>
                 <span class="t">{d.data.titulo}</span>
                 <span class="d"><Dificultad valor={d.data.nivel} /> {minutosLectura(d.body)} min</span>
                 <p class="x">{d.data.descripcion}</p>

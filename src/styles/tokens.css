@@ -30,7 +30,7 @@
   --text: #f4f4f5;
   --text-2: #d4d4d8;
   --text-muted: #a1a1aa;
-  --text-faint: #71717a;
+  --text-faint: #80808a;   /* DISENO dice #71717a; subido para contraste AA (4,5:1) con texto pequeño sobre void y surface */
   --text-ghost: #52525b;
   --border: #27272a;
   --border-2: #3f3f46;

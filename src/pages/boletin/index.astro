@@ -21,7 +21,7 @@ const numeros = (await publicados('boletin')).sort((a, b) => b.data.numero - a.d
       {numeros.map((n) => (
         <li>
           <a class="fila compacta" href={urlDe(n)}>
-            <span class="num" aria-hidden="true">{String(n.data.numero).padStart(3, '0')}</span>
+            <span class="num" aria-hidden="true" data-num={String(n.data.numero).padStart(3, '0')}></span>
             <span class="t"><span class="sr-only">Número {n.data.numero}: </span>{n.data.titulo}</span>
             <span class="d"><time datetime={fechaISO(n.data.creado)}>{fecha(n.data.creado)}</time></span>
             <p class="x">{n.data.descripcion}</p>

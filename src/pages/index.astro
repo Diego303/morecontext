@@ -16,7 +16,7 @@ const jsonld = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: SITIO.nombre,
-  url: SITIO.url,
+  url: `${SITIO.url}/`,
   description: SITIO.descripcion,
   inLanguage: 'es',
   publisher: { '@type': 'Organization', name: SITIO.nombre, url: SITIO.url, logo: new URL('/icon-512.png', SITIO.url).href },

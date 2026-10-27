@@ -17,7 +17,7 @@ const guias = (await publicados('modelos')).sort(porOrden);
       {guias.map((g, i) => (
         <li>
           <a class="fila compacta" href={urlDe(g)}>
-            <span class="num" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <span class="num" aria-hidden="true" data-num={String(i + 1).padStart(2, '0')}></span>
             <span class="t">{g.data.titulo}</span>
             <span class="d">{minutosLectura(g.body)} min</span>
             <p class="x">{g.data.descripcion}</p>
