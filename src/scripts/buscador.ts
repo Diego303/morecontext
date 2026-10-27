@@ -39,7 +39,15 @@ async function buscar(q: string) {
   if (!pf) { pintar('<li class="bus-vacio">La búsqueda se genera al construir la web (<code>pnpm build &amp;&amp; pnpm preview</code>). Mientras, prueba el <a href="/glosario/">glosario</a>.</li>'); return; }
   const r = await pf.debouncedSearch(q, {}, 150);
   if (!r) return; // superada por otra búsqueda
-  const datos = await Promise.all(r.results.slice(0, 12).map((x) => x.data()));
+  const datos = await Promise.all(r.results.slice(0, 30).map((x) => x.data()));
+  // Las definiciones del glosario primero (y antes que nada el término que coincide con la búsqueda);
+  // el resto, en el orden de Pagefind (sort estable)
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[_-]+/g, ' ').trim();
+  // exacto (entre los 30 primeros) = 2 · otro término del glosario que Pagefind ya ponía entre los 12 primeros = 1
+  const peso = (d: Resultado, i: number) => d.filters.seccion?.[0] !== 'Glosario' ? 0 : norm(d.meta.title ?? '') === norm(q) ? 2 : i < 12 ? 1 : 0;
+  const ordenados = datos.map((d, i) => ({ d, p: peso(d, i), i })).sort((a, b) => b.p - a.p || a.i - b.i).map((x) => x.d);
+  datos.splice(0, datos.length, ...ordenados);
+  datos.length = Math.min(datos.length, 12);
   if (!datos.length) { pintar(`<li class="bus-vacio">Nada con «${esc(q)}». Prueba otro término o mira el <a href="/glosario/">glosario</a>.</li>`); return; }
   pintar(datos.map((d) => `<li><a href="${d.url}"><span class="bus-t">${esc(d.meta.title ?? d.url)}</span>` +
     `<span class="bus-s">${esc(d.filters.seccion?.[0] ?? '')}</span><span class="bus-e">${d.excerpt}</span></a></li>`).join(''));

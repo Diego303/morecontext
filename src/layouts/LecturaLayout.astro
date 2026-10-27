@@ -20,7 +20,7 @@ interface Props {
   seccion: string;
   jsonld?: object | object[];
   estrecho?: boolean;
-  /** Peso del título en la búsqueda (glosario: 2) */
+  /** Peso del título en la búsqueda (0–10; Pagefind ya da 7 a los h1: el glosario usa 10) */
   peso?: number;
   meta?: boolean;
 }
@@ -33,7 +33,7 @@ const d = entrada.data as typeof entrada.data & { actualizado?: Date; relacionad
       <article data-pagefind-body>
         <header class="doc-head">
           <Migas items={migas} />
-          <slot name="sobre-titulo" />
+          <div data-pagefind-ignore><slot name="sobre-titulo" /></div>
           <h1 class="h1-doc" data-pagefind-meta="title" data-pagefind-weight={peso}>{d.titulo}</h1>
           <p class="lead">{d.descripcion}</p>
           <slot name="cabecera" />

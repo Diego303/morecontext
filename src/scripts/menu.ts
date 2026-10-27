@@ -55,6 +55,15 @@ paleta?.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && paleta.open) { e.preventDefault(); paleta.close(); }
 });
 
+// Anuncia a los lectores de pantalla cuántos resultados hay (buscador.ts solo pinta la lista)
+const lista = paleta?.querySelector('[data-resultados]');
+const estado = paleta?.querySelector<HTMLElement>('[data-bus-estado]');
+if (lista && estado) new MutationObserver(() => {
+  const n = lista.querySelectorAll('a[href]:not(.bus-vacio a)').length;
+  const vacio = lista.querySelector('.bus-vacio');
+  estado.textContent = n ? `${n} ${n === 1 ? 'resultado' : 'resultados'}` : vacio?.textContent ?? '';
+}).observe(lista, { childList: true });
+
 // Al pasar a escritorio, el menú móvil se cierra
 matchMedia('(min-width: 1181px)').addEventListener('change', (m) => { if (m.matches) abrirMenu(false); });
 

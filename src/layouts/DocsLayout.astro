@@ -38,7 +38,7 @@ const d = entrada.data as typeof entrada.data & { actualizado?: Date; relacionad
         </details>
         <header class="doc-head">
           <Migas items={migas} />
-          <slot name="sobre-titulo" />
+          <div data-pagefind-ignore><slot name="sobre-titulo" /></div>
           <h1 class="h1-doc" data-pagefind-meta="title">{d.titulo}</h1>
           <p class="lead">{d.descripcion}</p>
           <slot name="cabecera" />

@@ -10,6 +10,7 @@ import Icono from './Icono.astro';
     <form method="dialog"><button class="bus-cerrar" type="submit" aria-label="Cerrar la búsqueda"><kbd>Esc</kbd></button></form>
   </div>
   <ul class="bus-lista" id="bus-resultados" data-resultados aria-label="Resultados"></ul>
+  <p class="sr-only" role="status" aria-live="polite" data-bus-estado></p>
   <div class="bus-pie" aria-hidden="true">
     <span><kbd>↑</kbd> <kbd>↓</kbd> moverte</span><span><kbd>Enter</kbd> abrir</span><span><kbd>Esc</kbd> cerrar</span>
   </div>
