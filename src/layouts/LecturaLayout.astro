@@ -1,0 +1,56 @@
+---
+// Artículo + índice lateral (2 columnas): modelos, sistemas, patrones, disciplinas, recetas, glosario, radar, blog…
+import type { CollectionEntry, CollectionKey } from 'astro:content';
+import type { MarkdownHeading } from 'astro';
+import BaseLayout from './BaseLayout.astro';
+import Migas from '../components/entrada/Migas.astro';
+import MetaEntrada from '../components/entrada/MetaEntrada.astro';
+import AvisoRevision from '../components/entrada/AvisoRevision.astro';
+import TablaContenidos from '../components/entrada/TablaContenidos.astro';
+import Relacionados from '../components/entrada/Relacionados.astro';
+import Retroenlaces from '../components/entrada/Retroenlaces.astro';
+import EditarEnGitHub from '../components/entrada/EditarEnGitHub.astro';
+import { NOMBRE_SECCION } from '../config/sitio';
+import { urlDe } from '../lib/contenido';
+
+interface Props {
+  entrada: CollectionEntry<CollectionKey>;
+  headings: MarkdownHeading[];
+  migas: { href?: string; texto: string }[];
+  seccion: string;
+  jsonld?: object | object[];
+  estrecho?: boolean;
+  /** Peso del título en la búsqueda (glosario: 2) */
+  peso?: number;
+  meta?: boolean;
+}
+const { entrada, headings, migas, seccion, jsonld, estrecho = false, peso, meta = true } = Astro.props;
+const d = entrada.data as typeof entrada.data & { actualizado?: Date; relacionados?: string[] };
+---
+<BaseLayout titulo={d.titulo} descripcion={d.descripcion} seccion={seccion} tipo="article" fecha={d.creado} actualizado={d.actualizado} jsonld={jsonld}>
+  <main id="main" class="wrap">
+    <div class:list={['lectura-layout', { estrecho }]}>
+      <article data-pagefind-body>
+        <header class="doc-head">
+          <Migas items={migas} />
+          <slot name="sobre-titulo" />
+          <h1 class="h1-doc" data-pagefind-meta="title" data-pagefind-weight={peso}>{d.titulo}</h1>
+          <p class="lead">{d.descripcion}</p>
+          <slot name="cabecera" />
+          {meta && <MetaEntrada entrada={entrada} />}
+          <span hidden data-pagefind-filter="seccion">{NOMBRE_SECCION[seccion] ?? seccion}</span>
+        </header>
+        <AvisoRevision estado={d.estado} />
+        <div class="prosa cuerpo"><slot /></div>
+        <footer class="pie-entrada" data-pagefind-ignore="all">
+          <slot name="antes-pie" />
+          <Relacionados lista={d.relacionados} />
+          <Retroenlaces url={urlDe(entrada)} />
+          <slot name="paginador" />
+          <EditarEnGitHub filePath={entrada.filePath} />
+        </footer>
+      </article>
+      <TablaContenidos headings={headings} />
+    </div>
+  </main>
+</BaseLayout>

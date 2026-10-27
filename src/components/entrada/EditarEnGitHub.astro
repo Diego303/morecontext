@@ -1,0 +1,12 @@
+---
+import { SITIO } from '../../config/sitio';
+import Icono from '../base/Icono.astro';
+interface Props { filePath?: string }
+const { filePath } = Astro.props;
+---
+{filePath && (
+  <p class="editar">
+    <a href={`${SITIO.repo}/edit/${SITIO.ramaEdicion}/${filePath}`} rel="noopener"><Icono nombre="github" tamano={14} />Editar en GitHub</a>
+    <a href={`${SITIO.repo}/commits/${SITIO.ramaEdicion}/${filePath}`} rel="noopener"><Icono nombre="reloj" tamano={14} />Ver historial</a>
+  </p>
+)}

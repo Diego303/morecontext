@@ -1,0 +1,21 @@
+---
+// «En esta página»: h2 y h3 con marcador rosa que sigue el scroll (toc.ts). Oculto por debajo de 1240 px.
+import type { MarkdownHeading } from 'astro';
+interface Props { headings: MarkdownHeading[]; max?: number }
+const { headings, max = 3 } = Astro.props;
+const lista = headings.filter((h) => h.depth >= 2 && h.depth <= max);
+---
+<div class="toc" data-pagefind-ignore>
+  {lista.length > 1 && (
+    <nav aria-labelledby="toc-titulo">
+      <span class="label" id="toc-titulo">En esta página</span>
+      <div class="toc-l">
+        <ol>
+          {lista.map((h) => <li class:list={[{ sub: h.depth > 2 }]}><a href={`#${h.slug}`}>{h.text}</a></li>)}
+        </ol>
+        <span class="marker" aria-hidden="true" hidden></span>
+      </div>
+    </nav>
+  )}
+  <div class="aside"><slot /><a href="#main">Volver arriba ↑</a></div>
+</div>

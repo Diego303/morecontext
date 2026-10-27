@@ -1,0 +1,37 @@
+---
+// Páginas sueltas y portadillas: cabecera con retícula, h1 display, lead y el Markdown en .prosa.
+import BaseLayout, { type Props as BaseProps } from './BaseLayout.astro';
+import Migas from '../components/entrada/Migas.astro';
+import { NOMBRE_SECCION } from '../config/sitio';
+
+interface Props extends BaseProps {
+  migas?: { href?: string; texto: string }[];
+  lead?: string;
+  ancho?: 'lectura' | 'completo';
+  /** false = el cuerpo no se indexa en la búsqueda (listados) */
+  indexar?: boolean;
+}
+const { migas, lead, ancho = 'lectura', indexar = true, ...base } = Astro.props;
+const estrecho = ancho === 'lectura';
+const nombreSeccion = base.seccion !== undefined ? NOMBRE_SECCION[base.seccion] : undefined;
+---
+<BaseLayout {...base}>
+  <main id="main">
+    <header class="page-head grid-bg" data-pagefind-body={indexar ? '' : undefined}>
+      <div class:list={['wrap', { narrow: estrecho }]}>
+        {migas && <Migas items={migas} />}
+        <h1 class="display" data-pagefind-meta="title">{base.titulo}</h1>
+        {lead && <p class="lead">{lead}</p>}
+        <slot name="cabecera" />
+        {nombreSeccion && <span hidden data-pagefind-filter="seccion">{nombreSeccion}</span>}
+      </div>
+    </header>
+    <slot name="antes" />
+    {Astro.slots.has('default') && (
+      <div class:list={['wrap pagina-cuerpo', { narrow: estrecho }]}>
+        <div class="prosa" data-pagefind-body={indexar ? '' : undefined}><slot /></div>
+      </div>
+    )}
+    <slot name="despues" />
+  </main>
+</BaseLayout>

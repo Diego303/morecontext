@@ -1,0 +1,12 @@
+---
+import { resolverEnlaces } from '../../lib/contenido';
+interface Props { lista?: string[]; titulo?: string }
+const { lista = [], titulo = 'Relacionado' } = Astro.props;
+const enlaces = resolverEnlaces(lista);
+---
+{enlaces.length > 0 && (
+  <section aria-labelledby="h-relacionado">
+    <h2 id="h-relacionado">{titulo}</h2>
+    <ul class="lista-flecha">{enlaces.map((e) => <li><a href={e.url}>{e.titulo}</a></li>)}</ul>
+  </section>
+)}
