@@ -1,64 +1,37 @@
 ---
-// Provisional (fase 1): comprueba que las 17 colecciones cargan y que cada entrada tiene URL.
-// Se sustituye por la portada «El índice» en la fase 5.
-import type { CollectionKey } from 'astro:content';
-import { CARPETA, publicados, urlDe } from '../lib/contenido';
+// Portada «El índice» (docs/referencia/landing-indice.html) con todos los datos calculados del contenido.
+import '../styles/portada.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/portada/Hero.astro';
+import EmpiezaAqui from '../components/portada/EmpiezaAqui.astro';
+import IndiceGeneral from '../components/portada/IndiceGeneral.astro';
+import UltimosEscritos from '../components/portada/UltimosEscritos.astro';
+import Manifiesto from '../components/portada/Manifiesto.astro';
+import { SITIO } from '../config/sitio';
+import { datosPortada } from '../lib/portada';
 
-const colecciones = await Promise.all(
-  (Object.keys(CARPETA) as CollectionKey[]).map(async (nombre) => {
-    const entradas = (await publicados(nombre))
-      .map((e) => ({ url: urlDe(e), titulo: e.data.titulo }))
-      .sort((a, b) => a.url.localeCompare(b.url, 'es', { numeric: true }));
-    return { nombre, entradas };
-  }),
-);
-const total = colecciones.reduce((n, c) => n + c.entradas.length, 0);
+const d = await datosPortada();
+const descripcion = `${SITIO.descripcion} Roadmap 0→100, cursos, documentación, sistemas, patrones, recetas, glosario y radar. Gratis y sin registro.`;
+const jsonld = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITIO.nombre,
+  url: SITIO.url,
+  description: SITIO.descripcion,
+  inLanguage: 'es',
+  publisher: { '@type': 'Organization', name: SITIO.nombre, url: SITIO.url, logo: new URL('/icon-512.png', SITIO.url).href },
+};
 ---
-<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex" />
-    <title>Contenido cargado · MoreContext</title>
-  </head>
-  <body>
-    <main>
-      <h1>Contenido cargado</h1>
-      <p>Página provisional: {total} entradas en {colecciones.length} colecciones. La portada la sustituye en la fase 5.</p>
-
-      <table>
-        <caption>Entradas por colección</caption>
-        <thead><tr><th scope="col">Colección</th><th scope="col">Entradas</th></tr></thead>
-        <tbody>
-          {colecciones.map((c) => (
-            <tr><th scope="row"><a href={`#${c.nombre}`}>{c.nombre}</a></th><td>{c.entradas.length}</td></tr>
-          ))}
-        </tbody>
-        <tfoot><tr><th scope="row">Total</th><td>{total}</td></tr></tfoot>
-      </table>
-
-      {colecciones.map((c) => (
-        <section aria-labelledby={c.nombre}>
-          <h2 id={c.nombre}>{c.nombre} ({c.entradas.length})</h2>
-          <ol>
-            {c.entradas.map((e) => (
-              <li><a href={e.url}>{e.titulo}</a> <code>{e.url}</code></li>
-            ))}
-          </ol>
-        </section>
-      ))}
-    </main>
-  </body>
-</html>
-
-<style is:global>
-  /* Mínimo para leer sin desbordes hasta que llegue el design system (fase 2). */
-  :root { color-scheme: dark; }
-  body { margin: 0 auto; max-width: 72rem; padding: 24px max(16px, env(safe-area-inset-left, 0px)); font-family: system-ui, sans-serif; line-height: 1.5; }
-  li, code { overflow-wrap: anywhere; }
-  table { border-collapse: collapse; }
-  caption { text-align: left; }
-  th, td { padding: 4px 16px 4px 0; text-align: left; }
-  td { text-align: right; font-variant-numeric: tabular-nums; }
-</style>
+<BaseLayout titulo={SITIO.nombre} descripcion={descripcion} jsonld={jsonld}>
+  <main id="main">
+    <Hero cifras={d.cifras} />
+    <EmpiezaAqui rutas={d.rutas} urlTest={d.urlTest} />
+    <IndiceGeneral partes={d.partes} apendices={d.apendices} colofon={d.colofon} />
+    <UltimosEscritos destacado={d.escritos.destacado} anteriores={d.escritos.anteriores} tipo={d.escritos.tipo}
+      ultimoBoletin={d.escritos.ultimoBoletin} fechaCorta={d.fechaCorta} />
+    <Manifiesto bloques={d.manifiesto} href={d.urlManifiesto} />
+  </main>
+</BaseLayout>
+<script>
+  import '../scripts/portada.ts';
+</script>

@@ -40,7 +40,7 @@
 }
 .qbox:focus-within { border-color: var(--accent-yellow); }
 .qbox svg { flex: none; color: var(--text-faint); }
-.qbox input { flex: 1; min-width: 0; padding: 22px 0; color: var(--text); background: transparent; border: 0; outline: none; font-family: var(--font-sans); font-size: 19px; }
+.qbox input { flex: 1; min-width: 0; padding: 22px 0; line-height: normal; color: var(--text); background: transparent; border: 0; outline: none; font-family: var(--font-sans); font-size: 19px; }
 .qbox input::placeholder { font-family: var(--font-hand); font-size: 24px; letter-spacing: .02em; color: var(--text-ghost); }
 .qbox input::-webkit-search-cancel-button { display: none; }
 .qbox .keys { display: flex; gap: 6px; align-items: center; font-family: var(--font-mono); font-size: 11px; color: var(--text-ghost); }

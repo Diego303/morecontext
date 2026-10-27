@@ -1,0 +1,33 @@
+---
+// Un capítulo del índice: título numerado con línea de puntos hasta el dato y sus entradas.
+import type { Capitulo } from '../../lib/portada';
+interface Props { capitulo: Capitulo }
+const { capitulo: c } = Astro.props;
+---
+<section class="ix-ch" aria-label={c.t}>
+  <h4><a class="lead-line" href={c.href}><span class="n">{c.n}</span><span class="t">{c.t}</span><i></i><span class="d">{c.d}</span></a></h4>
+  {c.lineas.length > 0 && (
+    <ol>
+      {c.lineas.map((l) => (
+        <li>
+          <a class="lead-line" href={l.href} data-k={l.k}>
+            <span class="n">{l.n}</span><span class="t">{l.t}</span>
+            {(l.d || l.dots || l.nuevo) && <i></i>}
+            {(l.d || l.dots || l.nuevo) && (
+              <span class="d">
+                {l.nuevo && <em class="new">nuevo</em>}
+                {l.dots && (
+                  <span class="dots" role="img" aria-label={`${l.dots.etiqueta}: ${l.dots.valor} de 3`}>
+                    {[1, 2, 3].map((i) => <i class:list={[{ on: i <= l.dots!.valor }]}></i>)}
+                  </span>
+                )}
+                {l.dots && l.d && ' '}{l.d}
+              </span>
+            )}
+          </a>
+        </li>
+      ))}
+    </ol>
+  )}
+  {c.nota && <span class="note">{c.nota}</span>}
+</section>

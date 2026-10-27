@@ -1,0 +1,53 @@
+---
+// «Todo MoreContext en una página»: cinco partes con título sticky, capítulos numerados y apéndices.
+import type { Capitulo, Parte } from '../../lib/portada';
+import CapituloIndice from './CapituloIndice.astro';
+interface Props { partes: Parte[]; apendices: Capitulo[]; colofon: { capitulos: number; apendices: number; entradas: number } }
+const { partes, apendices, colofon } = Astro.props;
+const rango = apendices.length ? `${apendices[0].n}–${apendices.at(-1)!.n}` : '';
+---
+<section class="sec" id="indice" aria-labelledby="h-indice">
+  <div class="wrap">
+    <header class="ix-head">
+      <div>
+        <span class="label sec-label"><b>Índice</b> general</span>
+        <h2 id="h-indice">Todo MoreContext en una página</h2>
+        <p class="sec-sub">Cinco partes y {apendices.length} apéndices. Cada línea lleva a su sitio. Si no sabes cómo se llama lo que buscas, usa el buscador.</p>
+      </div>
+      <p class="ix-legend" aria-label="Leyenda"><span>lec = lecciones · h = horas</span><span>min = minutos de lectura o de estudio</span><span><em>nuevo</em> = de los últimos 30 días</span></p>
+      <nav class="ix-jump" aria-label="Partes del índice">
+        {partes.map((p) => <a href={`#${p.id}`}><b>{p.num}</b>{p.titulo}</a>)}
+        {apendices.length > 0 && <a href="#apendices"><b>{rango}</b>Apéndices</a>}
+      </nav>
+    </header>
+
+    {partes.map((p) => (
+      <div class="ix-part" id={p.id}>
+        <div class="ix-ph"><div class="in">
+          <span class="num" aria-hidden="true">{p.num}</span>
+          <h3><span class="sr-only">Parte {p.num}: </span>{p.titulo}</h3>
+          <p>{p.texto}</p>
+          <span class="count">{p.capitulos.length} capítulos</span>
+        </div></div>
+        <div class="ix-chs">{p.capitulos.map((c) => <CapituloIndice capitulo={c} />)}</div>
+      </div>
+    ))}
+
+    {apendices.length > 0 && (
+      <div class="ix-part" id="apendices">
+        <div class="ix-ph"><div class="in">
+          <span class="num" aria-hidden="true">{rango}</span>
+          <h3>Apéndices</h3>
+          <p>Las páginas del proyecto: por qué existe, cómo contribuir, quién lo hace, la licencia y cómo seguir las novedades.</p>
+          <span class="count">{apendices.length} apéndices</span>
+        </div></div>
+        <div class="ix-chs">{apendices.map((c) => <CapituloIndice capitulo={c} />)}</div>
+      </div>
+    )}
+
+    <p class="ix-colophon">
+      <span>{colofon.capitulos} capítulos · {colofon.apendices} apéndices · {colofon.entradas} entradas</span>
+      <span>El buscador recorre todo el contenido. Pulsa <kbd>/</kbd> desde cualquier página.</span>
+    </p>
+  </div>
+</section>

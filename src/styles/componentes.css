@@ -780,7 +780,8 @@ dl.datos dd { margin: 2px 0 0; font-family: var(--font-mono); font-size: 13px; c
 .form-boletin > p { margin: 10px 0 0; color: var(--text-muted); }
 .form-boletin form { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
 .form-boletin form .input { flex: 1 1 220px; }
-.form-boletin .proximamente { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 18px; color: var(--text-2); }
+.form-boletin .proximamente { margin-top: 18px; color: var(--text-2); }
+.form-boletin .proximamente .tag { margin-right: 8px; vertical-align: 1px; }
 .form-boletin .fine { margin-top: 14px; font-family: var(--font-mono); font-size: 12px; line-height: 1.7; color: var(--text-faint); }
 
 /* Test de nivel */
