@@ -13,7 +13,7 @@ const MES = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric', t
 const meses = new Map<string, typeof notas>();
 for (const n of notas) { const k = fechaISO(n.data.creado).slice(0, 7); meses.set(k, [...(meses.get(k) ?? []), n]); }
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="radar"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="radar"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/radar/')}>
   <Content />
   <section slot="despues" class="wrap narrow listado" aria-labelledby="h-radar">

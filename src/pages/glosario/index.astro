@@ -19,7 +19,7 @@ const letras = [...ABC, '#'].filter((l) => porLetra.has(l));
 const idLetra = (l: string) => `letra-${l === '#' ? 'otros' : l === 'Ñ' ? 'enie' : l.toLowerCase()}`;
 const CATEGORIA: Record<string, string> = { fundamentos: 'fundamentos', prompting: 'prompting', herramientas: 'herramientas', contexto: 'contexto', agentes: 'agentes', evals: 'evals', produccion: 'producción', seguridad: 'seguridad' };
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="glosario"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="glosario"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/glosario/')}>
   <Content />
   <section slot="despues" class="wrap narrow listado" aria-labelledby="h-terminos">

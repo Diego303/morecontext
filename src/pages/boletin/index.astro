@@ -9,7 +9,7 @@ const s = (await getEntry('secciones', 'boletin'))!;
 const { Content } = await render(s);
 const numeros = (await publicados('boletin')).sort((a, b) => b.data.numero - a.data.numero);
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="boletin"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="boletin"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/boletin/')}>
   <div slot="antes" class="wrap narrow" style="padding-top:var(--s8)">
     <div class="panel" style="padding:24px"><FormularioBoletin id="boletin-pagina" titulo="Suscríbete" nivelTitulo={2} /></div>

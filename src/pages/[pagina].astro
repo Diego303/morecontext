@@ -4,8 +4,6 @@ import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { render } from 'astro:content';
 import PaginaLayout from '../layouts/PaginaLayout.astro';
 import TestNivel from '../components/aprender/TestNivel.astro';
-import Relacionados from '../components/entrada/Relacionados.astro';
-import EditarEnGitHub from '../components/entrada/EditarEnGitHub.astro';
 import { publicados } from '../lib/contenido';
 import { ldArticulo } from '../lib/jsonld';
 
@@ -15,14 +13,8 @@ export const getStaticPaths = (async () =>
 const { e } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
 const { Content } = await render(e);
 ---
-<PaginaLayout titulo={e.data.titulo} descripcion={e.data.descripcion} lead={e.data.descripcion} seccion=""
+<PaginaLayout entrada={e} titulo={e.data.titulo} descripcion={e.data.descripcion} lead={e.data.descripcion} seccion=""
   migas={[{ href: '/', texto: 'Inicio' }, { texto: e.data.titulo }]} jsonld={{ ...ldArticulo(e), '@type': 'WebPage' }}>
   <Content />
   {e.id === 'empieza-aqui' && <TestNivel />}
-  <div slot="despues" class="wrap narrow">
-    <footer class="pie-entrada pie-pagina" data-pagefind-ignore="all">
-      <Relacionados lista={e.data.relacionados} />
-      <EditarEnGitHub filePath={e.filePath} />
-    </footer>
-  </div>
 </PaginaLayout>

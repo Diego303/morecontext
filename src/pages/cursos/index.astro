@@ -11,7 +11,7 @@ const s = (await getEntry('secciones', 'cursos'))!;
 const { Content } = await render(s);
 const cursos = await temarioCursos();
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="cursos"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="cursos"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/cursos/')}>
   <Content />
   <section slot="despues" class="wrap listado" aria-labelledby="h-cursos">

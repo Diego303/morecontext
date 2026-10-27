@@ -11,7 +11,7 @@ const destacada = entradas.find((e) => e.data.destacado) ?? entradas[0];
 const resto = entradas.filter((e) => e !== destacada);
 const TIPO: Record<string, string> = { ensayo: 'ensayo', analisis: 'análisis', 'nota-de-campo': 'nota de campo', tutorial: 'tutorial' };
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="blog"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="blog"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/blog/')}>
   <Content />
   <div slot="despues" class="wrap narrow listado">

@@ -16,7 +16,7 @@ const opciones = (mapa: Record<string, string>, campo: 'tema' | 'nivel') => Obje
   .map(([valor, texto]) => ({ valor, texto, n: recetas.filter((r) => r.data[campo] === valor).length }))
   .filter((o) => o.n > 0);
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="recetas"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="recetas"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/recetas/')}>
   <Content />
   <section slot="despues" class="wrap listado" aria-labelledby="h-recetas">

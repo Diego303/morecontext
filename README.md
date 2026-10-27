@@ -57,6 +57,24 @@ pnpm validar                                                # comprueba frontmat
 
 Las reglas completas (frontmatter, enlaces, avisos, código, diagramas, estilo) están en [`docs/GUIA-CONTENIDO.md`](docs/GUIA-CONTENIDO.md).
 
+### Segundo cerebro con Obsidian
+
+La configuración de la bóveda va incluida en `contenido/.obsidian/`:
+
+- **Enlaces con ruta completa** (`[[glosario/rag]]`), igual que los que entiende la web. Al mover o renombrar una nota, Obsidian actualiza los enlaces.
+- **Plantillas** en `_plantillas/` (*Insertar plantilla*); fechas `AAAA-MM-DD`.
+- **Adjuntos** en `_adjuntos/`; se enlazan con `![[archivo.png]]`.
+- Lo que empieza por `_` o `.` no se publica: plantillas, adjuntos, `_borradores/` y la configuración.
+
+El flujo de una nota nueva:
+
+1. Créala con `pnpm nuevo <plantilla> <ruta> "<Título>"` (o desde Obsidian con la plantilla). Nace con `estado: borrador`.
+2. Escríbela y enlázala. En `pnpm dev` se ve con el aviso «Borrador», con sus retroenlaces.
+3. `pnpm validar` revisa frontmatter y enlaces, y avisa si una página publicada enlaza a un borrador. En la web, ese enlace sale en gris («aún no existe») hasta que lo publiques.
+4. Cambia a `estado: publicado` (o quita la línea), haz commit y push.
+
+Cada página publicada muestra «Enlazado desde» (las notas que la citan con `[[…]]` o en `relacionados`), sus etiquetas (`/tags/`) y un enlace «Editar en GitHub».
+
 ## Desarrollo
 
 Requisitos: Node ≥ 22.23.4 y pnpm.

@@ -12,7 +12,7 @@ const COLUMNAS = [
   { tipo: 'forma-de-trabajar', titulo: 'Formas de trabajar' },
 ] as const;
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="disciplinas"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="disciplinas"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/disciplinas/')}>
   <Content />
   <div slot="despues" class="wrap listado">

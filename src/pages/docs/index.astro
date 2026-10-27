@@ -11,7 +11,7 @@ const { Content } = await render(s);
 const grupos = await temarioDocs();
 const total = grupos.reduce((n, g) => n + g.docs.length, 0);
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="docs"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="docs"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/docs/')}>
   <form slot="cabecera" class="search-xl" role="search" data-form-buscar style="margin-top:28px">
     <Icono nombre="buscar" tamano={20} />

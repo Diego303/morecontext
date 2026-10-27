@@ -10,7 +10,7 @@ const s = (await getEntry('secciones', 'sistemas'))!;
 const { Content } = await render(s);
 const sistemas = (await publicados('sistemas')).sort(porOrden);
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="sistemas"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="sistemas"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/sistemas/')}>
   <Content />
   <section slot="despues" class="wrap listado" aria-labelledby="h-sistemas">

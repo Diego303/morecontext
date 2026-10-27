@@ -13,7 +13,7 @@ const todas = temario.flatMap((t) => t.lecciones.map(idLeccion));
 const horas = temario.reduce((n, t) => n + t.nivel.data.horas, 0);
 const nombre = (titulo: string) => titulo.replace(/^Nivel \d+ · /, '');
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="roadmap"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="roadmap"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/roadmap/')}>
   <dl class="datos" slot="cabecera" style="margin-top:24px">
     <div><dt>Niveles</dt><dd>{temario.length}</dd></div>

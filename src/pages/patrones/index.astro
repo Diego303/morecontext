@@ -16,7 +16,7 @@ const TIPOS = [
 ] as const;
 const comparables = patrones.filter((p) => p.data.cuandoUsar || p.data.coste || p.data.latencia);
 ---
-<PaginaLayout titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="patrones"
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="patrones"
   migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/patrones/')}>
   <Content />
   <div slot="despues" class="wrap listado">

@@ -1,7 +1,13 @@
 ---
 // Páginas sueltas y portadillas: cabecera con retícula, h1 display, lead y el Markdown en .prosa.
 import BaseLayout, { type Props as BaseProps } from './BaseLayout.astro';
+import type { CollectionEntry, CollectionKey } from 'astro:content';
 import Migas from '../components/entrada/Migas.astro';
+import Relacionados from '../components/entrada/Relacionados.astro';
+import Retroenlaces from '../components/entrada/Retroenlaces.astro';
+import EditarEnGitHub from '../components/entrada/EditarEnGitHub.astro';
+import AvisoRevision from '../components/entrada/AvisoRevision.astro';
+import { urlDe } from '../lib/contenido';
 import { NOMBRE_SECCION } from '../config/sitio';
 
 interface Props extends BaseProps {
@@ -10,8 +16,10 @@ interface Props extends BaseProps {
   ancho?: 'lectura' | 'completo';
   /** false = el cuerpo no se indexa en la búsqueda (listados) */
   indexar?: boolean;
+  /** Entrada de contenido de la página: añade el pie común (relacionados, enlazado desde, editar en GitHub) */
+  entrada?: CollectionEntry<CollectionKey>;
 }
-const { migas, lead, ancho = 'lectura', indexar = true, ...base } = Astro.props;
+const { migas, lead, ancho = 'lectura', indexar = true, entrada, ...base } = Astro.props;
 const estrecho = ancho === 'lectura';
 const nombreSeccion = base.seccion !== undefined ? NOMBRE_SECCION[base.seccion] : undefined;
 ---
@@ -23,6 +31,7 @@ const nombreSeccion = base.seccion !== undefined ? NOMBRE_SECCION[base.seccion] 
         <h1 class="display" data-pagefind-meta="title">{base.titulo}</h1>
         {lead && <p class="lead">{lead}</p>}
         <slot name="cabecera" />
+        {entrada && <AvisoRevision estado={entrada.data.estado} />}
         {nombreSeccion && <span hidden data-pagefind-filter="seccion">{nombreSeccion}</span>}
       </div>
     </header>
@@ -33,5 +42,14 @@ const nombreSeccion = base.seccion !== undefined ? NOMBRE_SECCION[base.seccion] 
       </div>
     )}
     <slot name="despues" />
+    {entrada && (
+      <div class="wrap narrow">
+        <footer class="pie-entrada pie-pagina" data-pagefind-ignore="all">
+          <Relacionados lista={(entrada.data as { relacionados?: string[] }).relacionados} />
+          <Retroenlaces url={urlDe(entrada)} />
+          <EditarEnGitHub filePath={entrada.filePath} />
+        </footer>
+      </div>
+    )}
   </main>
 </BaseLayout>
