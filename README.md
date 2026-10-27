@@ -89,6 +89,19 @@ pnpm enlaces    # comprobar enlaces internos de dist/
 
 Stack: Astro 7 · Markdown con plugins propios (wikilinks, avisos, pestañas de código) · Shiki · Mermaid · Pagefind · GitHub Pages. Detalles en [`docs/PLAN-IMPLEMENTACION.md`](docs/PLAN-IMPLEMENTACION.md).
 
+### Publicar en GitHub Pages
+
+Cada push a `main` publica la web (`.github/workflows/deploy.yml`: valida, construye, indexa y despliega). Cada pull request y cada rama pasan `validar`, `check`, `build` y `enlaces` (`ci.yml`).
+
+Una sola vez:
+
+1. **Settings → Pages → Source: GitHub Actions.**
+2. En el proveedor del dominio, cuatro registros **A** para `@`: `185.199.108.153`, `185.199.109.153`, `185.199.110.153` y `185.199.111.153`. Opcionalmente, los **AAAA**: `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153` y `2606:50c0:8003::153`. Y un **CNAME** `www` → `<usuario>.github.io`.
+3. **Settings → Pages → Custom domain**: `morecontextai.com`. Espera a que se verifique y marca **Enforce HTTPS**. El archivo `public/CNAME` ya lleva el dominio.
+4. Verifica el dominio en los ajustes de tu cuenta u organización (**Settings → Pages → Verified domains**), para que nadie pueda usarlo en otro repositorio.
+
+`astro.config.mjs` ya tiene `site: 'https://morecontextai.com'` y no usa `base` (con dominio propio no hace falta).
+
 ### Boletín
 
 El formulario de suscripción solo aparece cuando `SITIO.boletin.action` (en `src/config/sitio.ts`) tiene una URL. Mientras esté vacío, la web muestra «Próximamente» y enlaza al RSS, sin formularios que no llevan a ninguna parte.
