@@ -1,0 +1,1047 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MoreContext · El Índice</title>
+<meta name="description" content="MoreContext: la guía abierta de agentes de IA en español. Roadmap 0→100, cursos, documentación, sistemas, patrones, recetas, glosario y radar. Gratis y sin registro.">
+<meta name="theme-color" content="#0f0f11">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='.5' fill='%23fde047'/%3E%3Cpath d='M8 5H5v14h3M16 5h3v14h-3M12 9.25v6M9 12.25h6' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='square'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Patrick+Hand&amp;display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg-void:#0f0f11;--bg-surface:#18181b;--bg-surface-hover:#27272a;--bg-overlay:rgba(15,15,17,.8);--callout-bg:#1f1f23;
+  --code-bg:#0a0a0a;
+  --accent-yellow:#fde047;--accent-cyan:#22d3ee;--accent-pink:#f472b6;--accent-green:#86efac;--accent-red:#fb7185;
+  --text:#f4f4f5;--text-2:#d4d4d8;--text-muted:#a1a1aa;--text-faint:#71717a;--text-ghost:#52525b;
+  --border:#27272a;--border-2:#3f3f46;--ink:#000;--paper:#fff;
+  --shadow-sm:2px 2px 0 0 #27272a;--shadow-md:4px 4px 0 0 #27272a;--shadow-lg:8px 8px 0 0 #000;
+  --radius-sm:2px;--radius-md:4px;--radius-sketch:2px 255px 3px 25px / 255px 5px 225px 5px;
+  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --font-sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --font-hand:"Patrick Hand","Bradley Hand","Segoe Print",cursive;
+  --header-h:60px;--maxw:1200px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-padding-top:calc(var(--header-h) + 24px);overflow-x:clip}
+body{margin:0;background:var(--bg-void);color:var(--text);font-family:var(--font-sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:clip}
+img,svg{max-width:100%}
+::selection{background:var(--accent-yellow);color:var(--ink)}
+a{color:var(--accent-cyan);text-decoration:none}
+a:hover{color:var(--accent-pink)}
+:focus-visible{outline:2px solid var(--accent-yellow);outline-offset:3px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip:focus{position:fixed;left:16px;top:12px;width:auto;height:auto;clip:auto;z-index:200;background:var(--accent-yellow);color:var(--ink);padding:8px 12px;font-family:var(--font-mono);font-size:13px;border-radius:var(--radius-sm)}
+[hidden]{display:none!important}
+h1,h2,h3,h4{text-wrap:balance;margin:0}
+p{margin:0 0 1em;max-width:65ch}
+.wrap{max-width:var(--maxw);margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+.label{font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted)}
+.label b{color:var(--accent-yellow);font-weight:500}
+kbd,.key{font-family:var(--font-mono);font-size:11px;font-weight:500;color:var(--text-muted);background:var(--bg-surface);border:1px solid var(--border-2);border-bottom-width:3px;border-radius:4px;padding:1px 6px;line-height:1.5;white-space:nowrap}
+.note{font-family:var(--font-hand);font-size:19px;letter-spacing:.02em;line-height:1.25;color:var(--accent-pink);display:inline-block;transform:rotate(-2deg)}
+.note svg{overflow:visible;vertical-align:middle}
+.note path{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.hl{background:linear-gradient(120deg,rgba(253,224,71,0) 0%,rgba(253,224,71,.28) 100%);background-repeat:no-repeat;background-size:100% 38%;background-position:0 90%}
+.dots{display:inline-flex;gap:3px;vertical-align:middle}
+.dots i{width:7px;height:7px;border:1px solid var(--text-faint);border-radius:1px}
+.dots i.on{background:var(--accent-yellow);border-color:var(--accent-yellow)}
+
+/* Botones */
+.btn{display:inline-flex;align-items:center;gap:10px;font-family:var(--font-mono);font-weight:700;font-size:14px;line-height:1.2;background:var(--paper);color:var(--ink);border:2px solid var(--ink);border-radius:var(--radius-sm);padding:12px 18px;cursor:pointer;white-space:nowrap;transition:transform .12s ease,box-shadow .12s ease}
+.btn:hover{color:var(--ink);transform:translate(-2px,-2px);box-shadow:4px 4px 0 0 var(--accent-yellow)}
+.btn:active{transform:none;box-shadow:none}
+.btn .pr{color:var(--text-ghost)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn-sketch{display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--text);font-family:var(--font-mono);font-weight:500;font-size:14px;padding:11px 20px;cursor:pointer;border:2px solid var(--text-muted);border-radius:var(--radius-sketch);transition:transform .15s ease,border-color .15s ease,color .15s}
+.btn-sketch:hover{border-color:var(--accent-yellow);color:var(--accent-yellow);transform:rotate(-1deg)}
+.link{font-family:var(--font-mono);font-size:13px;color:var(--accent-cyan);display:inline-flex;gap:6px;align-items:center}
+.link::after{content:"→";transition:transform .15s}
+.link:hover::after{transform:translateX(3px)}
+.chip{font-family:var(--font-mono);font-size:12px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-muted);background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;cursor:pointer;transition:color .12s,border-color .12s}
+.chip:hover{color:var(--accent-pink);border-color:var(--accent-pink)}
+.input{width:100%;min-width:0;background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font-mono);font-size:14px;padding:11px 12px;outline:none}
+.input::placeholder{font-family:var(--font-hand);color:var(--text-ghost);font-size:18px}
+.input:focus{border-color:var(--accent-yellow)}
+
+/* Icono [+] */
+.mark{display:inline-block;flex:none;border-radius:var(--radius-sm)}
+
+/* ---------- Header ---------- */
+.hdr{position:sticky;top:0;z-index:50;background:var(--bg-overlay);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding-top:env(safe-area-inset-top,0px)}
+.hdr-in{display:flex;align-items:center;gap:18px;height:var(--header-h)}
+.logo{display:flex;align-items:center;gap:10px;color:var(--text);font-family:var(--font-mono);font-weight:700;font-size:16px;letter-spacing:-.01em;white-space:nowrap;flex:none}
+.logo:hover{color:var(--text)}
+.logo .mark{width:28px;height:28px;box-shadow:var(--shadow-sm)}
+.nav{display:flex;gap:0;min-width:0;align-items:center}
+.nav>a,.nav .dd>button{font:inherit;font-size:13.5px;color:var(--text-muted);padding:6px 9px;border-radius:var(--radius-sm);white-space:nowrap;background:none;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.nav>a:hover,.nav .dd>button:hover,.nav .dd>button[aria-expanded="true"]{color:var(--text);background:var(--bg-surface)}
+.dd{position:relative}
+.dd svg{transition:transform .15s}
+.dd>button[aria-expanded="true"] svg{transform:rotate(180deg)}
+.dd-menu{position:absolute;top:calc(100% + 10px);left:0;min-width:300px;background:var(--bg-surface);border:1px solid var(--border-2);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);padding:8px;z-index:60}
+.dd-menu a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 14px;padding:9px 10px;border-radius:var(--radius-sm);color:var(--text)}
+.dd-menu a:hover{background:var(--bg-surface-hover);color:var(--text)}
+.dd-menu a small{grid-column:1;color:var(--text-faint);font-size:12.5px}
+.dd-menu a span.d{grid-row:1;grid-column:2;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);align-self:center}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex:none}
+.search-mini{display:flex;align-items:center;gap:10px;background:var(--code-bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 8px 6px 10px;color:var(--text-faint);cursor:pointer;min-width:170px;font:inherit}
+.search-mini:hover{border-color:var(--border-2)}
+.search-mini .ph{font-family:var(--font-hand);font-size:17px;color:var(--text-ghost);flex:1;text-align:left;line-height:1}
+.menu-btn{display:none;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);width:38px;height:38px;cursor:pointer;place-items:center}
+.mnav{border-top:1px solid var(--border);background:var(--bg-void);max-height:calc(100vh - var(--header-h));overflow-y:auto}
+.mnav .wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 16px;padding-block:18px 24px}
+.mnav h4{font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);margin:0 0 4px}
+.mnav a{display:block;color:var(--text-muted);padding:8px 0;font-size:15px}
+.mnav a:hover{color:var(--text)}
+
+/* ---------- Hero ---------- */
+.hero{position:relative;isolation:isolate;padding-block:88px 72px;text-align:center}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-size:40px 40px;background-image:linear-gradient(to right,#27272a 1px,transparent 1px),linear-gradient(to bottom,#27272a 1px,transparent 1px);-webkit-mask-image:radial-gradient(circle at center,black 40%,transparent 100%);mask-image:radial-gradient(circle at center,black 40%,transparent 100%);opacity:.15}
+.edition{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);display:inline-flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;margin:0 auto 36px;max-width:none}
+.edition span+span::before{content:"·";margin-right:14px;color:var(--text-ghost)}
+.wm{display:inline-flex;align-items:center;gap:.28em;font-family:var(--font-mono);font-weight:700;font-size:clamp(38px,8.4vw,92px);letter-spacing:-.03em;line-height:1}
+.wm .mark{width:.86em;height:.86em;box-shadow:4px 4px 0 #000}
+.wm .more{color:var(--text-muted)}
+.slogan{font-size:clamp(22px,3vw,30px);font-weight:300;line-height:1.3;letter-spacing:-.01em;margin:28px auto 0;max-width:none;color:var(--text)}
+.what{font-size:17px;color:var(--text-muted);margin:14px auto 0;max-width:52ch;text-wrap:balance}
+.what strong{color:var(--text);font-weight:500}
+.qbox{display:flex;align-items:center;gap:14px;max-width:780px;margin:44px auto 0;background:var(--code-bg);border:1px solid var(--border-2);border-radius:var(--radius-sm);padding:0 16px 0 20px;box-shadow:var(--shadow-lg);transition:border-color .15s;text-align:left}
+.qbox:focus-within{border-color:var(--accent-yellow)}
+.qbox svg{flex:none;color:var(--text-faint)}
+.qbox input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--text);font-family:var(--font-sans);font-size:19px;padding:22px 0}
+.qbox input::placeholder{font-family:var(--font-hand);color:var(--text-ghost);font-size:24px;letter-spacing:.02em}
+.qbox input::-webkit-search-cancel-button{display:none}
+.qbox .keys{display:flex;gap:6px;align-items:center;font-family:var(--font-mono);font-size:11px;color:var(--text-ghost)}
+.quick{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px;margin:22px auto 0;max-width:780px}
+.quick .label{color:var(--text-faint);margin-right:4px}
+.hero-foot{max-width:none;margin:40px auto 0;font-family:var(--font-mono);font-size:12px;color:var(--text-faint);display:flex;flex-wrap:wrap;justify-content:center;gap:6px 22px}
+.hero-foot a{color:var(--text-muted)}
+.hero-foot a:hover{color:var(--accent-pink)}
+
+/* ---------- Secciones ---------- */
+.sec{padding-block:88px;border-top:1px solid var(--border)}
+.sec-label{display:block;margin-bottom:12px}
+.sec h2{font-size:clamp(24px,3vw,30px);font-weight:600;letter-spacing:-.01em;line-height:1.25}
+.sec-sub{color:var(--text-muted);margin:12px 0 0}
+
+/* Líneas guía de puntos (compartidas) */
+.lead-line{display:flex;align-items:baseline;gap:0;min-width:0}
+.lead-line .t{min-width:0}
+.lead-line>i{flex:1 1 24px;min-width:14px;height:2px;margin:0 10px;align-self:baseline;transform:translateY(-.32em);background-image:radial-gradient(circle,var(--text-ghost) .9px,transparent 1.2px);background-size:6px 2px;background-repeat:repeat-x;background-position:0 50%}
+.lead-line .d{flex:none;font-family:var(--font-mono);font-size:12px;color:var(--text-faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+/* ---------- Empieza aquí ---------- */
+.start{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:40px 72px;align-items:start}
+.start>*{min-width:0}
+.start-head .btn-sketch{margin-top:28px}
+.start-head .note{margin-top:22px;display:block;max-width:26ch}
+.routes{list-style:none;margin:0;padding:0;border-top:1px solid var(--border-2)}
+.routes li{border-bottom:1px dashed var(--border)}
+.routes a{display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 16px;padding:20px 4px 20px 0;color:var(--text)}
+.routes a:hover{color:var(--text)}
+.routes .lt{grid-row:1 / span 2;width:28px;height:28px;display:grid;place-items:center;font-family:var(--font-mono);font-size:13px;font-weight:700;border:1px solid var(--border-2);border-radius:var(--radius-sm);background:var(--code-bg);transition:background .12s,color .12s,border-color .12s}
+.routes .lead-line .t{font-size:17px;font-weight:500;transition:color .12s}
+.routes .lead-line .d{font-size:12.5px;color:var(--text-muted)}
+.routes .lead-line .d b{color:var(--text-ghost);font-weight:400;margin:0 6px}
+.routes small{grid-column:2;color:var(--text-faint);font-size:14px}
+.routes a:hover .t{color:var(--accent-pink)}
+.routes a:hover .lt{background:var(--accent-yellow);color:var(--ink);border-color:var(--accent-yellow)}
+
+/* ---------- Índice general ---------- */
+.ix-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:24px 48px;align-items:end;margin-bottom:56px}
+.ix-head>*{min-width:0}
+.ix-legend{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);display:flex;flex-direction:column;gap:4px;text-align:right}
+.ix-legend em{font-style:normal;color:var(--accent-yellow)}
+.ix-jump{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:8px}
+.ix-jump a{font-family:var(--font-mono);font-size:13px;color:var(--text-muted);padding:12px 18px 12px 0;margin-right:18px;display:inline-flex;gap:8px;align-items:baseline}
+.ix-jump a b{color:var(--text-faint);font-weight:500}
+.ix-jump a:hover{color:var(--accent-pink)}
+.ix-jump a:hover b{color:var(--accent-pink)}
+
+.ix-part{display:grid;grid-template-columns:250px minmax(0,1fr);gap:32px 56px;padding-block:52px;border-top:1px solid var(--border)}
+.ix-part:first-of-type{border-top:0;padding-top:8px}
+.ix-part>*{min-width:0}
+.ix-ph .in{position:sticky;top:calc(var(--header-h) + 28px)}
+.ix-ph .num{display:block;font-family:var(--font-mono);font-weight:700;font-size:64px;line-height:.9;letter-spacing:-.04em;color:var(--border-2);margin-bottom:18px}
+.ix-ph h3{font-size:26px;font-weight:600;letter-spacing:-.01em;line-height:1.2}
+.ix-ph p{color:var(--text-muted);font-size:14.5px;margin:10px 0 16px;max-width:30ch}
+.ix-ph .count{font-family:var(--font-mono);font-size:12px;color:var(--text-faint)}
+
+.ix-chs{columns:2;column-gap:56px}
+.ix-ch{break-inside:avoid;-webkit-column-break-inside:avoid;padding-bottom:40px;display:block}
+.ix-ch h4 a{display:flex;align-items:baseline;color:var(--text);padding:0 0 10px;border-bottom:1px solid var(--border-2);margin-bottom:6px}
+.ix-ch h4 .n{flex:none;width:30px;font-family:var(--font-mono);font-size:13px;font-weight:500;color:var(--text-faint)}
+.ix-ch h4 .t{font-size:17.5px;font-weight:600;line-height:1.35;transition:color .12s}
+.ix-ch h4 .d{color:var(--text-muted)}
+.ix-ch h4 a:hover{color:var(--text)}
+.ix-ch h4 a:hover .t{color:var(--accent-pink)}
+.ix-ch ol{list-style:none;margin:0;padding:0}
+.ix-ch li a{display:flex;align-items:baseline;padding:6px 0;color:var(--text-2);border-radius:var(--radius-sm)}
+.ix-ch li .n{flex:none;width:30px;font-family:var(--font-mono);font-size:11.5px;color:var(--text-ghost);font-variant-numeric:tabular-nums}
+.ix-ch li .t{font-size:15px;line-height:1.45;transition:color .12s}
+.ix-ch li a:hover{color:var(--text)}
+.ix-ch li a:hover .t{color:var(--accent-pink)}
+.ix-ch li a:hover>i{background-image:radial-gradient(circle,var(--text-faint) .9px,transparent 1.2px)}
+.ix-ch li a:hover .d{color:var(--text)}
+.new{font-style:normal;font-family:var(--font-mono);font-size:10.5px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--accent-yellow);border:1px solid rgba(253,224,71,.35);border-radius:var(--radius-sm);padding:0 5px;margin-right:8px}
+.ix-ch .note{margin:14px 0 0 30px;font-size:18px}
+.ix-colophon{margin-top:8px;padding-top:20px;border-top:1px dashed var(--border);display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px 24px;font-family:var(--font-mono);font-size:12px;color:var(--text-faint)}
+
+/* ---------- Ensayo + boletín ---------- */
+.ess{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:48px 0}
+.ess>*{min-width:0}
+.ess-main{padding-right:64px}
+.ess-meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--font-mono);font-size:12px;color:var(--text-faint);margin:0 0 16px}
+.ess-main h2 a{color:var(--text)}
+.ess-main h2 a:hover{color:var(--accent-pink)}
+.ess-main .ex{color:var(--text-2);font-weight:300;font-size:17px;margin:18px 0 22px;max-width:58ch}
+.ess-prev{margin-top:44px}
+.ess-prev .label{display:block;margin-bottom:10px;color:var(--text-faint)}
+.ess-prev ul{list-style:none;margin:0;padding:0}
+.ess-prev a{color:var(--text-2);padding:8px 0;border-top:1px dashed var(--border)}
+.ess-prev a .t{font-size:15px}
+.ess-prev a:hover .t{color:var(--accent-pink)}
+.news{padding-left:56px;border-left:1px dashed var(--border-2)}
+.news h3{font-size:22px;font-weight:600;line-height:1.3;margin-top:4px}
+.news p{color:var(--text-muted);margin:12px 0 0}
+.news form{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+.news form .input{flex:1 1 220px}
+.form-out{flex-basis:100%;margin:0;font-size:13px;font-family:var(--font-mono)}
+.form-out.g{color:var(--accent-green)} .form-out.r{color:var(--accent-red)}
+.news .fine{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);margin-top:18px;line-height:1.7}
+.news .last{margin-top:28px;padding-top:16px;border-top:1px dashed var(--border)}
+.news .last a{color:var(--text-2)}
+.news .last a:hover .t{color:var(--accent-pink)}
+
+/* ---------- Manifiesto ---------- */
+.mani-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px 40px;flex-wrap:wrap;margin-bottom:44px}
+.mani-head>div{min-width:0;max-width:640px}
+.mani{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--border-2)}
+.mani>div{min-width:0;padding:26px 28px 0 0}
+.mani>div+div{padding-left:28px;border-left:1px dashed var(--border)}
+.mani .n{font-family:var(--font-mono);font-size:12px;color:var(--text-faint);display:block;margin-bottom:12px}
+.mani h3{font-size:17px;font-weight:600;margin-bottom:8px}
+.mani p{color:var(--text-muted);font-size:14.5px;margin:0}
+
+/* ---------- Footer ---------- */
+.site-foot{border-top:1px solid var(--border);padding-block:64px calc(32px + env(safe-area-inset-bottom,0px))}
+.foot-grid{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(6,minmax(0,1fr));gap:36px 28px}
+.foot-grid>div{min-width:0}
+.foot-brand p{color:var(--text-muted);font-size:14px;margin:14px 0 0;max-width:30ch}
+.foot-brand .sl{font-family:var(--font-hand);color:var(--text-faint);font-size:18px;margin-top:10px;display:block}
+.site-foot h4{font-family:var(--font-mono);font-size:11px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);margin:0 0 12px}
+.site-foot ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:14px}
+.site-foot ul a{color:var(--text-muted)}
+.site-foot ul a:hover{color:var(--text)}
+.legal{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:52px;padding-top:18px;border-top:1px dashed var(--border);font-family:var(--font-mono);font-size:12px;color:var(--text-faint)}
+
+/* ---------- Paleta Ctrl+K ---------- */
+.cmdk{position:fixed;inset:0;z-index:100;background:var(--bg-overlay);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);display:flex;justify-content:center;align-items:flex-start;padding:max(10vh, calc(env(safe-area-inset-top,0px) + 16px)) max(16px, env(safe-area-inset-right,0px)) 16px max(16px, env(safe-area-inset-left,0px))}
+.cmdk-box{width:100%;max-width:660px;background:var(--bg-surface);border:1px solid var(--border-2);border-radius:var(--radius-md);box-shadow:var(--shadow-lg);overflow:hidden;display:flex;flex-direction:column;max-height:74vh}
+.cmdk-in{display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--border);background:var(--code-bg)}
+.cmdk-in svg{flex:none;color:var(--text-faint)}
+.cmdk-in input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--text);font-family:var(--font-sans);font-size:17px;padding:16px 0}
+.cmdk-in input::placeholder{font-family:var(--font-hand);color:var(--text-ghost);font-size:20px}
+.cmdk-in input::-webkit-search-cancel-button{display:none}
+.cmdk-list{list-style:none;margin:0;padding:8px;overflow-y:auto}
+.cmdk-list .grp{font-family:var(--font-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);padding:10px 10px 4px}
+.cmdk-list a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:9px 10px;border-radius:var(--radius-sm);color:var(--text);border-left:2px solid transparent}
+.cmdk-list a .d{grid-column:1;font-size:13px;color:var(--text-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmdk-list a .s{grid-row:1;grid-column:2;font-family:var(--font-mono);font-size:11px;color:var(--text-faint);align-self:center;white-space:nowrap}
+.cmdk-list a.sel{background:linear-gradient(to right,rgba(34,211,238,.1),transparent);border-left-color:var(--accent-cyan)}
+.cmdk-list a.sel .t{color:var(--accent-cyan)}
+.cmdk-list mark{background:none;color:var(--accent-yellow)}
+.cmdk-empty{padding:28px 16px;text-align:center;font-family:var(--font-hand);font-size:19px;color:var(--text-faint)}
+.cmdk-foot{display:flex;gap:14px;flex-wrap:wrap;padding:9px 14px;border-top:1px solid var(--border);font-family:var(--font-mono);font-size:11px;color:var(--text-faint)}
+
+.is-target{outline:1px dashed var(--accent-yellow);outline-offset:8px;transition:outline-color 1.6s ease}
+.is-target.fade{outline-color:transparent}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1180px){
+  .nav{display:none}
+  .menu-btn{display:grid}
+  .foot-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .foot-brand{grid-column:1 / -1}
+}
+@media (max-width:1000px){
+  .start{grid-template-columns:minmax(0,1fr)}
+  .start-head .note{max-width:none}
+  .ix-part{grid-template-columns:minmax(0,1fr);gap:28px}
+  .ix-ph .in{position:static;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 22px;align-items:baseline}
+  .ix-ph .num{grid-row:1 / span 3;font-size:48px;margin:0}
+  .ix-ph p{max-width:60ch;margin:6px 0 8px}
+  .ess{grid-template-columns:minmax(0,1fr)}
+  .ess-main{padding-right:0}
+  .news{padding-left:0;border-left:0;padding-top:44px;border-top:1px dashed var(--border-2)}
+  .mani{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mani>div:nth-child(3){padding-left:0;border-left:0}
+  .mani>div{padding-bottom:26px}
+  .mani>div:nth-child(n+3){border-top:1px dashed var(--border)}
+}
+@media (max-width:760px){
+  .ix-chs{columns:1}
+  .ix-head{grid-template-columns:minmax(0,1fr)}
+  .ix-legend{text-align:left}
+}
+@media (max-width:680px){
+  .sec{padding-block:64px}
+  .hero{padding-block:56px 56px}
+  .edition{margin-bottom:28px}
+  .search-mini{min-width:0;padding:8px 10px}
+  .search-mini .ph,.search-mini .key{display:none}
+  .qbox{padding:0 12px 0 14px;gap:10px;margin-top:36px}
+  .qbox input{font-size:17px;padding:18px 0}
+  .qbox input::placeholder{font-size:20px}
+  .qbox .keys{display:none}
+  .what{font-size:16px}
+  .routes .lead-line{flex-wrap:wrap}
+  .routes .lead-line>i{display:none}
+  .routes .lead-line .t{flex-basis:100%}
+  .routes .lead-line .d{margin-top:4px;white-space:normal}
+  .ix-jump a{padding-right:0;margin-right:16px}
+  .ix-ch li .t{font-size:14.5px}
+  .mani{grid-template-columns:minmax(0,1fr)}
+  .mani>div,.mani>div+div{padding:22px 0;border-left:0}
+  .mani>div+div{border-top:1px dashed var(--border)}
+  .foot-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mnav .wrap{grid-template-columns:minmax(0,1fr)}
+  .cmdk-list a .s{display:none}
+  .news form .btn{flex:1 1 100%;justify-content:center}
+}
+@media (max-width:420px){
+  .hdr-in{gap:10px}
+  .hdr .btn.sm{padding:7px 9px;font-size:12px}
+  .hdr .btn .pr{display:none}
+  .ix-ch li .n{width:26px}
+  .ix-ch h4 .n{width:26px}
+  .lead-line>i{margin:0 6px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+</style>
+</head>
+<body>
+<a class="sr-only skip" href="#main">Saltar al contenido</a>
+
+<svg aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+  <symbol id="i-mark" viewBox="0 0 24 24">
+    <rect width="24" height="24" rx="0.5" fill="#fde047"/>
+    <path d="M8 5H5v14h3" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="square"/>
+    <path d="M16 5h3v14h-3" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="square"/>
+    <path d="M12 9.25v6M9 12.25h6" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="square"/>
+  </symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m11 11 3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+</svg>
+
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="logo" href="#inicio" aria-label="MoreContext, inicio"><svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>morecontext</a>
+    <nav class="nav" aria-label="Principal">
+      <div class="dd">
+        <button type="button" aria-expanded="false" aria-controls="dd-aprender">Aprender<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="m2 3.5 3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></button>
+        <div class="dd-menu" id="dd-aprender" hidden>
+          <a href="#empieza">Empieza aquí<small>Test de nivel y rutas por perfil</small><span class="d">3 preg.</span></a>
+          <a href="/roadmap">Roadmap 0→100<small>8 niveles, de la primera llamada a producción</small><span class="d">~40 h</span></a>
+          <a href="/cursos">Cursos específicos<small>Monográficos cortos: RAG, MCP, evals…</small><span class="d">8 cursos</span></a>
+          <a href="/laboratorio">Laboratorio<small>Calculadora de tokens y ejercicios</small><span class="d">en el navegador</span></a>
+        </div>
+      </div>
+      <a href="/docs">Docs</a>
+      <a href="/modelos">Modelos</a>
+      <a href="/sistemas">Sistemas</a>
+      <a href="/patrones">Patrones</a>
+      <a href="/disciplinas">Disciplinas</a>
+      <a href="/recetas">Recetas</a>
+      <a href="/radar">Radar</a>
+      <a href="/blog">Blog</a>
+    </nav>
+    <div class="hdr-right">
+      <button class="search-mini" type="button" data-cmdk aria-label="Buscar (Ctrl+K)">
+        <svg width="15" height="15" aria-hidden="true"><use href="#i-search"/></svg>
+        <span class="ph">buscar…</span><kbd class="key" data-kbd>Ctrl K</kbd>
+      </button>
+      <a class="btn sm" href="#empieza"><span class="pr">$</span>Empezar</a>
+      <button class="menu-btn" type="button" aria-label="Menú" aria-expanded="false" aria-controls="mnav">
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 9h14M2 13h14" stroke="currentColor" stroke-width="1.5"/></svg>
+      </button>
+    </div>
+  </div>
+  <nav class="mnav" id="mnav" aria-label="Principal (móvil)" hidden>
+    <div class="wrap">
+      <div><h4>I · Aprender</h4><a href="#empieza">Empieza aquí</a><a href="/roadmap">Roadmap 0→100</a><a href="/cursos">Cursos específicos</a></div>
+      <div><h4>II · Consultar</h4><a href="/docs">Documentación</a><a href="/modelos">Guía de modelos</a><a href="/glosario">Glosario</a></div>
+      <div><h4>III · Construir</h4><a href="/sistemas">Sistemas</a><a href="/patrones">Patrones</a><a href="/recetas">Recetas</a></div>
+      <div><h4>IV · Trabajar</h4><a href="/disciplinas">Disciplinas</a><a href="/disciplinas/formas-de-trabajar">Formas de trabajar</a></div>
+      <div><h4>V · Estar al día</h4><a href="/radar">Radar</a><a href="/blog">Blog y ensayos</a><a href="#boletin">Boletín</a></div>
+      <div><h4>Índice</h4><a href="#indice">Índice general</a><a href="#manifiesto">Manifiesto</a></div>
+    </div>
+  </nav>
+</header>
+
+<main id="main">
+
+  <!-- HERO: wordmark + buscador -->
+  <section class="hero" id="inicio" aria-labelledby="h-inicio">
+    <div class="wrap">
+      <p class="edition"><span>la guía abierta de agentes de IA</span><span>en español</span><span>revisado el 22 oct 2026</span></p>
+      <h1 class="wm" id="h-inicio" aria-label="MoreContext"><svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg><span aria-hidden="true"><span class="more">more</span><span class="hl">context</span></span></h1>
+      <p class="slogan">Más contexto, menos ruido.</p>
+      <p class="what">Todo lo que necesitas para entender y construir agentes de IA, explicado desde la base. <strong>Gratis, sin registro y sin muro de pago.</strong></p>
+
+      <form class="qbox" role="search" aria-label="Buscar en MoreContext" data-hero-search>
+        <svg width="22" height="22" aria-hidden="true"><use href="#i-search"/></svg>
+        <input type="search" name="q" autocomplete="off" aria-label="Busca un concepto, una lección o un patrón" placeholder="¿qué no entiendes todavía?">
+        <span class="keys" aria-hidden="true"><kbd>/</kbd>o<kbd data-kbd>Ctrl K</kbd></span>
+      </form>
+      <div class="quick" aria-label="Búsquedas rápidas">
+        <span class="label">prueba</span>
+        <button class="chip" type="button" data-q="tool use">tool use</button>
+        <button class="chip" type="button" data-q="RAG">RAG</button>
+        <button class="chip" type="button" data-q="MCP">MCP</button>
+        <button class="chip" type="button" data-q="evals">evals</button>
+        <button class="chip" type="button" data-q="ventana de contexto">ventana de contexto</button>
+        <button class="chip" type="button" data-q="prompt injection">prompt injection</button>
+      </div>
+      <p class="hero-foot"><a href="#indice">Ver el índice general ↓</a><span>8 niveles · 43 lecciones · ~40 h</span><span>47 términos</span><span>CC BY-SA · MIT</span></p>
+    </div>
+  </section>
+
+  <!-- EMPIEZA AQUÍ -->
+  <section class="sec" id="empieza" aria-labelledby="h-empieza">
+    <div class="wrap start">
+      <div class="start-head">
+        <span class="label sec-label"><b>§</b> antes de abrir el índice</span>
+        <h2 id="h-empieza">Empieza aquí</h2>
+        <p class="sec-sub">Cuatro rutas por el mismo material. Elige la frase que más se parece a ti y sigue el orden que marca.</p>
+        <a class="btn-sketch" href="/empieza/test">Haz el test de nivel <kbd>3 preguntas</kbd></a>
+        <span class="note">si dudas, la A: los niveles bajos se hacen rápido</span>
+      </div>
+      <ol class="routes">
+        <li><a href="/empieza/primera-api"><span class="lt" aria-hidden="true">A</span>
+          <span class="lead-line"><span class="t">Nunca he usado la API de un modelo</span><i></i><span class="d">00<b>→</b>10<b>→</b>20</span></span>
+          <small>Fundamentos, prompting y tu primera herramienta.</small></a></li>
+        <li><a href="/empieza/agentes"><span class="lt" aria-hidden="true">B</span>
+          <span class="lead-line"><span class="t">Uso LLMs y quiero construir agentes</span><i></i><span class="d">20<b>→</b>30<b>→</b>40</span></span>
+          <small>Herramientas y MCP, contexto y RAG, el bucle agéntico.</small></a></li>
+        <li><a href="/empieza/produccion"><span class="lt" aria-hidden="true">C</span>
+          <span class="lead-line"><span class="t">Quiero llevar agentes a producción</span><i></i><span class="d">80<b>→</b>patrones<b>→</b>100</span></span>
+          <small>Mide antes de tocar nada, simplifica y añade trazas y límites.</small></a></li>
+        <li><a href="/empieza/producto"><span class="lt" aria-hidden="true">D</span>
+          <span class="lead-line"><span class="t">Soy de producto o gestión</span><i></i><span class="d">glosario<b>→</b>sistemas<b>→</b>costes</span></span>
+          <small>El vocabulario, qué se puede construir y cuánto cuesta mantenerlo.</small></a></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ÍNDICE GENERAL -->
+  <section class="sec" id="indice" aria-labelledby="h-indice">
+    <div class="wrap">
+      <header class="ix-head">
+        <div>
+          <span class="label sec-label"><b>Índice</b> general</span>
+          <h2 id="h-indice">Todo MoreContext en una página</h2>
+          <p class="sec-sub">Cinco partes y siete apéndices. Cada línea lleva a su sitio. Si no sabes cómo se llama lo que buscas, usa el buscador.</p>
+        </div>
+        <p class="ix-legend" aria-label="Leyenda"><span>lec = lecciones · h = horas</span><span>min = lectura · fechas = última revisión</span><span><em>nuevo</em> = añadido este mes</span></p>
+        <nav class="ix-jump" aria-label="Partes del índice">
+          <a href="#parte-1"><b>I</b>Aprender</a><a href="#parte-2"><b>II</b>Consultar</a><a href="#parte-3"><b>III</b>Construir</a><a href="#parte-4"><b>IV</b>Trabajar</a><a href="#parte-5"><b>V</b>Estar al día</a><a href="#apendices"><b>A–G</b>Apéndices</a>
+        </nav>
+      </header>
+
+      <!-- I · APRENDER -->
+      <div class="ix-part" id="parte-1" data-part="I · Aprender">
+        <div class="ix-ph"><div class="in">
+          <span class="num" aria-hidden="true">I</span>
+          <h3><span class="sr-only">Parte I: </span>Aprender</h3>
+          <p>De cero a construir con criterio, en orden. Cada nivel acaba en un proyecto que funciona.</p>
+          <span class="count">3 capítulos</span>
+        </div></div>
+        <div class="ix-chs">
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="#empieza"><span class="n">1</span><span class="t">Empieza aquí</span><i></i><span class="d">5 entradas</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/empieza/test" data-k="nivel quiz examen"><span class="n">1.1</span><span class="t">Test de nivel</span><i></i><span class="d">3 preguntas</span></a></li>
+              <li><a class="lead-line" href="/empieza/primera-api" data-k="principiante api empezar"><span class="n">1.2</span><span class="t">Nunca he usado una API</span><i></i><span class="d">ruta A</span></a></li>
+              <li><a class="lead-line" href="/empieza/agentes" data-k="llm agentes"><span class="n">1.3</span><span class="t">Uso LLMs y quiero agentes</span><i></i><span class="d">ruta B</span></a></li>
+              <li><a class="lead-line" href="/empieza/produccion" data-k="produccion deploy"><span class="n">1.4</span><span class="t">Llevar agentes a producción</span><i></i><span class="d">ruta C</span></a></li>
+              <li><a class="lead-line" href="/empieza/producto" data-k="pm gestion negocio"><span class="n">1.5</span><span class="t">Soy de producto o gestión</span><i></i><span class="d">ruta D</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/roadmap"><span class="n">2</span><span class="t">Roadmap 0→100</span><i></i><span class="d">43 lec · ~40 h</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/roadmap/00" data-k="llm tokens roles primera llamada messages api ventana de contexto"><span class="n">00</span><span class="t">Fundamentos</span><i></i><span class="d">4 lec · 3 h</span></a></li>
+              <li><a class="lead-line" href="/roadmap/10" data-k="prompt instrucciones few-shot xml json salidas estructuradas"><span class="n">10</span><span class="t">Prompting</span><i></i><span class="d">5 lec · 4 h</span></a></li>
+              <li><a class="lead-line" href="/roadmap/20" data-k="tool use tools tool_use tool_result json schema mcp"><span class="n">20</span><span class="t">Herramientas y MCP</span><i></i><span class="d">6 lec · 5 h</span></a></li>
+              <li><a class="lead-line" href="/roadmap/30" data-k="rag embeddings chunking reranking memoria ventana de contexto"><span class="n">30</span><span class="t">Contexto, memoria y RAG</span><i></i><span class="d">6 lec · 6 h</span></a></li>
+              <li><a class="lead-line" href="/roadmap/40" data-k="bucle agentico stop_reason agente"><span class="n">40</span><span class="t">Tu primer agente</span><i></i><span class="d">6 lec · 6 h</span></a></li>
+              <li><a class="lead-line" href="/roadmap/60" data-k="subagentes orquestador multiagente"><span class="n">60</span><span class="t">Multiagente</span><i></i><span class="d">5 lec · 5 h</span></a></li>
+              <li><a class="lead-line" href="/roadmap/80" data-k="evals evaluacion juez trayectorias"><span class="n">80</span><span class="t">Evals</span><i></i><span class="d">5 lec · 5 h</span></a></li>
+              <li><a class="lead-line" href="/roadmap/100" data-k="produccion trazas costes latencia seguridad"><span class="n">100</span><span class="t">Producción</span><i></i><span class="d">6 lec · 6 h</span></a></li>
+            </ol>
+            <span class="note">no te saltes el 20: todo lo que viene después son herramientas</span>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/cursos"><span class="n">3</span><span class="t">Cursos específicos</span><i></i><span class="d">8 cursos</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/cursos/rag" data-k="rag retrieval embeddings chunking reranking citas"><span class="n">3.1</span><span class="t">RAG a fondo</span><i></i><span class="d">7 lec</span></a></li>
+              <li><a class="lead-line" href="/cursos/mcp" data-k="mcp model context protocol servidor"><span class="n">3.2</span><span class="t">MCP de cero a servidor propio</span><i></i><span class="d">6 lec</span></a></li>
+              <li><a class="lead-line" href="/cursos/evals" data-k="evals evaluacion"><span class="n">3.3</span><span class="t">Evals para agentes</span><i></i><span class="d">5 lec</span></a></li>
+              <li><a class="lead-line" href="/cursos/seguridad" data-k="prompt injection inyeccion seguridad guardrails"><span class="n">3.4</span><span class="t">Seguridad y prompt injection</span><i></i><span class="d"><em class="new">nuevo</em>5 lec</span></a></li>
+              <li><a class="lead-line" href="/cursos/agentes-de-codigo" data-k="codigo coding"><span class="n">3.5</span><span class="t">Agentes de código</span><i></i><span class="d">6 lec</span></a></li>
+              <li><a class="lead-line" href="/cursos/multiagente" data-k="multiagente subagentes orquestador"><span class="n">3.6</span><span class="t">Sistemas multiagente</span><i></i><span class="d">5 lec</span></a></li>
+              <li><a class="lead-line" href="/cursos/context-engineering" data-k="context engineering contexto ventana de contexto"><span class="n">3.7</span><span class="t">Context engineering</span><i></i><span class="d">4 lec</span></a></li>
+              <li><a class="lead-line" href="/cursos/ordenador-y-navegador" data-k="computer use navegador browser"><span class="n">3.8</span><span class="t">Uso del ordenador y navegador</span><i></i><span class="d">4 lec</span></a></li>
+            </ol>
+          </section>
+        </div>
+      </div>
+
+      <!-- II · CONSULTAR -->
+      <div class="ix-part" id="parte-2" data-part="II · Consultar">
+        <div class="ix-ph"><div class="in">
+          <span class="num" aria-hidden="true">II</span>
+          <h3><span class="sr-only">Parte II: </span>Consultar</h3>
+          <p>Referencia para volver cuando te haga falta. No se lee de corrido: se busca.</p>
+          <span class="count">3 capítulos</span>
+        </div></div>
+        <div class="ix-chs">
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/docs"><span class="n">4</span><span class="t">Documentación</span><i></i><span class="d">8 temas</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/docs/fundamentos" data-k="tokens llm roles"><span class="n">4.1</span><span class="t">Fundamentos</span><i></i><span class="d">rev. 18 oct</span></a></li>
+              <li><a class="lead-line" href="/docs/prompting" data-k="prompt xml few-shot"><span class="n">4.2</span><span class="t">Prompting</span><i></i><span class="d">rev. 12 oct</span></a></li>
+              <li><a class="lead-line" href="/docs/herramientas" data-k="tool use tools tool_use tool_result tool_choice json schema mcp"><span class="n">4.3</span><span class="t">Herramientas y MCP</span><i></i><span class="d">rev. 21 oct</span></a></li>
+              <li><a class="lead-line" href="/docs/rag" data-k="rag embeddings chunking reranking prompt caching ventana de contexto"><span class="n">4.4</span><span class="t">Contexto y RAG</span><i></i><span class="d">rev. 9 oct</span></a></li>
+              <li><a class="lead-line" href="/docs/agentes" data-k="bucle agentico memoria subagentes"><span class="n">4.5</span><span class="t">Agentes</span><i></i><span class="d">rev. 15 oct</span></a></li>
+              <li><a class="lead-line" href="/docs/evals" data-k="evals evaluacion ci juez"><span class="n">4.6</span><span class="t">Evals</span><i></i><span class="d">rev. 2 oct</span></a></li>
+              <li><a class="lead-line" href="/docs/produccion" data-k="trazas observabilidad costes reintentos"><span class="n">4.7</span><span class="t">Producción</span><i></i><span class="d">rev. 30 sep</span></a></li>
+              <li><a class="lead-line" href="/docs/seguridad" data-k="prompt injection inyeccion sandbox permisos guardrails"><span class="n">4.8</span><span class="t">Seguridad</span><i></i><span class="d">rev. 20 oct</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/modelos"><span class="n">5</span><span class="t">Guía de modelos</span><i></i><span class="d">6 guías</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/modelos/principios" data-k="prompting instrucciones"><span class="n">5.1</span><span class="t">Principios de prompting</span><i></i><span class="d">9 min</span></a></li>
+              <li><a class="lead-line" href="/modelos/contexto-y-formato" data-k="xml formato salida json ventana de contexto"><span class="n">5.2</span><span class="t">Contexto y formato</span><i></i><span class="d">11 min</span></a></li>
+              <li><a class="lead-line" href="/modelos/razonamiento" data-k="pensar chain of thought"><span class="n">5.3</span><span class="t">Razonamiento</span><i></i><span class="d">8 min</span></a></li>
+              <li><a class="lead-line" href="/modelos/elegir" data-k="elegir modelo tier grande mediano rapido coste"><span class="n">5.4</span><span class="t">Elegir modelo por tarea</span><i></i><span class="d">grande · mediano · rápido</span></a></li>
+              <li><a class="lead-line" href="/modelos/parametros" data-k="temperature max_tokens parametros"><span class="n">5.5</span><span class="t">Parámetros</span><i></i><span class="d">6 min</span></a></li>
+              <li><a class="lead-line" href="/modelos/antipatrones" data-k="errores mayusculas antipatrones"><span class="n">5.6</span><span class="t">Antipatrones</span><i></i><span class="d">7 min</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/glosario"><span class="n">6</span><span class="t">Glosario</span><i></i><span class="d">47 términos</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/glosario#agente" data-k="agent"><span class="n">A</span><span class="t">Agente</span><i></i><span class="d">→ nivel 40</span></a></li>
+              <li><a class="lead-line" href="/glosario#ventana-de-contexto" data-k="context window tokens"><span class="n">V</span><span class="t">Ventana de contexto</span><i></i><span class="d">→ nivel 00</span></a></li>
+              <li><a class="lead-line" href="/glosario#tool-use" data-k="tool use herramientas tool_use"><span class="n">T</span><span class="t">Tool use</span><i></i><span class="d">→ nivel 20</span></a></li>
+              <li><a class="lead-line" href="/glosario#mcp" data-k="model context protocol"><span class="n">M</span><span class="t">MCP</span><i></i><span class="d">→ nivel 20</span></a></li>
+              <li><a class="lead-line" href="/glosario#rag" data-k="retrieval augmented generation"><span class="n">R</span><span class="t">RAG</span><i></i><span class="d">→ nivel 30</span></a></li>
+              <li><a class="lead-line" href="/glosario#prompt-injection" data-k="inyeccion de prompt seguridad"><span class="n">P</span><span class="t">Prompt injection</span><i></i><span class="d">→ curso 3.4</span></a></li>
+            </ol>
+          </section>
+        </div>
+      </div>
+
+      <!-- III · CONSTRUIR -->
+      <div class="ix-part" id="parte-3" data-part="III · Construir">
+        <div class="ix-ph"><div class="in">
+          <span class="num" aria-hidden="true">III</span>
+          <h3><span class="sr-only">Parte III: </span>Construir</h3>
+          <p>Arquitecturas de proyectos reales, los seis patrones y recetas con código para copiar.</p>
+          <span class="count">3 capítulos</span>
+        </div></div>
+        <div class="ix-chs">
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/sistemas"><span class="n">7</span><span class="t">Sistemas de referencia</span><i></i><span class="d">7 arquitecturas</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/sistemas/rag" data-k="rag citas"><span class="n">7.1</span><span class="t">RAG con citas</span><i></i><span class="d"><span class="dots" role="img" aria-label="Complejidad 2 de 3"><i class="on"></i><i class="on"></i><i></i></span></span></a></li>
+              <li><a class="lead-line" href="/sistemas/investigacion" data-k="multiagente investigacion subagentes"><span class="n">7.2</span><span class="t">Multiagente de investigación</span><i></i><span class="d"><span class="dots" role="img" aria-label="Complejidad 3 de 3"><i class="on"></i><i class="on"></i><i class="on"></i></span></span></a></li>
+              <li><a class="lead-line" href="/sistemas/soporte" data-k="soporte humano en el bucle aprobacion"><span class="n">7.3</span><span class="t">Soporte con aprobación humana</span><i></i><span class="d"><span class="dots" role="img" aria-label="Complejidad 2 de 3"><i class="on"></i><i class="on"></i><i></i></span></span></a></li>
+              <li><a class="lead-line" href="/sistemas/codigo" data-k="agente de codigo sandbox"><span class="n">7.4</span><span class="t">Agente de código</span><i></i><span class="d"><span class="dots" role="img" aria-label="Complejidad 3 de 3"><i class="on"></i><i class="on"></i><i class="on"></i></span></span></a></li>
+              <li><a class="lead-line" href="/sistemas/extraccion" data-k="extraccion documentos json facturas"><span class="n">7.5</span><span class="t">Extracción documental a JSON</span><i></i><span class="d"><span class="dots" role="img" aria-label="Complejidad 1 de 3"><i class="on"></i><i></i><i></i></span></span></a></li>
+              <li><a class="lead-line" href="/sistemas/base-de-datos" data-k="mcp sql base de datos"><span class="n">7.6</span><span class="t">Asistente sobre tu BD vía MCP</span><i></i><span class="d"><span class="dots" role="img" aria-label="Complejidad 2 de 3"><i class="on"></i><i class="on"></i><i></i></span></span></a></li>
+              <li><a class="lead-line" href="/sistemas/voz" data-k="voz audio tiempo real"><span class="n">7.7</span><span class="t">Agente de voz</span><i></i><span class="d"><em class="new">nuevo</em><span class="dots" role="img" aria-label="Complejidad 3 de 3"><i class="on"></i><i class="on"></i><i class="on"></i></span></span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/patrones"><span class="n">8</span><span class="t">Patrones de agentes</span><i></i><span class="d">6 patrones</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/patrones/encadenado" data-k="prompt chaining cadena"><span class="n">8.1</span><span class="t">Encadenado</span><i></i><span class="d">workflow</span></a></li>
+              <li><a class="lead-line" href="/patrones/enrutado" data-k="routing clasificar"><span class="n">8.2</span><span class="t">Enrutado</span><i></i><span class="d">workflow</span></a></li>
+              <li><a class="lead-line" href="/patrones/paralelizacion" data-k="parallel votacion"><span class="n">8.3</span><span class="t">Paralelización</span><i></i><span class="d">workflow</span></a></li>
+              <li><a class="lead-line" href="/patrones/orquestador" data-k="orchestrator workers subagentes"><span class="n">8.4</span><span class="t">Orquestador y trabajadores</span><i></i><span class="d">workflow</span></a></li>
+              <li><a class="lead-line" href="/patrones/evaluador" data-k="evaluator optimizer critica"><span class="n">8.5</span><span class="t">Evaluador-optimizador</span><i></i><span class="d">workflow</span></a></li>
+              <li><a class="lead-line" href="/patrones/agente" data-k="autonomo bucle"><span class="n">8.6</span><span class="t">Agente autónomo</span><i></i><span class="d">agente</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/recetas"><span class="n">9</span><span class="t">Recetas</span><i></i><span class="d">con código</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/recetas/facturas-a-json" data-k="extraccion json schema"><span class="n">9.1</span><span class="t">Extraer facturas a JSON</span><i></i><span class="d">~1 h</span></a></li>
+              <li><a class="lead-line" href="/recetas/clasificar-tickets" data-k="enrutado clasificacion"><span class="n">9.2</span><span class="t">Clasificar tickets</span><i></i><span class="d">~1,5 h</span></a></li>
+              <li><a class="lead-line" href="/recetas/evals-en-ci" data-k="evals ci pytest"><span class="n">9.3</span><span class="t">Evals en CI</span><i></i><span class="d">~2 h</span></a></li>
+              <li><a class="lead-line" href="/recetas/prompt-caching" data-k="prompt caching costes cache"><span class="n">9.4</span><span class="t">Prompt caching para recortar costes</span><i></i><span class="d">~45 min</span></a></li>
+              <li><a class="lead-line" href="/recetas/reintentos" data-k="reintentos rate limit errores"><span class="n">9.5</span><span class="t">Reintentos y límites de tasa</span><i></i><span class="d">~30 min</span></a></li>
+            </ol>
+          </section>
+        </div>
+      </div>
+
+      <!-- IV · TRABAJAR -->
+      <div class="ix-part" id="parte-4" data-part="IV · Trabajar">
+        <div class="ix-ph"><div class="in">
+          <span class="num" aria-hidden="true">IV</span>
+          <h3><span class="sr-only">Parte IV: </span>Trabajar</h3>
+          <p>Las disciplinas que separan una demo de un sistema, y formas de trabajar con un agente al lado.</p>
+          <span class="count">2 capítulos</span>
+        </div></div>
+        <div class="ix-chs">
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/disciplinas"><span class="n">10</span><span class="t">Disciplinas</span><i></i><span class="d">6 disciplinas</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/disciplinas/context-engineering" data-k="contexto ventana de contexto"><span class="n">10.1</span><span class="t">Context engineering</span><i></i><span class="d">16 min</span></a></li>
+              <li><a class="lead-line" href="/disciplinas/evals" data-k="evaluacion"><span class="n">10.2</span><span class="t">Evals</span><i></i><span class="d">14 min</span></a></li>
+              <li><a class="lead-line" href="/disciplinas/observabilidad" data-k="trazas logs"><span class="n">10.3</span><span class="t">Observabilidad</span><i></i><span class="d">10 min</span></a></li>
+              <li><a class="lead-line" href="/disciplinas/seguridad" data-k="prompt injection permisos"><span class="n">10.4</span><span class="t">Seguridad</span><i></i><span class="d">13 min</span></a></li>
+              <li><a class="lead-line" href="/disciplinas/diseno-de-herramientas" data-k="tool use tools descripcion"><span class="n">10.5</span><span class="t">Diseño de herramientas</span><i></i><span class="d">12 min</span></a></li>
+              <li><a class="lead-line" href="/disciplinas/ux-de-agentes" data-k="interfaz producto"><span class="n">10.6</span><span class="t">UX de agentes</span><i></i><span class="d">9 min</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/disciplinas/formas-de-trabajar"><span class="n">11</span><span class="t">Formas de trabajar</span><i></i><span class="d">5 métodos</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/formas/spec-primero" data-k="especificacion"><span class="n">11.1</span><span class="t">Spec primero</span><i></i><span class="d">8 min</span></a></li>
+              <li><a class="lead-line" href="/formas/pair-programming" data-k="programar en pareja"><span class="n">11.2</span><span class="t">Pair programming con un agente</span><i></i><span class="d">10 min</span></a></li>
+              <li><a class="lead-line" href="/formas/humano-en-el-bucle" data-k="human in the loop aprobacion"><span class="n">11.3</span><span class="t">Humano en el bucle</span><i></i><span class="d">7 min</span></a></li>
+              <li><a class="lead-line" href="/formas/orquestador-subagentes" data-k="multiagente"><span class="n">11.4</span><span class="t">Orquestador + subagentes</span><i></i><span class="d">11 min</span></a></li>
+              <li><a class="lead-line" href="/formas/explorar-planificar" data-k="explorar planificar implementar verificar"><span class="n">11.5</span><span class="t">Explorar → planificar → implementar → verificar</span><i></i><span class="d">9 min</span></a></li>
+            </ol>
+          </section>
+        </div>
+      </div>
+
+      <!-- V · ESTAR AL DÍA -->
+      <div class="ix-part" id="parte-5" data-part="V · Estar al día">
+        <div class="ix-ph"><div class="in">
+          <span class="num" aria-hidden="true">V</span>
+          <h3><span class="sr-only">Parte V: </span>Estar al día</h3>
+          <p>Solo lo que cambia cómo construyes. Qué es, qué cambia y qué hacer.</p>
+          <span class="count">3 capítulos</span>
+        </div></div>
+        <div class="ix-chs">
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/radar"><span class="n">12</span><span class="t">Radar</span><i></i><span class="d">qué cambia</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/radar/ventanas-largas" data-k="contexto rag ventana de contexto"><span class="n">12.1</span><span class="t">Las ventanas largas no sustituyen a la recuperación</span><i></i><span class="d">22 oct</span></a></li>
+              <li><a class="lead-line" href="/radar/trayectorias" data-k="evals trayectorias"><span class="n">12.2</span><span class="t">Evaluar trayectorias además de respuestas</span><i></i><span class="d">15 oct</span></a></li>
+              <li><a class="lead-line" href="/radar/inyeccion-indirecta" data-k="prompt injection seguridad tool_result"><span class="n">12.3</span><span class="t">Inyección indirecta vía resultados de herramientas</span><i></i><span class="d">8 oct</span></a></li>
+              <li><a class="lead-line" href="/radar/prompt-caching" data-k="costes cache"><span class="n">12.4</span><span class="t">Prompt caching: cuándo compensa</span><i></i><span class="d">1 oct</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/blog"><span class="n">13</span><span class="t">Blog y ensayos</span><i></i><span class="d">del autor</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/blog/primer-agente-workflow" data-k="ensayo workflow agente"><span class="n">13.1</span><span class="t">Por qué tu primer agente debería ser un workflow</span><i></i><span class="d">20 oct</span></a></li>
+              <li><a class="lead-line" href="/blog/contexto-presupuesto" data-k="ensayo contexto ventana de contexto"><span class="n">13.2</span><span class="t">El contexto es un presupuesto</span><i></i><span class="d">29 sep</span></a></li>
+              <li><a class="lead-line" href="/blog/evals-antes-que-prompts" data-k="ensayo evals"><span class="n">13.3</span><span class="t">Evals antes que prompts</span><i></i><span class="d">9 sep</span></a></li>
+              <li><a class="lead-line" href="/blog/toda-la-noche" data-k="ensayo notas de campo agente autonomo"><span class="n">13.4</span><span class="t">Lo que aprendí dejando a un agente trabajar toda la noche</span><i></i><span class="d">18 ago</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="#boletin"><span class="n">14</span><span class="t">Boletín</span><i></i><span class="d">cada 2 semanas</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/boletin/ultimo" data-k="newsletter correo"><span class="n">14.1</span><span class="t">Último envío</span><i></i><span class="d">21 oct</span></a></li>
+              <li><a class="lead-line" href="/boletin/archivo" data-k="newsletter correo"><span class="n">14.2</span><span class="t">Archivo de envíos</span><i></i><span class="d">abierto</span></a></li>
+              <li><a class="lead-line" href="#boletin" data-k="newsletter suscribirse correo email"><span class="n">14.3</span><span class="t">Suscribirse</span><i></i><span class="d">gratis</span></a></li>
+            </ol>
+          </section>
+        </div>
+      </div>
+
+      <!-- APÉNDICES -->
+      <div class="ix-part" id="apendices" data-part="Apéndices">
+        <div class="ix-ph"><div class="in">
+          <span class="num" aria-hidden="true">A–G</span>
+          <h3>Apéndices</h3>
+          <p>Material de apoyo: plantillas, directorio de herramientas, papers, problemas típicos, laboratorio y comunidad.</p>
+          <span class="count">7 apéndices</span>
+        </div></div>
+        <div class="ix-chs">
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/plantillas"><span class="n">A</span><span class="t">Plantillas</span><i></i><span class="d">para copiar</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/plantillas/prompts-de-sistema" data-k="system prompt"><span class="n">A.1</span><span class="t">Prompts de sistema</span><i></i><span class="d">.md</span></a></li>
+              <li><a class="lead-line" href="/plantillas/specs" data-k="especificacion spec"><span class="n">A.2</span><span class="t">Specs</span><i></i><span class="d">.md</span></a></li>
+              <li><a class="lead-line" href="/plantillas/checklist-produccion" data-k="checklist produccion"><span class="n">A.3</span><span class="t">Checklist de producción</span><i></i><span class="d">.md</span></a></li>
+              <li><a class="lead-line" href="/plantillas/evals" data-k="evals dataset casos"><span class="n">A.4</span><span class="t">Conjuntos de evals</span><i></i><span class="d">.jsonl</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/herramientas"><span class="n">B</span><span class="t">Herramientas</span><i></i><span class="d">con criterio</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/herramientas" data-k="directorio ecosistema frameworks"><span class="n">B.1</span><span class="t">Directorio del ecosistema</span><i></i><span class="d">curado</span></a></li>
+              <li><a class="lead-line" href="/herramientas/criterio" data-k="criterio inclusion"><span class="n">B.2</span><span class="t">Qué entra y qué no</span><i></i><span class="d">criterio</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/biblioteca"><span class="n">C</span><span class="t">Biblioteca</span><i></i><span class="d">papers comentados</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/biblioteca/react" data-k="paper react razonamiento"><span class="n">C.1</span><span class="t">ReAct</span><i></i><span class="d">2022</span></a></li>
+              <li><a class="lead-line" href="/biblioteca/rag" data-k="paper rag lewis"><span class="n">C.2</span><span class="t">Retrieval-Augmented Generation</span><i></i><span class="d">2020</span></a></li>
+              <li><a class="lead-line" href="/biblioteca/building-effective-agents" data-k="anthropic patrones workflows"><span class="n">C.3</span><span class="t">Building effective agents</span><i></i><span class="d">2024</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/problemas"><span class="n">D</span><span class="t">Problemas frecuentes</span><i></i><span class="d">síntoma → causa</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/problemas/bucle" data-k="loop bucle infinito max_iter"><span class="n">D.1</span><span class="t">Mi agente entra en bucle</span><i></i><span class="d">→ 40</span></a></li>
+              <li><a class="lead-line" href="/problemas/herramienta-equivocada" data-k="tool use descripcion"><span class="n">D.2</span><span class="t">Llama a la herramienta equivocada</span><i></i><span class="d">→ 20</span></a></li>
+              <li><a class="lead-line" href="/problemas/max-tokens" data-k="max_tokens stop_reason json cortado"><span class="n">D.3</span><span class="t">La respuesta llega cortada</span><i></i><span class="d">→ 00</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/laboratorio"><span class="n">E</span><span class="t">Laboratorio</span><i></i><span class="d">en el navegador</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/laboratorio/tokens" data-k="calculadora tokens costes precio"><span class="n">E.1</span><span class="t">Calculadora de tokens y costes</span><i></i><span class="d">herramienta</span></a></li>
+              <li><a class="lead-line" href="/laboratorio/ejercicios" data-k="practicar ejercicios"><span class="n">E.2</span><span class="t">Ejercicios interactivos</span><i></i><span class="d">por nivel</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="/comunidad"><span class="n">F</span><span class="t">Comunidad</span><i></i><span class="d">abierta</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/comunidad/discord" data-k="chat discord preguntar"><span class="n">F.1</span><span class="t">Discord</span><i></i><span class="d">preguntas</span></a></li>
+              <li><a class="lead-line" href="/comunidad/proyectos" data-k="proyectos comunidad"><span class="n">F.2</span><span class="t">Proyectos de la comunidad</span><i></i><span class="d">escaparate</span></a></li>
+              <li><a class="lead-line" href="/comunidad/contribuir" data-k="github contribuir pull request"><span class="n">F.3</span><span class="t">Cómo contribuir en GitHub</span><i></i><span class="d">guía</span></a></li>
+            </ol>
+          </section>
+          <section class="ix-ch">
+            <h4><a class="lead-line" href="#manifiesto"><span class="n">G</span><span class="t">Manifiesto</span><i></i><span class="d">3 páginas</span></a></h4>
+            <ol>
+              <li><a class="lead-line" href="/manifiesto#gratis" data-k="gratis gratuito"><span class="n">G.1</span><span class="t">Por qué es gratis</span><i></i><span class="d">4 min</span></a></li>
+              <li><a class="lead-line" href="/manifiesto#principios" data-k="principios valores"><span class="n">G.2</span><span class="t">Principios</span><i></i><span class="d">3 min</span></a></li>
+              <li><a class="lead-line" href="/manifiesto#financiacion" data-k="autor financiacion donaciones"><span class="n">G.3</span><span class="t">Quién escribe y cómo se financia</span><i></i><span class="d">3 min</span></a></li>
+            </ol>
+          </section>
+        </div>
+      </div>
+
+      <p class="ix-colophon"><span data-ix-total>14 capítulos · 7 apéndices</span><span>El buscador usa este mismo índice. Pulsa <kbd>/</kbd> desde cualquier página.</span></p>
+    </div>
+  </section>
+
+  <!-- ENSAYO + BOLETÍN -->
+  <section class="sec" id="ensayos" aria-labelledby="h-ensayo">
+    <div class="wrap ess">
+      <article class="ess-main">
+        <span class="label sec-label"><b>13.1</b> / último ensayo</span>
+        <p class="ess-meta"><time datetime="2026-10-20">20 oct 2026</time><span>12 min de lectura</span><span>opinión fundamentada</span></p>
+        <h2 id="h-ensayo"><a href="/blog/primer-agente-workflow">Por qué tu primer agente debería ser un workflow</a></h2>
+        <p class="ex">Casi todos los proyectos que empiezan con un agente autónomo acaban con un bucle sin límite y una factura que nadie entiende. Si los pasos se conocen de antemano, escríbelos tú. Deja que el modelo decida solo donde de verdad hace falta.</p>
+        <a class="link" href="/blog/primer-agente-workflow">Leer el ensayo</a>
+        <div class="ess-prev">
+          <span class="label">Antes en el blog</span>
+          <ul>
+            <li><a class="lead-line" href="/blog/contexto-presupuesto"><span class="t">El contexto es un presupuesto</span><i></i><span class="d">29 sep</span></a></li>
+            <li><a class="lead-line" href="/blog/evals-antes-que-prompts"><span class="t">Evals antes que prompts</span><i></i><span class="d">9 sep</span></a></li>
+            <li><a class="lead-line" href="/blog/toda-la-noche"><span class="t">Lo que aprendí dejando a un agente trabajar toda la noche</span><i></i><span class="d">18 ago</span></a></li>
+          </ul>
+        </div>
+      </article>
+      <aside class="news" id="boletin" aria-labelledby="h-boletin">
+        <span class="label sec-label"><b>14</b> / boletín</span>
+        <h3 id="h-boletin">Al día sin perseguir novedades</h3>
+        <p>Un correo cada dos semanas con lo que ha cambiado y una receta. Sin relleno.</p>
+        <form data-subscribe novalidate>
+          <label class="sr-only" for="nl-email">Tu email</label>
+          <input class="input" id="nl-email" type="email" name="email" autocomplete="email" placeholder="tu@email.com" required>
+          <button class="btn" type="submit"><span class="pr">$</span>Suscribirme</button>
+          <p class="form-out" role="status" aria-live="polite" data-out></p>
+        </form>
+        <p class="fine">Gratis. No hace falta para leer nada del sitio.<br>Te das de baja desde cualquier envío.</p>
+        <div class="last"><a class="lead-line" href="/boletin/ultimo"><span class="t">Leer el último envío</span><i></i><span class="d">21 oct</span></a></div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- MANIFIESTO -->
+  <section class="sec" id="manifiesto" aria-labelledby="h-manifiesto">
+    <div class="wrap">
+      <div class="mani-head">
+        <div>
+          <span class="label sec-label"><b>G</b> / manifiesto, en corto</span>
+          <h2 id="h-manifiesto">Por qué es gratis y cómo se sostiene</h2>
+        </div>
+        <a class="link" href="/manifiesto">Leer el manifiesto entero</a>
+      </div>
+      <div class="mani">
+        <div><span class="n">§1</span><h3>Gratis</h3><p>Todo se lee sin registro y sin muro de pago. La cuenta solo sirve para guardar tu progreso, si quieres.</p></div>
+        <div><span class="n">§2</span><h3>Abierto</h3><p>Texto con licencia CC BY-SA 4.0 y código MIT. Cópialo, adáptalo o corrígelo en GitHub.</p></div>
+        <div><span class="n">§3</span><h3>Sin humo</h3><p>Sin cifras infladas ni titulares urgentes. Si algo no se sabe, se dice. Si depende, se explica de qué.</p></div>
+        <div><span class="n">§4</span><h3>Cómo se financia</h3><p>Lo escribe una persona, con aportaciones de la comunidad. Lo sostienen donaciones voluntarias. Si algún día hay patrocinio, irá marcado y no tocará el contenido.</p></div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="logo" href="#inicio"><svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>morecontext</a>
+        <p>La guía abierta de agentes de IA en español.</p>
+        <span class="sl">más contexto, menos ruido.</span>
+      </div>
+      <div><h4>I · Aprender</h4><ul><li><a href="#empieza">Empieza aquí</a></li><li><a href="/empieza/test">Test de nivel</a></li><li><a href="/roadmap">Roadmap 0→100</a></li><li><a href="/cursos">Cursos específicos</a></li></ul></div>
+      <div><h4>II · Consultar</h4><ul><li><a href="/docs">Documentación</a></li><li><a href="/modelos">Guía de modelos</a></li><li><a href="/glosario">Glosario</a></li></ul></div>
+      <div><h4>III · Construir</h4><ul><li><a href="/sistemas">Sistemas</a></li><li><a href="/patrones">Patrones</a></li><li><a href="/recetas">Recetas</a></li></ul></div>
+      <div><h4>IV · Trabajar</h4><ul><li><a href="/disciplinas">Disciplinas</a></li><li><a href="/disciplinas/formas-de-trabajar">Formas de trabajar</a></li></ul></div>
+      <div><h4>V · Al día</h4><ul><li><a href="/radar">Radar</a></li><li><a href="/blog">Blog y ensayos</a></li><li><a href="#boletin">Boletín</a></li></ul></div>
+      <div><h4>Apéndices</h4><ul><li><a href="/plantillas">Plantillas</a></li><li><a href="/herramientas">Herramientas</a></li><li><a href="/biblioteca">Biblioteca</a></li><li><a href="/problemas">Problemas frecuentes</a></li><li><a href="/laboratorio">Laboratorio</a></li><li><a href="/comunidad">Comunidad</a></li><li><a href="#manifiesto">Manifiesto</a></li></ul></div>
+    </div>
+    <div class="legal"><span>© 2026 MoreContext · contenido CC BY-SA 4.0 · código MIT</span><span>Pulsa <kbd>/</kbd> para buscar</span></div>
+  </div>
+</footer>
+
+<!-- Paleta de búsqueda -->
+<div class="cmdk" id="cmdk" hidden>
+  <div class="cmdk-box" role="dialog" aria-modal="true" aria-label="Buscar en MoreContext">
+    <div class="cmdk-in">
+      <svg width="18" height="18" aria-hidden="true"><use href="#i-search"/></svg>
+      <input type="search" id="cmdk-q" autocomplete="off" spellcheck="false" placeholder="busca un concepto, una lección, un patrón…" aria-label="Buscar" role="combobox" aria-expanded="true" aria-controls="cmdk-list" aria-autocomplete="list">
+      <kbd>Esc</kbd>
+    </div>
+    <ul class="cmdk-list" id="cmdk-list" role="listbox" aria-label="Resultados"></ul>
+    <div class="cmdk-foot"><span><kbd>↑</kbd> <kbd>↓</kbd> moverte</span><span><kbd>Enter</kbd> abrir</span><span><kbd>Esc</kbd> cerrar</span><span data-cmdk-n></span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var $ = function(s, r){ return (r || document).querySelector(s); };
+  var $$ = function(s, r){ return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* Atajo según plataforma */
+  var isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+  if (isMac) $$("[data-kbd]").forEach(function(k){ k.textContent = "⌘ K"; });
+
+  /* Menú móvil */
+  var mbtn = $(".menu-btn"), mnav = $("#mnav");
+  mbtn.addEventListener("click", function(){
+    var open = mbtn.getAttribute("aria-expanded") === "true";
+    mbtn.setAttribute("aria-expanded", String(!open));
+    mnav.hidden = open;
+  });
+  $$("#mnav a").forEach(function(a){ a.addEventListener("click", function(){ mnav.hidden = true; mbtn.setAttribute("aria-expanded","false"); }); });
+
+  /* Desplegable Aprender */
+  var ddBtn = $(".dd>button"), ddMenu = $("#dd-aprender");
+  function ddClose(){ ddBtn.setAttribute("aria-expanded","false"); ddMenu.hidden = true; }
+  ddBtn.addEventListener("click", function(e){
+    e.stopPropagation();
+    var open = ddBtn.getAttribute("aria-expanded") === "true";
+    if (open) ddClose(); else { ddBtn.setAttribute("aria-expanded","true"); ddMenu.hidden = false; }
+  });
+  document.addEventListener("click", function(e){ if (!e.target.closest(".dd")) ddClose(); });
+  $$("#dd-aprender a").forEach(function(a){ a.addEventListener("click", ddClose); });
+
+  /* ---------- Índice de búsqueda (sale del propio índice general) ---------- */
+  var norm = function(s){ return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); };
+  var items = [], seen = {};
+  function add(o){
+    var key = o.href + "|" + o.t;
+    if (seen[key]) return;
+    seen[key] = 1;
+    o.nt = norm(o.t); o.hay = norm(o.t + " " + (o.k || "") + " " + o.g + " " + (o.d || ""));
+    o.i = items.length; items.push(o);
+  }
+  $$(".ix-part").forEach(function(part){
+    var pname = part.getAttribute("data-part");
+    $$(".ix-ch", part).forEach(function(ch){
+      var head = $("h4 a", ch), cht = $(".t", head).textContent;
+      add({ t: cht, href: head.getAttribute("href"), g: pname, d: "Capítulo · " + $(".d", head).textContent, s: $(".n", head).textContent, k: "" });
+      $$("li a", ch).forEach(function(a){
+        var d = $(".d", a);
+        var dtxt = d ? d.textContent.replace(/\s+/g, " ").trim() : "";
+        if (d && $(".dots", d)) dtxt = $(".dots", d).getAttribute("aria-label");
+        add({ t: $(".t", a).textContent, href: a.getAttribute("href"), g: pname, d: cht + (dtxt ? " · " + dtxt : ""), s: $(".n", a).textContent, k: a.getAttribute("data-k") || "" });
+      });
+    });
+  });
+  /* Términos del glosario y conceptos que no tienen línea propia en el índice */
+  [
+    ["Token", "/glosario#token", "La unidad en la que el modelo lee y cobra", "tokens"],
+    ["Embeddings", "/glosario#embeddings", "Vectores para buscar por significado", "rag busqueda semantica"],
+    ["Chunking", "/glosario#chunking", "Cómo partir documentos para RAG", "rag trocear"],
+    ["Reranking", "/glosario#reranking", "Reordenar lo recuperado antes de generar", "rag"],
+    ["Few-shot", "/glosario#few-shot", "Ejemplos dentro del prompt", "ejemplos prompting"],
+    ["stop_reason", "/glosario#stop-reason", "Por qué paró el modelo: end_turn, tool_use, max_tokens", "tool_use end_turn max_tokens"],
+    ["tool_result", "/glosario#tool-result", "El bloque con el que devuelves el resultado de una herramienta", "tool use herramientas tool_use_id"],
+    ["Subagente", "/glosario#subagente", "Un agente al que otro delega una tarea con su propio contexto", "multiagente orquestador"],
+    ["Guardrails", "/glosario#guardrails", "Controles de entrada y salida", "seguridad prompt injection"],
+    ["Alucinación", "/glosario#alucinacion", "Cuando el modelo afirma algo sin base", "hallucination rag citas"],
+    ["Prompt caching", "/glosario#prompt-caching", "Reutilizar un prefijo largo para pagar menos", "costes cache contexto"],
+    ["JSON Schema", "/glosario#json-schema", "Cómo describes la entrada de una herramienta", "tool use input_schema"],
+    ["Sandbox", "/glosario#sandbox", "Entorno aislado para ejecutar código del agente", "seguridad codigo"],
+    ["Modelo como juez", "/glosario#llm-juez", "Un modelo que puntúa salidas de otro", "evals llm as judge"],
+    ["Bucle agéntico", "/glosario#bucle-agentico", "Llamar, ejecutar herramientas, devolver resultados, repetir", "agente tool use stop_reason"],
+    ["Messages API", "/docs/fundamentos#messages", "client.messages.create y los roles user / assistant", "api primera llamada"],
+    ["Inyección de prompt", "/glosario#prompt-injection", "Instrucciones escondidas en datos que lee el agente", "prompt injection seguridad"]
+  ].forEach(function(r){ add({ t: r[0], href: r[1], g: "Glosario", d: r[2], s: "término", k: r[3] }); });
+
+  var total = items.length;
+  var tot = $("[data-ix-total]");
+  var nEntries = $$(".ix-ch li a").length;
+  if (tot) tot.textContent = "14 capítulos · 7 apéndices · " + nEntries + " entradas";
+
+  var DEFAULTS = ["/empieza/test", "/roadmap", "/roadmap/40", "/docs/herramientas", "/patrones", "/glosario#ventana-de-contexto", "/sistemas/rag", "/radar"];
+
+  function search(q){
+    var nq = norm(q).trim();
+    if (!nq) return DEFAULTS.map(function(h){ return items.filter(function(x){ return x.href === h; })[0]; }).filter(Boolean);
+    var terms = nq.split(/\s+/);
+    var out = [];
+    items.forEach(function(it){
+      for (var j = 0; j < terms.length; j++) if (it.hay.indexOf(terms[j]) === -1) return;
+      var sc = 0;
+      if (it.nt === nq) sc += 200;
+      if (it.nt.indexOf(nq) === 0) sc += 100;
+      else if (it.nt.indexOf(nq) > -1) sc += 60;
+      terms.forEach(function(t){ if (it.nt.indexOf(t) > -1) sc += 15; });
+      if (norm(it.k || "").indexOf(nq) > -1) sc += 20;
+      if (/^Capítulo/.test(it.d)) sc += 8;
+      out.push({ it: it, sc: sc });
+    });
+    out.sort(function(a, b){ return b.sc - a.sc || a.it.i - b.it.i; });
+    return out.slice(0, 14).map(function(o){ return o.it; });
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"]/g, function(c){ return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function hilite(t, q){
+    var nq = norm(q).trim();
+    if (!nq) return esc(t);
+    var chars = Array.prototype.slice.call(t), nt = chars.map(norm).join("");
+    if (nt.length !== chars.length) return esc(t);
+    var p = nt.indexOf(nq);
+    if (p < 0) return esc(t);
+    return esc(chars.slice(0, p).join("")) + "<mark>" + esc(chars.slice(p, p + nq.length).join("")) + "</mark>" + esc(chars.slice(p + nq.length).join(""));
+  }
+
+  var cmdk = $("#cmdk"), qi = $("#cmdk-q"), list = $("#cmdk-list"), nOut = $("[data-cmdk-n]");
+  var results = [], sel = 0, lastFocus = null;
+
+  function render(){
+    var q = qi.value;
+    results = search(q);
+    sel = 0;
+    if (!results.length){
+      list.innerHTML = '<li class="cmdk-empty">Nada con «' + esc(q.trim()) + '». Prueba con otro término o mira el <a href="/glosario">glosario</a>.</li>';
+      nOut.textContent = "0 resultados";
+      return;
+    }
+    var html = "", g = null;
+    if (!norm(q).trim()) html += '<li class="grp" role="presentation">Sugerencias</li>';
+    results.forEach(function(it, i){
+      if (norm(q).trim() && it.g !== g){ g = it.g; html += '<li class="grp" role="presentation">' + esc(g) + "</li>"; }
+      html += '<li role="presentation"><a role="option" id="cmdk-o' + i + '" href="' + esc(it.href) + '" data-i="' + i + '"><span class="t">' + hilite(it.t, q) + '</span><span class="d">' + esc(it.d || "") + '</span><span class="s">' + esc(it.s || "") + "</span></a></li>";
+    });
+    list.innerHTML = html;
+    nOut.textContent = norm(q).trim() ? results.length + (results.length === 1 ? " resultado" : " resultados") : total + " entradas indexadas";
+    mark();
+  }
+  function mark(){
+    $$("a[role=option]", list).forEach(function(a, i){
+      var on = i === sel;
+      a.classList.toggle("sel", on);
+      a.setAttribute("aria-selected", on ? "true" : "false");
+      if (on){ qi.setAttribute("aria-activedescendant", a.id); a.scrollIntoView({ block: "nearest" }); }
+    });
+  }
+  function open(q){
+    if (cmdk.hidden) lastFocus = document.activeElement;
+    ddClose();
+    cmdk.hidden = false;
+    document.documentElement.style.overflow = "hidden";
+    qi.value = q != null ? q : qi.value;
+    render();
+    qi.focus();
+    try { qi.setSelectionRange(qi.value.length, qi.value.length); } catch(e){}
+  }
+  function close(){
+    cmdk.hidden = true;
+    document.documentElement.style.overflow = "";
+    var hq = $("[data-hero-search] input");
+    if (hq) hq.value = "";
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  function go(a){
+    if (!a) return;
+    var href = a.getAttribute("href");
+    close();
+    if (href.charAt(0) === "#"){ flash(href); history.replaceState(null, "", href); var t = document.querySelector(href); if (t) t.scrollIntoView(); }
+    else window.location.href = href;
+  }
+  function flash(h){
+    var t = document.querySelector(h);
+    if (!t) return;
+    t.classList.remove("fade"); t.classList.add("is-target");
+    setTimeout(function(){ t.classList.add("fade"); }, 400);
+    setTimeout(function(){ t.classList.remove("is-target", "fade"); }, 2100);
+  }
+
+  qi.addEventListener("input", render);
+  qi.addEventListener("keydown", function(e){
+    var n = results.length;
+    if (e.key === "ArrowDown"){ e.preventDefault(); if (n){ sel = (sel + 1) % n; mark(); } }
+    else if (e.key === "ArrowUp"){ e.preventDefault(); if (n){ sel = (sel - 1 + n) % n; mark(); } }
+    else if (e.key === "Enter"){ e.preventDefault(); go($("#cmdk-o" + sel)); }
+    else if (e.key === "Escape"){ e.preventDefault(); close(); }
+    else if (e.key === "Tab"){ e.preventDefault(); }
+  });
+  list.addEventListener("click", function(e){ var a = e.target.closest("a[role=option]"); if (a){ e.preventDefault(); go(a); } });
+  list.addEventListener("mousemove", function(e){ var a = e.target.closest("a[role=option]"); if (a){ var i = +a.getAttribute("data-i"); if (i !== sel){ sel = i; mark(); } } });
+  cmdk.addEventListener("mousedown", function(e){ if (e.target === cmdk) close(); });
+
+  $$("[data-cmdk]").forEach(function(b){ b.addEventListener("click", function(){ open(""); }); });
+  $$("[data-q]").forEach(function(b){ b.addEventListener("click", function(){ open(b.getAttribute("data-q")); }); });
+
+  /* Buscador del hero: al escribir pasa a la paleta con lo escrito */
+  var hero = $("[data-hero-search]"), hq = $("input", hero);
+  hq.addEventListener("input", function(){ if (hq.value.trim()) open(hq.value); });
+  hero.addEventListener("submit", function(e){ e.preventDefault(); open(hq.value); });
+
+  document.addEventListener("keydown", function(e){
+    var tag = (e.target.tagName || "").toLowerCase(), typing = tag === "input" || tag === "textarea" || e.target.isContentEditable;
+    if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")){ e.preventDefault(); cmdk.hidden ? open("") : close(); return; }
+    if (e.key === "/" && !typing && cmdk.hidden){ e.preventDefault(); open(""); return; }
+    if (e.key === "Escape"){ if (!cmdk.hidden) close(); ddClose(); if (!mnav.hidden){ mnav.hidden = true; mbtn.setAttribute("aria-expanded","false"); } }
+  });
+
+  /* Llegar a un ancla interna */
+  $$('a[href^="#"]').forEach(function(a){
+    a.addEventListener("click", function(){ var h = a.getAttribute("href"); if (h.length > 1) setTimeout(function(){ flash(h); }, 50); });
+  });
+
+  /* Boletín */
+  var f = $("[data-subscribe]");
+  f.addEventListener("submit", function(e){
+    e.preventDefault();
+    var v = f.email.value.trim(), out = $("[data-out]", f);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)){
+      out.className = "form-out r"; out.textContent = "Revisa el email: falta la @ o el dominio."; f.email.focus(); return;
+    }
+    out.className = "form-out g"; out.textContent = "¡Apuntado! Te llegará el próximo envío."; f.reset();
+  });
+})();
+</script>
+</body>
+</html>

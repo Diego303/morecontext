@@ -1,0 +1,26 @@
+---
+titulo: Vector store
+descripcion: Base de datos que guarda embeddings y permite buscar rápidamente los vectores más parecidos a una consulta.
+creado: 2026-08-05
+categoria: contexto
+aliases: [base de datos vectorial, vector database, índice vectorial]
+tags: [rag, contexto]
+relacionados: ["[[glosario/embeddings]]", "[[docs/contexto/03-rag]]"]
+---
+
+Un *vector store* es un almacén especializado en [[glosario/embeddings]]: guarda cada vector junto con su texto y sus metadatos, y responde a la pregunta «¿qué vectores se parecen más a este?» sin comparar uno por uno con todo el índice. Es el componente de búsqueda de la mayoría de sistemas [[glosario/rag|RAG]].
+
+## En la práctica
+
+Para buscar rápido en colecciones grandes, usa índices de vecinos aproximados: sacrifican algo de exactitud a cambio de velocidad. Elige según volumen y operación: una extensión vectorial en tu base de datos actual suele bastar para empezar, y un servicio dedicado tiene sentido cuando crece el corpus o la carga. Aprovecha los filtros por metadatos (cliente, fecha, tipo de documento) para no recuperar fragmentos que el usuario no debería ver. Si combinas con [[glosario/bm25|BM25]], asegúrate de que el sistema lo admite o de que puedes fusionar resultados tú.
+
+## No confundir con
+
+- **Buscador de texto completo**: indexa palabras, no significado. Para combinarlos, ver [[glosario/busqueda-hibrida]].
+
+## Ver también
+
+- [[roadmap/30-contexto-y-rag/01-embeddings]]
+- [[docs/contexto/03-rag]]
+- [[cursos/rag-a-fondo/02-indexar-bien]]
+- [[glosario/similitud-coseno]]
