@@ -4,7 +4,7 @@ import type { Capitulo } from '../../lib/portada';
 interface Props { capitulo: Capitulo }
 const { capitulo: c } = Astro.props;
 ---
-<section class="ix-ch" aria-label={c.t}>
+<section class="ix-ch">
   <h4><a class="lead-line" href={c.href}><span class="n">{c.n}</span><span class="t">{c.t}</span><i></i><span class="d">{c.d}</span></a></h4>
   {c.lineas.length > 0 && (
     <ol>

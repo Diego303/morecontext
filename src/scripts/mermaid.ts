@@ -47,7 +47,10 @@ if (nodos.length) {
     const visibles = entradas.filter((e) => e.isIntersecting).map((e) => e.target as HTMLElement);
     if (!visibles.length) return;
     visibles.forEach((n) => io.unobserve(n));
-    void cargar().then((mermaid) => mermaid.run({ nodes: visibles }));
+    void cargar().then((mermaid) => mermaid.run({ nodes: visibles })).then(() => {
+      // con scroll horizontal, el diagrama debe poder enfocarse para moverlo con el teclado
+      visibles.forEach((n) => { if (n.scrollWidth > n.clientWidth) { n.tabIndex = 0; n.setAttribute('aria-label', 'Diagrama (desplázalo con las flechas)'); } });
+    });
   }, { rootMargin: '200px 0px' });
   nodos.forEach((n) => io.observe(n));
 }

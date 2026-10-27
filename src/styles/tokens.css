@@ -15,7 +15,7 @@
   --code-func: #61afef;
   --code-string: #98c379;
   --code-number: #d19a66;
-  --code-comment: #71717a;
+  --code-comment: #80808a;    /* = --text-faint: contraste AA sobre --code-bg */
   --code-text: #e4e4e7;
 
   /* Acentos (significado fijo) */

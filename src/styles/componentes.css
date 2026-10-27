@@ -464,7 +464,7 @@ details.faq .a { padding: 0 0 18px; color: var(--text-muted); }
   cursor: pointer;
 }
 .search-mini:hover { border-color: var(--border-2); }
-.search-mini .ph { flex: 1; font-family: var(--font-hand); font-size: 17px; line-height: 1; color: var(--text-ghost); text-align: left; }
+.search-mini .ph { flex: 1; font-family: var(--font-hand); font-size: 17px; line-height: 1; color: var(--text-faint); text-align: left; }
 .menu-btn { display: none; place-items: center; width: 38px; height: 38px; color: var(--text); background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; }
 .mnav { max-height: calc(100vh - var(--header-h)); overflow-y: auto; background: var(--bg-void); border-top: 1px solid var(--border); }
 .mnav .wrap { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; padding-block: 18px 24px; }
@@ -623,7 +623,7 @@ dialog.buscador::backdrop { background: var(--bg-overlay); -webkit-backdrop-filt
 .prosa.cuerpo { margin-top: var(--s7); }
 .dif { display: inline-flex; align-items: center; gap: 6px; }
 .toc .toc-l { position: relative; }
-.side-nav details.grupo > summary { display: flex; justify-content: space-between; gap: 8px; cursor: pointer; list-style: none; }
+.side-nav details.grupo > summary { display: flex; justify-content: space-between; align-items: center; gap: 8px; min-height: 28px; cursor: pointer; list-style: none; }
 .side-nav details.grupo > summary::-webkit-details-marker { display: none; }
 .side-nav details.grupo > summary::after { content: '+'; padding-right: 16px; color: var(--text-ghost); }
 .side-nav details.grupo[open] > summary::after { content: '−'; }
@@ -855,7 +855,8 @@ dl.datos > .ancho { flex-basis: 100%; }
   .sec { padding-block: var(--s9); }
   .page-head { padding-block: 44px 32px; }
   .search-mini { min-width: 0; padding: 8px 10px; }
-  .search-mini .ph, .search-mini kbd { display: none; }
+  /* ocultos a la vista pero no al lector: son el nombre accesible del botón */
+  .search-mini .ph, .search-mini kbd { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .foot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mnav .wrap { grid-template-columns: minmax(0, 1fr); }
   .form-boletin form .btn { flex: 1 1 100%; }

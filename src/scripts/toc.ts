@@ -36,6 +36,9 @@ if (toc && marcador && enlaces.length) {
   objetivos.forEach((o) => io.observe(o));
 }
 
+// Tablas con scroll horizontal: enfocables para poder moverlas con el teclado
+document.querySelectorAll<HTMLElement>('.prosa table').forEach((t) => { if (t.scrollWidth > t.clientWidth) t.tabIndex = 0; });
+
 // 3) Llegar a un ancla: contorno discontinuo que se desvanece (DISENO §14)
 function destacar(hash: string) {
   if (hash.length < 2) return;

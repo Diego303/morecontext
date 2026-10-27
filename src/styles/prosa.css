@@ -246,7 +246,7 @@ details.callout[open] > summary::after { content: "−"; color: var(--c); }
 .code pre.astro-code:focus-visible { outline-offset: -2px; }
 .code pre code { padding: 0; font-size: inherit; color: inherit; background: none; border: 0; overflow-wrap: normal; }
 /* Comentarios del código en letra manuscrita */
-.astro-code span[style*="color:#71717A" i] { font-family: var(--font-hand); font-size: 1.12em; letter-spacing: .02em; }
+.astro-code span[style*="color:#80808A" i] { font-family: var(--font-hand); font-size: 1.12em; letter-spacing: .02em; }
 
 /* ---------- Mermaid ---------- */
 pre.mermaid {

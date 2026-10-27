@@ -3,7 +3,7 @@
   "type": "dark",
   "colors": { "editor.background": "#0a0a0a", "editor.foreground": "#e4e4e7" },
   "tokenColors": [
-    { "scope": ["comment", "punctuation.definition.comment"], "settings": { "foreground": "#71717a", "fontStyle": "" } },
+    { "scope": ["comment", "punctuation.definition.comment"], "settings": { "foreground": "#80808a", "fontStyle": "" } },
     { "scope": ["keyword", "storage", "storage.type", "storage.modifier", "keyword.control", "keyword.operator.new", "keyword.operator.expression", "keyword.operator.logical.python"], "settings": { "foreground": "#c678dd" } },
     { "scope": ["entity.name.function", "support.function", "meta.function-call", "variable.function"], "settings": { "foreground": "#61afef" } },
     { "scope": ["string", "string.quoted", "punctuation.definition.string"], "settings": { "foreground": "#98c379" } },
