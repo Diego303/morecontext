@@ -1,0 +1,274 @@
+/* Markdown renderizado. Todo bajo .prosa salvo los bloques de código y Mermaid,
+   que también se usan fuera (páginas de prueba, portadillas). */
+
+.prosa { min-width: 0; overflow-wrap: break-word; }
+.prosa > :first-child { margin-top: 0; }
+.prosa > :last-child { margin-bottom: 0; }
+
+.prosa h2 {
+  margin: 56px 0 14px;
+  padding-bottom: 8px;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  line-height: 1.3;
+  border-bottom: 1px solid var(--border);
+}
+.prosa h3 { margin: 32px 0 10px; font-size: 19px; font-weight: 600; line-height: 1.35; }
+.prosa h4 { margin: 24px 0 8px; font-size: 16px; font-weight: 600; line-height: 1.4; }
+.prosa :is(h2, h3, h4) code { font-size: .8em; }
+
+.prosa p, .prosa li { color: var(--text-2); font-weight: 300; }
+.prosa p { max-width: 65ch; }
+.prosa strong { color: var(--text); font-weight: 500; }
+.prosa em { color: var(--text); }
+
+.prosa ul, .prosa ol { max-width: 65ch; margin: 0 0 1em; padding-left: 1.3em; }
+.prosa li { margin: .3em 0; }
+.prosa li > ul, .prosa li > ol { margin: .3em 0 0; }
+.prosa li::marker { font-family: var(--font-mono); font-size: .85em; color: var(--text-faint); }
+
+.prosa blockquote:not(.callout) { margin: 24px 0; padding: 2px 0 2px 16px; border-left: 2px solid var(--border-2); color: var(--text-muted); }
+.prosa blockquote:not(.callout) p { color: inherit; }
+
+.prosa hr { margin: 40px 0; border: 0; border-top: 1px dashed var(--border); }
+
+.prosa img { display: block; max-width: 100%; margin: 24px 0; border: 1px solid var(--border); border-radius: var(--radius-md); }
+
+/* Enlaces: subrayado sutil para no depender solo del color */
+.prosa a { color: var(--accent-cyan); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent-cyan) 35%, transparent); text-underline-offset: 3px; }
+.prosa a:hover { color: var(--accent-pink); text-decoration-color: currentColor; }
+.prosa a.ext::after { content: "↗"; margin-left: 2px; font-size: .8em; text-decoration: none; display: inline-block; }
+
+/* Wikilinks */
+.prosa a.wikilink { text-decoration-style: dashed; }
+.wikilink--roto {
+  color: var(--text-faint);
+  text-decoration: underline dotted;
+  text-decoration-color: var(--text-ghost);
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+/* Anclas de encabezado (las añade toc.ts) */
+.prosa .ancla { margin-left: 8px; font-family: var(--font-mono); font-weight: 400; color: var(--text-ghost); text-decoration: none; opacity: 0; transition: opacity .12s ease; }
+.prosa :is(h2, h3):hover .ancla, .prosa .ancla:focus-visible { opacity: 1; }
+.prosa .ancla:hover { color: var(--accent-pink); }
+
+/* Código en línea */
+.prosa :not(pre) > code, .code-inline {
+  padding: 1px 6px;
+  font-size: .875em;
+  color: var(--accent-cyan);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
+}
+.prosa a code { color: inherit; }
+
+/* Tablas: scroll propio, nunca desbordan la página */
+.prosa table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  margin: 24px 0;
+  overflow-x: auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-variant-numeric: tabular-nums;
+}
+.prosa th {
+  padding: 11px 16px;
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.prosa td { padding: 12px 16px; font-size: 14px; font-weight: 300; vertical-align: top; color: var(--text-2); border-bottom: 1px dashed var(--border); min-width: 8ch; }
+.prosa tr:last-child td { border-bottom: 0; }
+.prosa tbody tr:hover td { background: var(--bg-surface); }
+.prosa td code { font-size: 12.5px; white-space: nowrap; overflow-wrap: normal; }
+
+/* ---------- Avisos (callouts con cinta adhesiva) ---------- */
+.callout {
+  --c: var(--accent-cyan);
+  --icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 11v6M12 7.5v.01'/%3E%3C/svg%3E");
+  position: relative;
+  min-width: 0;
+  margin: 36px 0 28px;
+  padding: 22px 20px 18px;
+  background: var(--callout-bg);
+  border: 0;
+  border-left: 4px solid var(--c);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.callout::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  width: 96px;
+  height: 24px;
+  margin-left: -48px;
+  background: color-mix(in srgb, var(--c) 20%, transparent);
+  transform: rotate(1deg) skewX(12deg);
+  pointer-events: none;
+}
+.callout .callout__titulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  max-width: none;
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+}
+.callout__tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--c);
+  align-self: center;
+}
+.callout__tipo::before {
+  content: "";
+  flex: none;
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  -webkit-mask: var(--icono) center / contain no-repeat;
+  mask: var(--icono) center / contain no-repeat;
+}
+.callout p, .callout li { font-size: 15px; color: var(--text-2); }
+.callout > :last-child, .callout > p:last-child { margin-bottom: 0; }
+.callout > ul, .callout > ol { margin-bottom: .6em; }
+.callout .code { margin: 14px 0; }
+
+details.callout > summary { cursor: pointer; list-style: none; margin: 0; }
+details.callout > summary::-webkit-details-marker { display: none; }
+details.callout > summary::after { content: "+"; margin-left: auto; font-family: var(--font-mono); font-size: 18px; font-weight: 400; line-height: 1; color: var(--text-faint); }
+details.callout[open] > summary { margin-bottom: 10px; }
+details.callout[open] > summary::after { content: "−"; color: var(--c); }
+
+.callout--info, .callout--pregunta { --c: var(--accent-cyan); }
+.callout--consejo { --c: var(--accent-green); --icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.5 1.1 1.3 1.1 2.2h5c0-.9.4-1.7 1.1-2.2A6 6 0 0 0 12 3z'/%3E%3C/svg%3E"); }
+.callout--aviso, .callout--ejercicio { --c: var(--accent-yellow); }
+.callout--aviso { --icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5 2.5 20h19L12 3.5z'/%3E%3Cpath d='M12 10v4.5M12 17.2v.01'/%3E%3C/svg%3E"); }
+.callout--ejercicio { --icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4'/%3E%3C/svg%3E"); }
+.callout--peligro { --c: var(--accent-red); --icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z'/%3E%3Cpath d='M12 8.5v4.5M12 16v.01'/%3E%3C/svg%3E"); }
+.callout--ejemplo, .callout--cita { --c: var(--text-muted); }
+.callout--ejemplo { --icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5.5l-3 13'/%3E%3C/svg%3E"); }
+.callout--pregunta { --icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.5M12 16.8v.01'/%3E%3C/svg%3E"); }
+.callout--cita { --icono: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 17h3l2-4V7H5v6h3zM14 17h3l2-4V7h-6v6h3z'/%3E%3C/svg%3E"); }
+
+/* ---------- Bloques de código (remark-bloques-codigo + codigo.ts) ---------- */
+.code { position: relative; min-width: 0; margin: 24px 0; background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.code.lg { box-shadow: var(--shadow-lg); }
+/* Hasta que codigo.ts monta la barra: reserva su hueco (sin saltos) y muestra solo la primera pestaña */
+.js .code:not([data-montado]) { padding-top: 43px; }
+.js .code--tabs:not([data-montado]) > .code__panel ~ .code__panel { display: none; }
+.code__bar { display: flex; align-items: flex-end; gap: 4px; min-height: 42px; padding: 0 8px 0 10px; border-bottom: 1px solid var(--border); }
+.code__tabs { display: flex; gap: 2px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.code__tab {
+  position: relative;
+  padding: 11px 10px 9px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-faint);
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.code__tab:hover { color: var(--text); }
+.code__tab:focus-visible { outline-offset: -2px; }
+.code__tab[aria-selected="true"] { color: var(--accent-yellow); }
+.code__tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--accent-yellow);
+  border-radius: var(--radius-sketch);
+  transform: rotate(-.8deg);
+}
+.code__file { flex: 1; min-width: 0; padding: 12px 4px 10px; overflow: hidden; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); white-space: nowrap; text-overflow: ellipsis; }
+.code__copy {
+  flex: none;
+  align-self: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, color .12s ease;
+}
+.code__copy:hover { color: var(--text); transform: translate(-1px, -1px); box-shadow: 3px 3px 0 0 var(--border); }
+.code__copy:active { transform: none; box-shadow: none; }
+.code__copy.is-ok { color: var(--accent-green); border-color: color-mix(in srgb, var(--accent-green) 50%, transparent); }
+.code__panel[hidden] { display: none; }
+.code pre.astro-code {
+  margin: 0;
+  padding: 18px 20px 20px;
+  overflow-x: auto;
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: var(--code-text);
+  background-color: transparent !important;
+  tab-size: 4;
+}
+.code pre.astro-code:focus-visible { outline-offset: -2px; }
+.code pre code { padding: 0; font-size: inherit; color: inherit; background: none; border: 0; overflow-wrap: normal; }
+/* Comentarios del código en letra manuscrita */
+.astro-code span[style*="color:#71717A" i] { font-family: var(--font-hand); font-size: 1.12em; letter-spacing: .02em; }
+
+/* ---------- Mermaid ---------- */
+pre.mermaid {
+  margin: 28px 0;
+  padding: 24px;
+  overflow-x: auto;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.5;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+pre.mermaid:not([data-processed]) { min-height: 120px; color: transparent; }
+pre.mermaid svg { max-width: 100%; height: auto; }
+/* Mermaid 12 trae sombras difusas (prohibidas en la marca) y usa la clase .label, que choca con la nuestra */
+pre.mermaid svg :is(rect, polygon, circle, ellipse, path) { filter: none !important; }
+pre.mermaid .label { font-size: inherit; font-weight: inherit; letter-spacing: normal; text-transform: none; color: inherit; }
+
+@media (max-width: 680px) {
+  .code pre.astro-code { padding: 16px; font-size: 12.5px; }
+  .prosa h2 { margin-top: 44px; font-size: 22px; }
+  pre.mermaid { padding: 16px 8px; }
+}

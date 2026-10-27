@@ -1,0 +1,75 @@
+/* MoreContext · tokens del design system (docs/DISENO.md §19). Tema oscuro único. */
+:root {
+  color-scheme: dark;
+
+  /* Base (The Void) */
+  --bg-void: #0f0f11;
+  --bg-surface: #18181b;
+  --bg-surface-hover: #27272a;
+  --bg-overlay: rgba(15, 15, 17, .8);
+  --callout-bg: #1f1f23;
+
+  /* Código */
+  --code-bg: #0a0a0a;
+  --code-keyword: #c678dd;
+  --code-func: #61afef;
+  --code-string: #98c379;
+  --code-number: #d19a66;
+  --code-comment: #71717a;
+  --code-text: #e4e4e7;
+
+  /* Acentos (significado fijo) */
+  --accent-yellow: #fde047;   /* marca, foco, activo, lo importante */
+  --accent-yellow-2: #facc15; /* segunda franja de la barra de progreso */
+  --accent-cyan: #22d3ee;     /* enlaces, flujo, arquitectura */
+  --accent-pink: #f472b6;     /* hover, notas, marcador */
+  --accent-green: #86efac;    /* éxito */
+  --accent-red: #fb7185;      /* error, peligro */
+
+  /* Texto y líneas */
+  --text: #f4f4f5;
+  --text-2: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-faint: #71717a;
+  --text-ghost: #52525b;
+  --border: #27272a;
+  --border-2: #3f3f46;
+  --ink: #000;
+  --paper: #fff;
+  --node-on-bg: #0b1416;      /* nodo «encendido» de un diagrama */
+
+  /* Sombras duras */
+  --shadow-sm: 2px 2px 0 0 #27272a;
+  --shadow-md: 4px 4px 0 0 #27272a;
+  --shadow-lg: 8px 8px 0 0 #000;
+  --shadow-neon: 0 0 10px 0 rgba(34, 211, 238, .3);
+
+  /* Radios */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-sketch: 2px 255px 3px 25px / 255px 5px 225px 5px;
+
+  /* Tipos */
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-hand: "Patrick Hand", "Bradley Hand", "Segoe Print", cursive;
+
+  /* Medidas */
+  --header-h: 60px;
+  --maxw: 1200px;
+  --lectura: 720px;
+  --sidebar-w: 260px;
+  --toc-w: 220px;
+
+  /* Espaciado (base 4) */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 40px;
+  --s8: 48px;
+  --s9: 64px;
+  --s10: 88px;
+}
