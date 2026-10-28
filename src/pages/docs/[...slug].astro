@@ -12,6 +12,7 @@ import EditarEnGitHub from '../../components/entrada/EditarEnGitHub.astro';
 import { minutosLectura, urlDe, vecinos } from '../../lib/contenido';
 import { temarioDocs, navDocs } from '../../lib/navegacion';
 import { ldArticulo, ldColeccion } from '../../lib/jsonld';
+import { ogDe } from '../../lib/og';
 
 type Grupo = CollectionEntry<'docsGrupos'>;
 type Doc = CollectionEntry<'docs'>;
@@ -36,7 +37,7 @@ const { Content, headings } = await render(p.tipo === 'grupo' ? p.grupo : p.doc)
 {p.tipo === 'grupo' && (
   <PaginaLayout titulo={p.grupo.data.titulo} descripcion={p.grupo.data.descripcion} lead={p.grupo.data.descripcion} seccion="docs"
     migas={[{ href: '/', texto: 'Inicio' }, { href: '/docs/', texto: 'Docs' }, { texto: p.grupo.data.titulo }]}
-    jsonld={ldColeccion(p.grupo.data.titulo, p.grupo.data.descripcion, urlDe(p.grupo))}>
+    jsonld={ldColeccion(p.grupo.data.titulo, p.grupo.data.descripcion, urlDe(p.grupo))} imagen={ogDe(p.grupo)}>
     <Content />
     <div slot="despues" class="wrap narrow listado" style="padding-top:0">
       <section aria-labelledby="h-articulos">

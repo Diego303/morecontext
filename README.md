@@ -102,6 +102,26 @@ Una sola vez:
 
 `astro.config.mjs` ya tiene `site: 'https://morecontextai.com'` y no usa `base` (con dominio propio no hace falta).
 
+### Secciones nuevas: problemas, plantillas, biblioteca, herramientas y comunidad
+
+Están montadas (colección, rutas, validador, portada y pie), con su plantilla en `_plantillas/` (`problema`, `plantilla`, `paper`, `herramienta`, `proyecto`). Cada carpeta trae una portadilla y una nota de ejemplo **en borrador**. Una sección aparece en la web (portada, pie, sitemap) solo cuando su `index.md` y al menos una entrada están publicados. Hasta entonces se ve únicamente en `pnpm dev`.
+
+```bash
+pnpm nuevo problema problemas/la-respuesta-llega-cortada "La respuesta llega cortada"
+```
+
+### Comentarios (Giscus)
+
+Las lecciones y el blog admiten comentarios con [Giscus](https://giscus.app) (GitHub Discussions). Para activarlos, habilita Discussions en el repositorio, instala la app de Giscus, crea una categoría (por ejemplo «Comentarios») y copia en `src/config/sitio.ts` → `comentarios` los valores `repoId` y `categoriaId` que te da giscus.app. Mientras estén vacíos, no se muestra nada.
+
+### Imágenes para compartir
+
+Cada página de contenido tiene su imagen Open Graph (`/og/<ruta>.png`), generada en el build con satori y sharp a partir del título y la sección. La imagen por defecto (`public/og/default.png`) y los iconos se regeneran con `pnpm og`.
+
+### Versión en inglés (pendiente)
+
+Queda para cuando el contenido en español esté estable, como indica el plan. Exige traducir el contenido, así que no hay nada publicado ni enlazado. Cuando llegue: activar `i18n` en `astro.config.mjs` (`defaultLocale: 'es'`, `locales: ['es', 'en']`), crear `contenido/en/` con la misma estructura, añadir el idioma a las colecciones y a `urlDe()`, y enlazar las traducciones con `<link rel="alternate" hreflang>`.
+
 ### Boletín
 
 El formulario de suscripción solo aparece cuando `SITIO.boletin.action` (en `src/config/sitio.ts`) tiene una URL. Mientras esté vacío, la web muestra «Próximamente» y enlaza al RSS, sin formularios que no llevan a ninguna parte.

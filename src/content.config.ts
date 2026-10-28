@@ -124,7 +124,32 @@ const blog = plana('blog', base.extend({
 const boletin = plana('boletin', base.extend({ numero: z.number().int().positive() }));
 const paginas = plana('paginas', base);
 
+// ---------- Backlog (fase 13): secciones que se publican cuando tienen entradas ----------
+const problemas = plana('problemas', base.extend({
+  orden: z.number().int().optional(),
+  sintoma: z.string().min(10),              // «Mi agente entra en bucle»
+}));
+const plantillas = plana('plantillas', base.extend({
+  orden: z.number().int().optional(),
+  formato: z.enum(['md', 'txt', 'json', 'jsonl', 'yaml']),
+}));
+const biblioteca = plana('biblioteca', base.extend({
+  autores: z.string(),                       // «Yao et al.»
+  anio: z.number().int().min(1950).max(2100),
+  url: z.url(),
+}));
+const herramientas = plana('herramientas', base.extend({
+  url: z.url(),
+  categoria: z.string(),                     // framework, observabilidad, evals…
+  licencia: z.string().optional(),
+}));
+const comunidad = plana('comunidad', base.extend({
+  autor: z.string(),
+  url: z.url(),
+}));
+
 export const collections = {
   secciones, niveles, lecciones, cursos, leccionesCurso, docsGrupos, docs,
   modelos, sistemas, patrones, disciplinas, recetas, glosario, radar, blog, boletin, paginas,
+  problemas, plantillas, biblioteca, herramientas, comunidad,
 };

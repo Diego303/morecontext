@@ -3,11 +3,12 @@ import type { CollectionKey } from 'astro:content';
 import { publicados, urlDe } from './contenido';
 
 export const COLECCIONES: CollectionKey[] = ['secciones', 'niveles', 'lecciones', 'cursos', 'leccionesCurso', 'docsGrupos', 'docs',
-  'modelos', 'sistemas', 'patrones', 'disciplinas', 'recetas', 'glosario', 'radar', 'blog', 'boletin', 'paginas'];
+  'modelos', 'sistemas', 'patrones', 'disciplinas', 'recetas', 'glosario', 'radar', 'blog', 'boletin', 'paginas',
+  'problemas', 'plantillas', 'biblioteca', 'herramientas', 'comunidad'];
 
 /** Normaliza una etiqueta para su URL: minúsculas, sin tildes, espacios a guiones. */
 export const slugTag = (tag: string) =>
-  tag.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim().replace(/\s+/g, '-');
+  tag.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, '-');
 
 export const urlDeTag = (tag: string) => `/tags/${slugTag(tag)}/`;
 

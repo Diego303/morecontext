@@ -183,7 +183,8 @@ a.tag:hover { color: var(--accent-pink); border-color: var(--accent-pink); }
 }
 .chip:hover { color: var(--accent-pink); border-color: var(--accent-pink); }
 .chip[aria-pressed="true"] { color: var(--ink); background: var(--accent-yellow); border-color: var(--accent-yellow); box-shadow: var(--shadow-sm); }
-.chip .n { margin-left: 6px; opacity: .7; font-variant-numeric: tabular-nums; }
+.chip .n { margin-left: 6px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] .n { color: var(--ink); }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* ---------- Superficies ---------- */
@@ -378,7 +379,7 @@ details.faq .a { padding: 0 0 18px; color: var(--text-muted); }
 
 .migas { font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); margin: 0 0 18px; }
 .migas ol { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0; padding: 0; list-style: none; }
-.migas li { display: inline-flex; gap: 6px; min-width: 0; }
+.migas li { display: inline-flex; align-items: baseline; gap: 6px; min-width: 0; }
 .migas li + li::before { content: "/"; color: var(--text-ghost); }
 .migas a { display: inline-block; padding: 4px 0; color: var(--text-faint); }
 .migas a:hover { color: var(--text); }
@@ -634,7 +635,7 @@ dialog.buscador::backdrop { background: var(--bg-overlay); -webkit-backdrop-filt
 
 /* ---------- Listados ---------- */
 .listado { padding-block: var(--s8) var(--s10); }
-.listado + .listado { padding-top: 0; }
+.listado + .listado, .listado.pegado { padding-top: 0; }
 .listado-cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px 24px; margin-bottom: var(--s5); }
 .listado-cab h2 { font-size: 22px; font-weight: 600; letter-spacing: -.01em; }
 .listado-cab .mono { color: var(--text-faint); font-size: 12px; }
@@ -817,6 +818,37 @@ dl.datos > .ancho { flex-basis: 100%; }
 
 .alias { margin: 12px 0 0; font-size: 12.5px; color: var(--text-faint); }
 
+/* ---------- Laboratorio ---------- */
+.calc { display: grid; gap: 18px; padding: 24px; margin-bottom: var(--s7); }
+.calc h2 { font-size: 20px; font-weight: 600; }
+.calc fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.calc legend { margin-bottom: 10px; padding: 0; color: var(--text-faint); }
+.calc legend small, .calc label small { text-transform: none; letter-spacing: 0; color: var(--text-faint); }
+.calc-campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); align-items: end; gap: 12px 16px; }
+.calc-campos label { display: grid; gap: 6px; font-size: 13px; color: var(--text-2); }
+.calc textarea.input { font-family: var(--font-mono); resize: vertical; min-height: 120px; }
+.calc-resultado { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding-top: 16px; border-top: 1px dashed var(--border); }
+.calc-resultado dt { font-family: var(--font-mono); font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--text-faint); }
+.calc-resultado dd { margin: 4px 0 0; font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.calc-nota, .calc-est { margin: 0; font-size: 12px; }
+.calc-est { font-family: var(--font-mono); font-size: 14px; color: var(--text-2); }
+
+/* ---------- Mapa ---------- */
+.mapa { margin: 0; }
+.mapa svg { display: block; width: 100%; height: auto; background: var(--code-bg); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.mapa .aristas line { stroke: var(--border-2); stroke-width: .6; transition: stroke .12s ease, opacity .12s ease; }
+.mapa .nodos circle { fill: var(--text-faint); stroke: var(--code-bg); stroke-width: 1; transition: fill .12s ease, opacity .12s ease; }
+.mapa .nodos text { fill: var(--text-muted); font-family: var(--font-mono); font-size: 10px; pointer-events: none; }
+.mapa .nodos a:hover circle { fill: var(--accent-pink); }
+.mapa svg.foco .aristas line { opacity: .15; }
+.mapa svg.foco .aristas line.on { opacity: 1; stroke: var(--accent-cyan); }
+.mapa svg.foco .nodos a:not(.on) { opacity: .35; }
+.mapa svg.foco .nodos a.on circle { fill: var(--accent-cyan); }
+.mapa svg.filtrado .nodos a:not(.sel) { opacity: .2; }
+.mapa svg.filtrado .nodos a.sel circle { fill: var(--accent-cyan); }
+.mapa figcaption { margin-top: 10px; font-size: 12px; }
+.lista-flecha .sin-enlace { display: flex; gap: 12px; align-items: baseline; padding: 10px 0 10px 25px; color: var(--text-2); }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1240px) {
   .docs-layout { grid-template-columns: var(--sidebar-w) minmax(0, 1fr); }
@@ -840,6 +872,7 @@ dl.datos > .ancho { flex-basis: 100%; }
 }
 @media (max-width: 680px) {
   .tarjetas, .tarjetas.dos { grid-template-columns: minmax(0, 1fr); }
+  .calc-resultado { grid-template-columns: minmax(0, 1fr); }
   .fila { grid-template-columns: 56px minmax(0, 1fr); }
   .fila .num { font-size: 24px; }
   .fila .d { grid-column: 2; text-align: left; white-space: normal; }

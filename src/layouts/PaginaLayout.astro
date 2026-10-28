@@ -8,6 +8,7 @@ import Retroenlaces from '../components/entrada/Retroenlaces.astro';
 import EditarEnGitHub from '../components/entrada/EditarEnGitHub.astro';
 import AvisoRevision from '../components/entrada/AvisoRevision.astro';
 import { urlDe } from '../lib/contenido';
+import { ogDe } from '../lib/og';
 import { NOMBRE_SECCION } from '../config/sitio';
 
 interface Props extends BaseProps {
@@ -23,7 +24,7 @@ const { migas, lead, ancho = 'lectura', indexar = true, entrada, ...base } = Ast
 const estrecho = ancho === 'lectura';
 const nombreSeccion = base.seccion !== undefined ? NOMBRE_SECCION[base.seccion] : undefined;
 ---
-<BaseLayout {...base}>
+<BaseLayout {...base} imagen={base.imagen ?? (entrada ? ogDe(entrada) : undefined)}>
   <main id="main">
     <header class="page-head grid-bg" data-pagefind-body={indexar ? '' : undefined}>
       <div class:list={['wrap', { narrow: estrecho }]}>

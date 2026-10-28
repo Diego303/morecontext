@@ -1,0 +1,31 @@
+---
+// Portadillas de las secciones del backlog (solo las que tienen contenido publicado).
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import { urlDe } from '../../lib/contenido';
+import { apendicesVisibles, datoDe } from '../../lib/apendices';
+import { ldColeccion } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () =>
+  (await apendicesVisibles()).map((a) => ({ params: { apendice: a.id }, props: a }))) satisfies GetStaticPaths;
+
+const { id, portadilla: s, entradas } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content } = await render(s);
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion={id}
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, urlDe(s))}>
+  <Content />
+  <section slot="despues" class="wrap narrow listado" aria-labelledby="h-entradas">
+    <div class="listado-cab"><h2 id="h-entradas">Entradas</h2><span class="mono">{entradas.length}</span></div>
+    <ol class="entradas">
+      {entradas.map((e) => (
+        <li>
+          <div class="meta"><span>{datoDe(e)}</span>{e.data.estado === 'borrador' && <span class="tag r">borrador</span>}</div>
+          <h3><a href={urlDe(e)}>{e.data.titulo}</a></h3>
+          <p>{e.collection === 'problemas' ? (e.data as { sintoma: string }).sintoma : e.data.descripcion}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+</PaginaLayout>

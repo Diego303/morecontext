@@ -1,13 +1,20 @@
 ---
 // Pie: marca, una columna por parte (I–V) y «Proyecto». Mismas partes que la portada.
 import { PARTES, SITIO } from '../../config/sitio';
+import { urlDe } from '../../lib/contenido';
+import { apendicesVisibles } from '../../lib/apendices';
 import Icono from './Icono.astro';
 
+// Las secciones del backlog solo aparecen cuando tienen contenido publicado
+const extra = (await apendicesVisibles()).map((a) => ({ href: urlDe(a.portadilla), texto: a.portadilla.data.titulo }));
 const PROYECTO = [
   { href: '/manifiesto/', texto: 'Manifiesto' },
   { href: '/contribuir/', texto: 'Cómo contribuir' },
   { href: '/sobre/', texto: 'Sobre MoreContext' },
   { href: '/licencia/', texto: 'Licencia' },
+  ...extra,
+  { href: '/laboratorio/', texto: 'Laboratorio' },
+  { href: '/mapa/', texto: 'Mapa de notas' },
   { href: '/tags/', texto: 'Etiquetas' },
   { href: '/rss.xml', texto: 'RSS' },
 ];

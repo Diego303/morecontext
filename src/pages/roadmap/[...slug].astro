@@ -15,6 +15,7 @@ import EditarEnGitHub from '../../components/entrada/EditarEnGitHub.astro';
 import { resolverEnlaces, urlDe, vecinos } from '../../lib/contenido';
 import { temarioRoadmap, navRoadmap, idLeccion } from '../../lib/navegacion';
 import { ldAprendizaje } from '../../lib/jsonld';
+import { ogDe } from '../../lib/og';
 
 type Nivel = CollectionEntry<'niveles'>;
 type Leccion = CollectionEntry<'lecciones'>;
@@ -49,7 +50,7 @@ const TIPO = { teoria: 'teoría', practica: 'práctica', proyecto: 'proyecto' } 
 {p.tipo === 'nivel' && (
   <PaginaLayout titulo={p.nivel.data.titulo} descripcion={p.nivel.data.descripcion} lead={p.nivel.data.descripcion} seccion="roadmap"
     migas={[{ href: '/', texto: 'Inicio' }, { href: '/roadmap/', texto: 'Roadmap' }, { texto: corto(p.nivel) }]}
-    jsonld={ldAprendizaje(p.nivel, { nivel: corto(p.nivel), horas: p.nivel.data.horas })}>
+    jsonld={ldAprendizaje(p.nivel, { nivel: corto(p.nivel), horas: p.nivel.data.horas })} imagen={ogDe(p.nivel)}>
     <BarraCurso slot="cabecera" horas={p.nivel.data.horas} lecciones={p.lecciones.map(idLeccion)}
       minutos={p.lecciones.reduce((n, l) => n + l.data.minutos, 0)} />
     <div slot="antes" class="wrap narrow">
@@ -88,7 +89,7 @@ const TIPO = { teoria: 'teoría', practica: 'práctica', proyecto: 'proyecto' } 
   </PaginaLayout>
 )}
 {p.tipo === 'leccion' && nav && (
-  <DocsLayout entrada={p.leccion} headings={headings} seccion="roadmap" navegacion={nav}
+  <DocsLayout entrada={p.leccion} headings={headings} seccion="roadmap" navegacion={nav} comentarios
     migas={[{ href: '/', texto: 'Inicio' }, { href: '/roadmap/', texto: 'Roadmap' }, { href: urlDe(p.nivel), texto: corto(p.nivel) }, { texto: p.leccion.data.titulo }]}
     jsonld={ldAprendizaje(p.leccion, { nivel: corto(p.nivel), minutos: p.leccion.data.minutos })}>
     <span slot="sobre-titulo" class="label sobre-titulo"><b>Lección {p.nivel.data.nivel}.{p.leccion.data.orden}</b> · {TIPO[p.leccion.data.tipo]}</span>

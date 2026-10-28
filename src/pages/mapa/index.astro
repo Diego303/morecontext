@@ -1,0 +1,69 @@
+---
+// Mapa: el grafo de enlaces entre notas (como la vista de grafo de Obsidian), calculado en el build.
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import { NOMBRE_SECCION } from '../../config/sitio';
+import { grafo } from '../../lib/grafo';
+import { ldColeccion } from '../../lib/jsonld';
+
+const W = 1000, H = 680;
+const { nodos, aristas, secciones } = await grafo(W, H);
+const pos = new Map(nodos.map((n) => [n.url, n]));
+const etiquetas = new Set([...nodos].sort((a, b) => b.grado - a.grado).slice(0, 18).map((n) => n.url));
+const top = [...nodos].sort((a, b) => b.grado - a.grado || a.titulo.localeCompare(b.titulo, 'es')).slice(0, 20);
+const nombre = (s: string) => NOMBRE_SECCION[s] ?? 'Páginas';
+const titulo = 'Mapa';
+const descripcion = `Todas las notas de MoreContext y sus enlaces: ${nodos.length} notas y ${aristas.length} conexiones, como la vista de grafo de una bóveda de Obsidian.`;
+const r = (g: number) => Math.min(9, 2.5 + Math.sqrt(g) * 0.9).toFixed(1);
+---
+<PaginaLayout titulo={titulo} descripcion={descripcion} lead={descripcion} seccion="mapa" ancho="completo" indexar={false}
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: titulo }]} jsonld={ldColeccion(titulo, descripcion, '/mapa/')}>
+  <div slot="despues" class="wrap listado">
+    <div class="filtros" data-mapa-filtros>
+      <div class="filtro-grupo" role="group" aria-label="Resaltar una sección">
+        <span class="label">Sección</span>
+        <div class="chips">
+          <button class="chip" type="button" aria-pressed="true" data-s="">Todas</button>
+          {secciones.map((s) => <button class="chip" type="button" aria-pressed="false" data-s={s}>{nombre(s)}<span class="n">{nodos.filter((n) => n.seccion === s).length}</span></button>)}
+        </div>
+      </div>
+    </div>
+    <figure class="mapa">
+      <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-labelledby="mapa-t" aria-describedby="mapa-d" data-mapa>
+        <title id="mapa-t">Mapa de notas de MoreContext</title>
+        <desc id="mapa-d">{nodos.length} notas unidas por {aristas.length} enlaces. Debajo tienes la misma información en texto.</desc>
+        <g class="aristas">
+          {aristas.map(([a, b]) => <line x1={pos.get(a)!.x.toFixed(1)} y1={pos.get(a)!.y.toFixed(1)} x2={pos.get(b)!.x.toFixed(1)} y2={pos.get(b)!.y.toFixed(1)} data-a={a} data-b={b} />)}
+        </g>
+        <g class="nodos">
+          {nodos.map((n) => (
+            <a href={n.url} tabindex="-1" data-url={n.url} data-s={n.seccion}>
+              <circle cx={n.x.toFixed(1)} cy={n.y.toFixed(1)} r={r(n.grado)}><title>{n.titulo} · {nombre(n.seccion)} · {n.grado} enlaces</title></circle>
+              {etiquetas.has(n.url) && <text x={(n.x + 10).toFixed(1)} y={(n.y + 4).toFixed(1)}>{n.titulo.length > 28 ? n.titulo.slice(0, 27) + '…' : n.titulo}</text>}
+            </a>
+          ))}
+        </g>
+      </svg>
+      <figcaption class="mono faint">Pasa el ratón por una nota para ver sus conexiones; haz clic para abrirla. El tamaño indica cuántos enlaces tiene.</figcaption>
+    </figure>
+
+    <div class="grid-2" style="gap:48px;margin-top:var(--s8)">
+      <section aria-labelledby="h-top">
+        <div class="listado-cab"><h2 id="h-top">Las {top.length} notas más conectadas</h2></div>
+        <ol class="lista-flecha">{top.map((n) => <li><a href={n.url}>{n.titulo}<span class="s">{n.grado} enlaces</span></a></li>)}</ol>
+      </section>
+      <section aria-labelledby="h-secs">
+        <div class="listado-cab"><h2 id="h-secs">Por sección</h2></div>
+        <ul class="lista-flecha">
+          {secciones.map((s) => {
+            const n = nodos.filter((x) => x.seccion === s).length;
+            const portadilla = nodos.find((x) => x.url === `/${s}/`);
+            return <li>{portadilla ? <a href={portadilla.url}>{nombre(s)}<span class="s">{n} notas</span></a> : <span class="sin-enlace">{nombre(s)}<span class="s">{n} notas</span></span>}</li>;
+          })}
+        </ul>
+      </section>
+    </div>
+  </div>
+</PaginaLayout>
+<script>
+  import '../../scripts/mapa.ts';
+</script>

@@ -4,6 +4,7 @@ import { esNuevo, fecha, minutosLectura, porFechaDesc, porOrden, porTitulo, publ
 import { resolverWikilink } from './indice-contenido.mjs';
 import { COLECCIONES, indiceTags, urlDeTag } from './etiquetas';
 import { numNivel, temarioCursos, temarioDocs, temarioRoadmap } from './navegacion';
+import { apendicesVisibles, datoDe } from './apendices';
 
 export type Linea = { n: string; t: string; href: string; d?: string; dots?: { valor: number; etiqueta: string }; nuevo?: boolean; k?: string };
 export type Capitulo = { n: string; t: string; href: string; d: string; lineas: Linea[]; nota?: string };
@@ -192,18 +193,30 @@ export async function datosPortada() {
   };
   const apendicesPaginas = (await Promise.all(['manifiesto', 'contribuir', 'sobre', 'licencia'].map(secciones))).filter((x) => x !== null);
   const tags = [...(await indiceTags())].sort((a, b) => b[1].entradas.length - a[1].entradas.length);
-  const letras = 'ABCDEFGHIJ';
-  const apendices: Capitulo[] = [
-    ...apendicesPaginas.map(({ e, hs }, i) => ({
-      n: letras[i], t: e.data.titulo, href: urlDe(e), d: `${minutosLectura(e.body)} min`,
-      lineas: hs.slice(0, 4).map((h, j) => ({ n: `${letras[i]}.${j + 1}`, t: h.text, href: `${urlDe(e)}#${h.slug}`, k: claves(e) })),
+  const visibles = await apendicesVisibles();
+  let notas = 0;
+  for (const col of COLECCIONES) notas += (await publicados(col)).length;
+  const letras = 'ABCDEFGHIJKLMNOP';
+  // Sin letra: se numeran al final, en orden
+  const sinLetra: Omit<Capitulo, 'n'>[] = [
+    ...apendicesPaginas.map(({ e, hs }) => ({
+      t: e.data.titulo, href: urlDe(e), d: `${minutosLectura(e.body)} min`,
+      lineas: hs.slice(0, 4).map((h) => ({ n: '', t: h.text, href: `${urlDe(e)}#${h.slug}`, k: claves(e) })),
     })),
+    // Secciones del backlog con contenido publicado (fase 13)
+    ...visibles.map(({ portadilla, entradas }) => ({
+      t: portadilla.data.titulo, href: urlDe(portadilla), d: `${entradas.length} ${entradas.length === 1 ? 'entrada' : 'entradas'}`,
+      lineas: entradas.slice(0, 4).map((e) => ({ n: '', t: e.data.titulo, href: urlDe(e), d: datoDe(e), nuevo: esNuevo(e), k: claves(e) })),
+    })),
+    { t: 'Laboratorio', href: '/laboratorio/', d: 'en el navegador', lineas: [{ n: '', t: 'Calculadora de tokens y costes', href: '/laboratorio/', d: 'tus precios', k: 'tokens costes precio calculadora' }] },
+    { t: 'Mapa de notas', href: '/mapa/', d: `${notas} notas`, lineas: [] },
     {
-      n: letras[apendicesPaginas.length], t: 'Etiquetas', href: '/tags/', d: `${tags.length} etiquetas`,
-      lineas: tags.slice(0, 4).map(([slug, g], j) => ({ n: `${letras[apendicesPaginas.length]}.${j + 1}`, t: `#${g.nombre}`, href: urlDeTag(slug), d: `${g.entradas.length} páginas`, k: g.nombre })),
+      t: 'Etiquetas', href: '/tags/', d: `${tags.length} etiquetas`,
+      lineas: tags.slice(0, 4).map(([slug, g]) => ({ n: '', t: `#${g.nombre}`, href: urlDeTag(slug), d: `${g.entradas.length} páginas`, k: g.nombre })),
     },
-    { n: letras[apendicesPaginas.length + 1], t: 'RSS', href: '/rss.xml', d: 'blog · radar · boletín', lineas: [] },
+    { t: 'RSS', href: '/rss.xml', d: 'blog · radar · boletín', lineas: [] },
   ];
+  const apendices: Capitulo[] = sinLetra.map((c, i) => ({ ...c, n: letras[i], lineas: c.lineas.map((l, j) => ({ ...l, n: `${letras[i]}.${j + 1}` })) }));
 
   // ---------- Manifiesto en corto (texto de contenido/paginas/manifiesto.md) ----------
   const mani = (await getEntry('paginas', 'manifiesto'))!;

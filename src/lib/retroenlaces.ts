@@ -4,7 +4,8 @@ import { publicados, urlDe } from './contenido';
 import { resolverWikilink, destinoDeWikilink } from './indice-contenido.mjs';
 
 const COLECCIONES: CollectionKey[] = ['secciones', 'niveles', 'lecciones', 'cursos', 'leccionesCurso', 'docsGrupos', 'docs',
-  'modelos', 'sistemas', 'patrones', 'disciplinas', 'recetas', 'glosario', 'radar', 'blog', 'boletin', 'paginas'];
+  'modelos', 'sistemas', 'patrones', 'disciplinas', 'recetas', 'glosario', 'radar', 'blog', 'boletin', 'paginas',
+  'problemas', 'plantillas', 'biblioteca', 'herramientas', 'comunidad'];
 const RE = /(?<!!)\[\[([^\]|#\\]+)(?:#[^\]|\\]+)?\\?(?:\|[^\]]+)?\]\]/g; // admite \| en tablas
 
 type Ref = { url: string; titulo: string; seccion: string };

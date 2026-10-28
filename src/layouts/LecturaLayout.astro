@@ -9,9 +9,11 @@ import AvisoRevision from '../components/entrada/AvisoRevision.astro';
 import TablaContenidos from '../components/entrada/TablaContenidos.astro';
 import Relacionados from '../components/entrada/Relacionados.astro';
 import Retroenlaces from '../components/entrada/Retroenlaces.astro';
+import Comentarios from '../components/entrada/Comentarios.astro';
 import EditarEnGitHub from '../components/entrada/EditarEnGitHub.astro';
 import { NOMBRE_SECCION } from '../config/sitio';
 import { urlDe } from '../lib/contenido';
+import { ogDe } from '../lib/og';
 
 interface Props {
   entrada: CollectionEntry<CollectionKey>;
@@ -23,11 +25,12 @@ interface Props {
   /** Peso del título en la búsqueda (0–10; Pagefind ya da 7 a los h1: el glosario usa 10) */
   peso?: number;
   meta?: boolean;
+  comentarios?: boolean;
 }
-const { entrada, headings, migas, seccion, jsonld, estrecho = false, peso, meta = true } = Astro.props;
+const { entrada, headings, migas, seccion, jsonld, estrecho = false, peso, meta = true, comentarios = false } = Astro.props;
 const d = entrada.data as typeof entrada.data & { actualizado?: Date; relacionados?: string[] };
 ---
-<BaseLayout titulo={d.titulo} descripcion={d.descripcion} seccion={seccion} tipo="article" fecha={d.creado} actualizado={d.actualizado} jsonld={jsonld}>
+<BaseLayout titulo={d.titulo} descripcion={d.descripcion} seccion={seccion} tipo="article" fecha={d.creado} actualizado={d.actualizado} jsonld={jsonld} imagen={ogDe(entrada)}>
   <main id="main" class="wrap">
     <div class:list={['lectura-layout', { estrecho }]}>
       <article data-pagefind-body>
@@ -49,6 +52,7 @@ const d = entrada.data as typeof entrada.data & { actualizado?: Date; relacionad
           <slot name="paginador" />
           <EditarEnGitHub filePath={entrada.filePath} />
         </footer>
+        {comentarios && <Comentarios />}
       </article>
       <TablaContenidos headings={headings} />
     </div>

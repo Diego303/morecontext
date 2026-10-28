@@ -13,7 +13,8 @@ const err = (f, m) => errores.push(`✗ ${f}: ${m}`);
 const avi = (f, m) => avisos.push(`! ${f}: ${m}`);
 
 const SECCIONES = ['roadmap', 'cursos', 'docs', 'modelos', 'sistemas', 'patrones', 'disciplinas',
-  'recetas', 'glosario', 'radar', 'blog', 'boletin', 'paginas'];
+  'recetas', 'glosario', 'radar', 'blog', 'boletin', 'paginas',
+  'problemas', 'plantillas', 'biblioteca', 'herramientas', 'comunidad'];
 const RE_WIKI = /(!?)\[\[([^\]|#\\]+)(?:#[^\]|\\]+)?\\?(?:\|[^\]]+)?\]\]/g; // admite \| dentro de tablas
 const RE_NOMBRE = /^[a-z0-9]+(?:-[a-z0-9]+)*\.md$/;
 

@@ -38,7 +38,7 @@ const rango = apendices.length ? `${apendices[0].n}–${apendices.at(-1)!.n}` : 
         <div class="ix-ph"><div class="in">
           <span class="num" aria-hidden="true" data-num={rango}></span>
           <h3>Apéndices</h3>
-          <p>Las páginas del proyecto: por qué existe, cómo contribuir, quién lo hace, la licencia y cómo seguir las novedades.</p>
+          <p>El proyecto (por qué existe, cómo contribuir, quién lo hace, la licencia), herramientas para practicar y el mapa de todas las notas.</p>
           <span class="count">{apendices.length} apéndices</span>
         </div></div>
         <div class="ix-chs">{apendices.map((c) => <CapituloIndice capitulo={c} />)}</div>

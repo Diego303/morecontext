@@ -10,6 +10,7 @@ export const CARPETA: Record<CollectionKey, string> = {
   docsGrupos: 'docs', docs: 'docs', modelos: 'modelos', sistemas: 'sistemas', patrones: 'patrones',
   disciplinas: 'disciplinas', recetas: 'recetas', glosario: 'glosario', radar: 'radar', blog: 'blog',
   boletin: 'boletin', paginas: 'paginas',
+  problemas: 'problemas', plantillas: 'plantillas', biblioteca: 'biblioteca', herramientas: 'herramientas', comunidad: 'comunidad',
 };
 
 type Entrada = CollectionEntry<CollectionKey>;

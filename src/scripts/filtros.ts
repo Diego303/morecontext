@@ -1,5 +1,5 @@
 // Filtros de listados (chips combinables), filtro en vivo del glosario y test de nivel de /empieza-aqui/.
-const sinTildes = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const sinTildes = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 // ---------- 1) Chips: un valor por grupo; los grupos se combinan ----------
 document.querySelectorAll<HTMLElement>('[data-filtros]').forEach((caja) => {

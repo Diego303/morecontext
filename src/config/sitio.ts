@@ -6,7 +6,8 @@ export const SITIO = {
   eslogan: 'Más contexto, menos ruido.',
   descripcion: 'La guía abierta y gratuita en español para entender y construir agentes de IA.',
   idioma: 'es-ES',
-  autor: '[Tu nombre]',
+  autor: 'Diego',
+  autorUrl: 'https://diego303.github.io/Portfolio/',
   repo: 'https://github.com/Diego303/morecontext',
   ramaEdicion: 'main',
   redes: { github: 'https://github.com/Diego303/morecontext', x: '', linkedin: '' },
@@ -16,6 +17,8 @@ export const SITIO = {
     campoEmail: 'email',
   },
   licencias: { contenido: 'CC BY-SA 4.0', codigo: 'MIT' },
+  // Comentarios con Giscus (GitHub Discussions). Vacío = sin comentarios. Los IDs se obtienen en https://giscus.app
+  comentarios: { repo: 'Diego303/morecontext', repoId: '', categoria: 'Comentarios', categoriaId: '' },
 } as const;
 
 /** Navegación principal. Las partes I–V son las mismas que en el índice de la portada. */
@@ -48,4 +51,6 @@ export const NAV = [
 export const NOMBRE_SECCION: Record<string, string> = {
   roadmap: 'Roadmap', cursos: 'Cursos', docs: 'Docs', modelos: 'Guía de modelos', sistemas: 'Sistemas', patrones: 'Patrones',
   disciplinas: 'Disciplinas', recetas: 'Recetas', glosario: 'Glosario', radar: 'Radar', blog: 'Blog', boletin: 'Boletín', '': 'Páginas',
+  problemas: 'Problemas frecuentes', plantillas: 'Plantillas', biblioteca: 'Biblioteca', herramientas: 'Herramientas', comunidad: 'Comunidad',
+  laboratorio: 'Laboratorio', mapa: 'Mapa',
 };
