@@ -1,0 +1,30 @@
+---
+// Cuatro rutas A–D: títulos, anclas y frases salen de contenido/paginas/empieza-aqui.md.
+interface Props { rutas: { letra: string; titulo: string; href: string; secuencia: string[]; texto: string }[]; urlTest: string }
+const { rutas, urlTest } = Astro.props;
+---
+<section class="sec" id="empieza" aria-labelledby="h-empieza">
+  <div class="wrap start">
+    <div class="start-head">
+      <span class="label sec-label"><b>§</b> antes de abrir el índice</span>
+      <h2 id="h-empieza">Empieza aquí</h2>
+      <p class="sec-sub">{rutas.length} rutas por el mismo material. Elige la frase que más se parece a ti y sigue el orden que marca.</p>
+      <a class="btn-sketch" href={urlTest}>Haz el test de nivel <kbd>3 preguntas</kbd></a>
+      <span class="note">si dudas, la A: los niveles bajos se hacen rápido</span>
+    </div>
+    <ol class="routes">
+      {rutas.map((r) => (
+        <li>
+          <a href={r.href}>
+            <span class="lt" aria-hidden="true">{r.letra}</span>
+            <span class="lead-line">
+              <span class="t"><span class="sr-only">Ruta {r.letra}: </span>{r.titulo}</span><i></i>
+              <span class="d" aria-label={`Orden: ${r.secuencia.join(', ')}`}>{r.secuencia.map((s, i) => <>{i > 0 && <b>→</b>}{s}</>)}</span>
+            </span>
+            <small>{r.texto}</small>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

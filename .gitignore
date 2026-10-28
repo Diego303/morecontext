@@ -1,0 +1,30 @@
+# Salida del build
+dist/
+
+# Tipos generados por Astro
+.astro/
+
+# Dependencias
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Variables de entorno
+.env
+.env.production
+
+# Sistema y editores
+.DS_Store
+.idea/
+
+# Obsidian: estado personal de la bóveda
+contenido/.obsidian/workspace*.json
+contenido/.obsidian/cache
+contenido/.trash/
+
+# Kit de arranque (material local, no se publica)
+morecontext-kit/

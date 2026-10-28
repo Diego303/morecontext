@@ -1,0 +1,44 @@
+---
+// Ensayo destacado (o el más reciente), tres anteriores y el boletín.
+import type { CollectionEntry } from 'astro:content';
+import { fecha, fechaISO, minutosLectura, urlDe } from '../../lib/contenido';
+import FormularioBoletin from '../boletin/FormularioBoletin.astro';
+interface Props {
+  destacado?: CollectionEntry<'blog'>;
+  anteriores: CollectionEntry<'blog'>[];
+  tipo: Record<string, string>;
+  ultimoBoletin?: CollectionEntry<'boletin'>;
+  fechaCorta: (d: Date) => string;
+}
+const { destacado, anteriores, tipo, ultimoBoletin, fechaCorta } = Astro.props;
+---
+<section class="sec" id="ensayos" aria-label="Últimos escritos y boletín">
+  <div class="wrap ess">
+    {destacado && (
+      <article class="ess-main" aria-labelledby="h-ensayo">
+        <span class="label sec-label"><b>13</b> / {destacado.data.destacado ? 'ensayo destacado' : `último ${tipo[destacado.data.tipo]}`}</span>
+        <p class="ess-meta"><time datetime={fechaISO(destacado.data.creado)}>{fecha(destacado.data.creado)}</time><span>{minutosLectura(destacado.body)} min de lectura</span><span>{tipo[destacado.data.tipo]}</span></p>
+        <h2 id="h-ensayo"><a href={urlDe(destacado)}>{destacado.data.titulo}</a></h2>
+        <p class="ex">{destacado.data.descripcion}</p>
+        <a class="link" href={urlDe(destacado)}>Leer {destacado.data.tipo === 'ensayo' ? 'el ensayo' : 'la entrada'}</a>
+        {anteriores.length > 0 && (
+          <div class="ess-prev">
+            <span class="label">Antes en el blog</span>
+            <ul>
+              {anteriores.map((e) => (
+                <li><a class="lead-line" href={urlDe(e)}><span class="t">{e.data.titulo}</span><i></i><span class="d">{fechaCorta(e.data.creado)}</span></a></li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </article>
+    )}
+    <aside class="news" id="boletin" aria-labelledby="boletin-portada-t">
+      <span class="label sec-label"><b>14</b> / boletín</span>
+      <FormularioBoletin id="boletin-portada" />
+      {ultimoBoletin && (
+        <div class="last"><a class="lead-line" href={urlDe(ultimoBoletin)}><span class="t">Leer el último envío</span><i></i><span class="d">{fechaCorta(ultimoBoletin.data.creado)}</span></a></div>
+      )}
+    </aside>
+  </div>
+</section>

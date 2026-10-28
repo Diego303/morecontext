@@ -1,0 +1,35 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import Icono from '../../components/base/Icono.astro';
+import { urlDe } from '../../lib/contenido';
+import { temarioDocs } from '../../lib/navegacion';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'docs'))!;
+const { Content } = await render(s);
+const grupos = await temarioDocs();
+const total = grupos.reduce((n, g) => n + g.docs.length, 0);
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="docs"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/docs/')}>
+  <form slot="cabecera" class="search-xl" role="search" data-form-buscar style="margin-top:28px">
+    <Icono nombre="buscar" tamano={20} />
+    <input type="search" name="q" aria-label="Buscar en MoreContext" placeholder="busca un concepto, una lección, un patrón…" autocomplete="off" />
+  </form>
+  <Content />
+  <section slot="despues" class="wrap listado" aria-labelledby="h-temas">
+    <div class="listado-cab"><h2 id="h-temas">{grupos.length} temas</h2><span class="mono">{total} artículos</span></div>
+    <ul class="tarjetas">
+      {grupos.map(({ grupo, docs }) => (
+        <li>
+          <div class="card grupo-docs">
+            <h3><a href={urlDe(grupo)}>{grupo.data.titulo}</a></h3>
+            <p>{grupo.data.descripcion}</p>
+            <ol class="lista-flecha">{docs.map((d) => <li><a href={urlDe(d)}>{d.data.titulo}</a></li>)}</ol>
+          </div>
+        </li>
+      ))}
+    </ul>
+  </section>
+</PaginaLayout>

@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icono from '../components/base/Icono.astro';
+---
+<BaseLayout titulo="Esta página no existe (todavía)" descripcion="La dirección no corresponde a ninguna página de MoreContext. Busca el concepto o vuelve al inicio." noindex>
+  <main id="main">
+    <div class="page-head grid-bg no-existe">
+      <div class="wrap narrow">
+        <span class="label"><b>404</b> / página no encontrada</span>
+        <h1 class="display" style="margin-top:14px">Esta página no existe (todavía)</h1>
+        <p class="lead">Puede que la dirección esté mal escrita o que la página aún no se haya publicado. Busca el concepto que te ha traído aquí.</p>
+        <form class="search-xl" role="search" data-form-buscar>
+          <Icono nombre="buscar" tamano={20} />
+          <input type="search" name="q" aria-label="Buscar en MoreContext" placeholder="¿qué estabas buscando?" autocomplete="off" />
+        </form>
+        <ul class="lista-flecha" style="max-width:420px">
+          <li><a href="/">Inicio</a></li>
+          <li><a href="/empieza-aqui/">Empieza aquí</a></li>
+          <li><a href="/glosario/">Glosario</a></li>
+        </ul>
+      </div>
+    </div>
+  </main>
+</BaseLayout>

@@ -1,0 +1,39 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import TarjetaEntrada from '../../components/listados/TarjetaEntrada.astro';
+import FiltroChips from '../../components/listados/FiltroChips.astro';
+import Dificultad from '../../components/entrada/Dificultad.astro';
+import { porTitulo, publicados, urlDe } from '../../lib/contenido';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'recetas'))!;
+const { Content } = await render(s);
+const recetas = (await publicados('recetas')).sort(porTitulo);
+const TEMA: Record<string, string> = { prompting: 'Prompting', herramientas: 'Herramientas', rag: 'RAG', agentes: 'Agentes', evals: 'Evals', produccion: 'Producción' };
+const NIVEL: Record<string, string> = { inicial: 'Inicial', intermedio: 'Intermedio', avanzado: 'Avanzado' };
+const opciones = (mapa: Record<string, string>, campo: 'tema' | 'nivel') => Object.entries(mapa)
+  .map(([valor, texto]) => ({ valor, texto, n: recetas.filter((r) => r.data[campo] === valor).length }))
+  .filter((o) => o.n > 0);
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="recetas"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/recetas/')}>
+  <Content />
+  <section slot="despues" class="wrap listado" aria-labelledby="h-recetas">
+    <div class="listado-cab"><h2 id="h-recetas">Todas las recetas</h2></div>
+    <FiltroChips objetivo="lista-recetas" total={recetas.length} nombre="recetas"
+      grupos={[{ clave: 'tema', etiqueta: 'Tema', opciones: opciones(TEMA, 'tema') }, { clave: 'nivel', etiqueta: 'Nivel', opciones: opciones(NIVEL, 'nivel') }]} />
+    <ul class="tarjetas" id="lista-recetas">
+      {recetas.map((r) => (
+        <TarjetaEntrada href={urlDe(r)} titulo={r.data.titulo} descripcion={r.data.descripcion}
+          datos={{ filtrable: '', tema: r.data.tema, nivel: r.data.nivel }}>
+          <Fragment slot="meta"><span class="tag">{TEMA[r.data.tema]}</span><span>~{r.data.minutos} min</span></Fragment>
+          <Fragment slot="pie"><span>{r.data.stack.slice(0, 3).join(' · ')}</span><Dificultad valor={r.data.nivel} texto /></Fragment>
+        </TarjetaEntrada>
+      ))}
+    </ul>
+  </section>
+</PaginaLayout>
+<script>
+  import '../../scripts/filtros.ts';
+</script>

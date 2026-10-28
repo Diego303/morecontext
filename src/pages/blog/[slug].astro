@@ -1,0 +1,26 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import Paginador from '../../components/entrada/Paginador.astro';
+import { porFechaDesc, publicados, urlDe, vecinos } from '../../lib/contenido';
+import { ldBlog } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () => {
+  const todas = (await publicados('blog')).sort(porFechaDesc);
+  return todas.map((e) => ({ params: { slug: e.id }, props: { e, ...vecinos(todas, e.id) } }));
+}) satisfies GetStaticPaths;
+
+const { e, anterior, siguiente } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+const TIPO: Record<string, string> = { ensayo: 'Ensayo', analisis: 'Análisis', 'nota-de-campo': 'Nota de campo', tutorial: 'Tutorial' };
+const ld = { ...ldBlog(e), ...(e.data.autor ? { author: { '@type': 'Person', name: e.data.autor } } : {}) };
+---
+<LecturaLayout entrada={e} headings={headings} seccion="blog" jsonld={ld} comentarios
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/blog/', texto: 'Blog' }, { texto: e.data.titulo }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo"><b>{TIPO[e.data.tipo]}</b>{e.data.autor && <> · {e.data.autor}</>}</span>
+  <Content />
+  <Paginador slot="paginador"
+    anterior={siguiente && { href: urlDe(siguiente), titulo: siguiente.data.titulo, etiqueta: 'Anterior en el blog' }}
+    siguiente={anterior && { href: urlDe(anterior), titulo: anterior.data.titulo, etiqueta: 'Más reciente' }} />
+</LecturaLayout>

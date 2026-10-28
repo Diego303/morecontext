@@ -1,0 +1,72 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import Icono from '../../components/base/Icono.astro';
+import { porTitulo, publicados, urlDe } from '../../lib/contenido';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'glosario'))!;
+const { Content } = await render(s);
+const terminos = (await publicados('glosario')).sort(porTitulo);
+const letraDe = (t: string) => {
+  const l = t.trim().charAt(0).toUpperCase();
+  return l === 'Ñ' ? 'Ñ' : l.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z]/, '#');
+};
+const ABC = 'ABCDEFGHIJKLMNÑOPQRSTUVWXYZ'.split('');
+const porLetra = new Map<string, typeof terminos>();
+for (const t of terminos) porLetra.set(letraDe(t.data.titulo), [...(porLetra.get(letraDe(t.data.titulo)) ?? []), t]);
+const letras = [...ABC, '#'].filter((l) => porLetra.has(l));
+const idLetra = (l: string) => `letra-${l === '#' ? 'otros' : l === 'Ñ' ? 'enie' : l.toLowerCase()}`;
+const CATEGORIA: Record<string, string> = { fundamentos: 'fundamentos', prompting: 'prompting', herramientas: 'herramientas', contexto: 'contexto', agentes: 'agentes', evals: 'evals', produccion: 'producción', seguridad: 'seguridad' };
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="glosario"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/glosario/')}>
+  <Content />
+  <section slot="despues" class="wrap narrow listado" aria-labelledby="h-terminos">
+    <h2 id="h-terminos" class="sr-only">Términos de la A a la Z</h2>
+    <form class="search-xl" role="search" style="margin-bottom:16px">
+      <Icono nombre="buscar" tamano={20} />
+      <input type="search" data-filtro-glosario aria-label="Filtrar términos del glosario" aria-describedby="cuenta-glosario"
+        placeholder="filtra: contexto, tool use, RAG…" autocomplete="off" spellcheck="false" />
+    </form>
+    <p class="filtro-cuenta mono faint" id="cuenta-glosario" role="status" aria-live="polite" data-cuenta-glosario style="margin-bottom:16px">{terminos.length} términos</p>
+    <details class="categorias" open>
+      <summary class="label">Por categoría</summary>
+      <dl>
+        {Object.entries(CATEGORIA).map(([c, nombre]) => {
+          const lista = terminos.filter((t) => t.data.categoria === c);
+          return lista.length > 0 && (
+            <div id={`cat-${c}`}>
+              <dt>{nombre} <span class="faint">{lista.length}</span></dt>
+              <dd>{lista.map((t, i) => <>{i > 0 && ' · '}<a href={`#${t.id}`}>{t.data.titulo}</a></>)}</dd>
+            </div>
+          );
+        })}
+      </dl>
+    </details>
+    <nav aria-label="Índice alfabético"><ol class="az" data-az>
+      {ABC.map((l) => <li>{porLetra.has(l) ? <a href={`#${idLetra(l)}`}>{l}</a> : <span aria-hidden="true">{l}</span>}</li>)}
+    </ol></nav>
+    <div class="vacio" data-vacio-glosario hidden>
+      <p>Ningún término coincide.</p>
+      <button class="btn-sketch" type="button" data-buscar="">Buscar en todo MoreContext</button>
+    </div>
+    {letras.map((l) => (
+      <section class="letra" id={idLetra(l)} data-letra={l} aria-labelledby={`${idLetra(l)}-t`}>
+        <h2 id={`${idLetra(l)}-t`}>{l}</h2>
+        <ul class="terminos">
+          {porLetra.get(l)!.map((t) => (
+            <li class="termino" id={t.id} data-termino={[t.data.titulo, t.data.ingles ?? '', ...t.data.aliases, t.data.descripcion].join(' ')}>
+              <h3><a href={urlDe(t)}>{t.data.titulo}</a>{t.data.ingles && t.data.ingles !== t.data.titulo && <span class="en" lang="en">{t.data.ingles}</span>}<span class="tag">{CATEGORIA[t.data.categoria]}</span></h3>
+              <p>{t.data.descripcion}</p>
+              <a class="link" href={urlDe(t)} aria-label={`Ampliar: ${t.data.titulo}`}>ampliar</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </section>
+</PaginaLayout>
+<script>
+  import '../../scripts/filtros.ts';
+</script>

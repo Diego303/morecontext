@@ -1,0 +1,26 @@
+name: Comprobar cambios
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+
+jobs:
+  comprobar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Contenido (frontmatter, enlaces)
+        run: pnpm validar
+      - name: Tipos
+        run: pnpm check
+      - name: Construir e indexar
+        run: pnpm build
+      - name: Enlaces internos del sitio generado
+        run: pnpm enlaces

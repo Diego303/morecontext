@@ -1,0 +1,15 @@
+---
+// Estado editorial visible: «En revisión» (se publica) y «Borrador» (solo en pnpm dev).
+interface Props { estado?: string }
+const { estado } = Astro.props;
+---
+{estado === 'revision' && (
+  <aside class="callout callout--aviso aviso-estado" role="note">
+    <p class="callout__titulo"><span class="callout__tipo">En revisión</span>Este texto puede cambiar.</p>
+  </aside>
+)}
+{estado === 'borrador' && (
+  <aside class="callout callout--peligro aviso-estado" role="note">
+    <p class="callout__titulo"><span class="callout__tipo">Borrador</span>Solo se ve en desarrollo: no se publica en la web.</p>
+  </aside>
+)}

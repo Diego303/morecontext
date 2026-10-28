@@ -1,0 +1,16 @@
+---
+// Datos de un nivel o curso bajo su título: horas, lecciones, nivel y progreso local.
+import Dificultad from '../entrada/Dificultad.astro';
+import ProgresoNivel from './ProgresoNivel.astro';
+interface Props { horas: number; lecciones: string[]; minutos: number; nivel?: 'inicial' | 'intermedio' | 'avanzado' }
+const { horas, lecciones, minutos, nivel } = Astro.props;
+---
+<div class="barra-curso">
+  <dl class="datos">
+    <div><dt>Dedicación</dt><dd>~{horas} h</dd></div>
+    <div><dt>Lecciones</dt><dd>{lecciones.length} · {minutos} min</dd></div>
+    {nivel && <div><dt>Nivel</dt><dd><Dificultad valor={nivel} texto /></dd></div>}
+  </dl>
+  {lecciones.length > 0 && <ProgresoNivel ids={lecciones} />}
+  {lecciones.length > 0 && <p class="mono faint progreso-nota">Tu progreso se guarda solo en este navegador.</p>}
+</div>

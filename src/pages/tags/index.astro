@@ -1,0 +1,19 @@
+---
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import { indiceTags, urlDeTag } from '../../lib/etiquetas';
+import { ldColeccion } from '../../lib/jsonld';
+
+const indice = await indiceTags();
+const tags = [...indice].sort(([a], [b]) => a.localeCompare(b, 'es'));
+const descripcion = 'Todas las etiquetas del contenido de MoreContext, con el número de páginas de cada una.';
+---
+<PaginaLayout titulo="Etiquetas" descripcion={descripcion} lead={`${tags.length} etiquetas. Cada una reúne lecciones, docs, recetas, términos y notas del mismo tema.`}
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: 'Etiquetas' }]} jsonld={ldColeccion('Etiquetas', descripcion, '/tags/')} indexar={false}>
+  <section slot="despues" class="wrap listado" aria-label="Etiquetas">
+    <ul class="nube">
+      {tags.map(([slug, { nombre, entradas }]) => (
+        <li><a class="tag" href={urlDeTag(slug)}>{nombre}<span class="n">{entradas.length}</span></a></li>
+      ))}
+    </ul>
+  </section>
+</PaginaLayout>

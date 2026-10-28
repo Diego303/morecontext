@@ -1,0 +1,23 @@
+---
+// Suscripción al boletín. Con SITIO.boletin.action: formulario normal (sin JS obligatorio).
+// Sin proveedor configurado: «Próximamente» y el RSS, sin formulario que no lleva a ningún sitio.
+import { SITIO } from '../../config/sitio';
+interface Props { id?: string; titulo?: string; nivelTitulo?: 2 | 3 }
+const { id = 'boletin-form', titulo = 'Al día sin perseguir novedades', nivelTitulo = 3 } = Astro.props;
+const { action, campoEmail } = SITIO.boletin;
+const Titulo = `h${nivelTitulo}` as 'h2' | 'h3';
+---
+<div class="form-boletin">
+  <Titulo id={`${id}-t`}>{titulo}</Titulo>
+  <p>Un correo cada dos semanas con lo que ha cambiado y una receta. Sin relleno.</p>
+  {action ? (
+    <form method="post" action={action} target="_blank" aria-labelledby={`${id}-t`}>
+      <label class="sr-only" for={`${id}-email`}>Tu email</label>
+      <input class="input" id={`${id}-email`} type="email" name={campoEmail} autocomplete="email" placeholder="tu@email.com" required />
+      <button class="btn" type="submit"><span class="pr" aria-hidden="true">$</span>Suscribirme</button>
+    </form>
+  ) : (
+    <p class="proximamente"><span class="tag y">Próximamente</span> Mientras, sigue las novedades por <a href="/rss.xml">RSS</a>.</p>
+  )}
+  <p class="fine">Gratis. No hace falta para leer nada del sitio.{action && <><br />Te das de baja desde cualquier envío.</>}</p>
+</div>

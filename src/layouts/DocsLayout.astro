@@ -1,0 +1,66 @@
+---
+// Navegación + artículo + índice (3 columnas): lecciones del roadmap y de cursos, artículos de documentación.
+// Por debajo de 900 px la navegación pasa a un <details> «Índice de la sección» encima del artículo.
+import type { CollectionEntry, CollectionKey } from 'astro:content';
+import type { MarkdownHeading } from 'astro';
+import BaseLayout from './BaseLayout.astro';
+import Migas from '../components/entrada/Migas.astro';
+import MetaEntrada from '../components/entrada/MetaEntrada.astro';
+import AvisoRevision from '../components/entrada/AvisoRevision.astro';
+import TablaContenidos from '../components/entrada/TablaContenidos.astro';
+import Relacionados from '../components/entrada/Relacionados.astro';
+import Retroenlaces from '../components/entrada/Retroenlaces.astro';
+import EditarEnGitHub from '../components/entrada/EditarEnGitHub.astro';
+import Comentarios from '../components/entrada/Comentarios.astro';
+import NavSeccion from '../components/entrada/NavSeccion.astro';
+import { NOMBRE_SECCION } from '../config/sitio';
+import { urlDe } from '../lib/contenido';
+import { ogDe } from '../lib/og';
+import type { NavegacionSeccion } from '../components/entrada/NavSeccion.astro';
+
+interface Props {
+  entrada: CollectionEntry<CollectionKey>;
+  headings: MarkdownHeading[];
+  migas: { href?: string; texto: string }[];
+  seccion: string;
+  navegacion: NavegacionSeccion;
+  jsonld?: object | object[];
+  comentarios?: boolean;
+}
+const { entrada, headings, migas, seccion, navegacion, jsonld, comentarios = false } = Astro.props;
+const d = entrada.data as typeof entrada.data & { actualizado?: Date; relacionados?: string[] };
+---
+<BaseLayout titulo={d.titulo} descripcion={d.descripcion} seccion={seccion} tipo="article" fecha={d.creado} actualizado={d.actualizado} jsonld={jsonld} imagen={ogDe(entrada)}>
+  <main id="main" class="wrap">
+    <div class="docs-layout">
+      <NavSeccion navegacion={navegacion} />
+      <article data-pagefind-body>
+        <details class="side-nav-m" data-pagefind-ignore="all">
+          <summary>Índice de la sección</summary>
+          <NavSeccion navegacion={navegacion} movil />
+        </details>
+        <header class="doc-head">
+          <Migas items={migas} />
+          <div data-pagefind-ignore><slot name="sobre-titulo" /></div>
+          <h1 class="h1-doc" data-pagefind-meta="title">{d.titulo}</h1>
+          <p class="lead">{d.descripcion}</p>
+          <slot name="cabecera" />
+          <MetaEntrada entrada={entrada} />
+          <span hidden data-pagefind-filter="seccion">{NOMBRE_SECCION[seccion] ?? seccion}</span>
+        </header>
+        <AvisoRevision estado={d.estado} />
+        <slot name="antes" />
+        <div class="prosa cuerpo"><slot /></div>
+        <footer class="pie-entrada" data-pagefind-ignore="all">
+          <slot name="antes-pie" />
+          <Relacionados lista={d.relacionados} />
+          <Retroenlaces url={urlDe(entrada)} />
+          <slot name="paginador" />
+          <EditarEnGitHub filePath={entrada.filePath} />
+        </footer>
+        {comentarios && <Comentarios />}
+      </article>
+      <TablaContenidos headings={headings} />
+    </div>
+  </main>
+</BaseLayout>

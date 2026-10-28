@@ -1,0 +1,42 @@
+---
+// Navegación lateral de una sección (DocsLayout). Grupos plegables con el actual abierto;
+// el enlace activo va en cian. `leccion` permite marcar ✓ las lecciones hechas (progreso local).
+export type ItemNav = { href: string; titulo: string; leccion?: string };
+export type GrupoNav = { titulo: string; href?: string; hrefTexto?: string; items: ItemNav[] };
+export type NavegacionSeccion = { titulo: string; grupos: GrupoNav[] };
+
+interface Props { navegacion: NavegacionSeccion; movil?: boolean }
+const { navegacion, movil = false } = Astro.props;
+const aqui = Astro.url.pathname;
+const actual = (href?: string) => (href === aqui ? 'page' : undefined);
+const plegable = navegacion.grupos.length > 1;
+---
+<nav class="side-nav" aria-label={movil ? `${navegacion.titulo} (índice)` : navegacion.titulo} data-pagefind-ignore="all">
+  {navegacion.grupos.map((g) => {
+    const abierto = g.href === aqui || g.items.some((i) => i.href === aqui);
+    const lista = (
+      <ul>
+        {g.href && plegable && <li><a class="ficha" href={g.href} aria-current={actual(g.href)}><span>{g.hrefTexto ?? 'Presentación'}</span></a></li>}
+        {g.items.map((i) => (
+          <li>
+            <a href={i.href} aria-current={actual(i.href)}>
+              <span>{i.titulo}</span>
+              {i.leccion && <span class="hecha" data-hecha={i.leccion} hidden><span aria-hidden="true">✓</span><span class="sr-only"> (hecha)</span></span>}
+            </a>
+          </li>
+        ))}
+      </ul>
+    );
+    return plegable ? (
+      <details class="grupo" open={abierto}>
+        <summary class="grp">{g.titulo}</summary>
+        {lista}
+      </details>
+    ) : (
+      <div class="grupo">
+        <p class="grp">{g.href ? <a href={g.href} aria-current={actual(g.href)}>{g.titulo}</a> : g.titulo}</p>
+        {lista}
+      </div>
+    );
+  })}
+</nav>

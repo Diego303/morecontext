@@ -1,0 +1,36 @@
+---
+// Hero: línea de edición, wordmark [+] morecontext, eslogan, buscador grande y cifras calculadas.
+import { SITIO } from '../../config/sitio';
+import { fechaISO } from '../../lib/contenido';
+import Icono from '../base/Icono.astro';
+interface Props { cifras: { niveles: number; lecciones: number; horas: number; terminos: number; revisado: Date; revisadoTexto: string } }
+const { cifras } = Astro.props;
+const RAPIDAS = ['tool use', 'RAG', 'MCP', 'evals', 'ventana de contexto', 'prompt injection'];
+---
+<section class="hero" id="inicio" aria-labelledby="h-inicio">
+  <div class="wrap">
+    <p class="edition"><span>la guía abierta de agentes de IA</span><span>en español</span><span>revisado el <time datetime={fechaISO(cifras.revisado)}>{cifras.revisadoTexto}</time></span></p>
+    <h1 class="wm" id="h-inicio" aria-label={SITIO.nombre}>
+      <Icono nombre="marca" tamano={80} />
+      <span aria-hidden="true"><span class="more">more</span><span class="hl">context</span></span>
+    </h1>
+    <p class="slogan">{SITIO.eslogan}</p>
+    <p class="what">Todo lo que necesitas para entender y construir agentes de IA, explicado desde la base. <strong>Gratis, sin registro y sin muro de pago.</strong></p>
+
+    <form class="qbox" role="search" aria-label="Buscar en MoreContext" data-form-buscar>
+      <Icono nombre="buscar" tamano={22} />
+      <input type="search" name="q" autocomplete="off" aria-label="Busca un concepto, una lección o un patrón" placeholder="¿qué no entiendes todavía?" />
+      <span class="keys" aria-hidden="true"><kbd>/</kbd>o<kbd data-kbd>Ctrl K</kbd></span>
+    </form>
+    <div class="quick" role="group" aria-label="Búsquedas rápidas">
+      <span class="label">prueba</span>
+      {RAPIDAS.map((q) => <button class="chip" type="button" data-buscar={q}>{q}</button>)}
+    </div>
+    <p class="hero-foot">
+      <a href="#indice">Ver el índice general ↓</a>
+      <span>{cifras.niveles} niveles · {cifras.lecciones} lecciones · ~{cifras.horas} h</span>
+      <span>{cifras.terminos} términos</span>
+      <span>CC BY-SA · MIT</span>
+    </p>
+  </div>
+</section>

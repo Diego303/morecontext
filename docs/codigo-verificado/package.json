@@ -1,0 +1,38 @@
+{
+  "name": "morecontext",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": ">=22.23.4" },
+  "packageManager": "pnpm@12.15.0",
+  "scripts": {
+    "dev": "astro dev",
+    "dev:limpio": "astro dev --force",
+    "validar": "node scripts/validar-contenido.mjs",
+    "check": "astro check",
+    "build": "node scripts/validar-contenido.mjs && astro build --force && pagefind --site dist",
+    "preview": "astro preview",
+    "enlaces": "node scripts/comprobar-enlaces.mjs",
+    "nuevo": "node scripts/nueva-nota.mjs",
+    "og": "node scripts/og.mjs",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.4",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource/patrick-hand": "^5.3.0",
+    "astro": "^7.4.2",
+    "github-slugger": "^2.0.0",
+    "mermaid": "^12.2.0",
+    "pagefind": "^1.5.2",
+    "unist-util-visit": "^5.2.0",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "typescript": "^6.0.3"
+  }
+}

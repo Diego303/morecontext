@@ -1,0 +1,50 @@
+---
+// Pie: marca, una columna por parte (I–V) y «Proyecto». Mismas partes que la portada.
+import { PARTES, SITIO } from '../../config/sitio';
+import { urlDe } from '../../lib/contenido';
+import { apendicesVisibles } from '../../lib/apendices';
+import Icono from './Icono.astro';
+
+// Las secciones del backlog solo aparecen cuando tienen contenido publicado
+const extra = (await apendicesVisibles()).map((a) => ({ href: urlDe(a.portadilla), texto: a.portadilla.data.titulo }));
+const PROYECTO = [
+  { href: '/manifiesto/', texto: 'Manifiesto' },
+  { href: '/contribuir/', texto: 'Cómo contribuir' },
+  { href: '/sobre/', texto: 'Sobre MoreContext' },
+  { href: '/licencia/', texto: 'Licencia' },
+  ...extra,
+  { href: '/laboratorio/', texto: 'Laboratorio' },
+  { href: '/mapa/', texto: 'Mapa de notas' },
+  { href: '/tags/', texto: 'Etiquetas' },
+  { href: '/rss.xml', texto: 'RSS' },
+];
+const anio = new Date().getUTCFullYear();
+---
+<footer class="site-foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="logo" href="/" aria-label="MoreContext, inicio"><Icono nombre="marca" tamano={28} />morecontext</a>
+        <p>{SITIO.descripcion}</p>
+        <span class="sl">{SITIO.eslogan.toLowerCase()}</span>
+      </div>
+      {PARTES.map((p) => (
+        <div>
+          <h2>{p.num} · {p.nombre}</h2>
+          <ul>{p.enlaces.map((l) => <li><a href={l.href}>{l.texto}</a></li>)}</ul>
+        </div>
+      ))}
+      <div>
+        <h2>Proyecto</h2>
+        <ul>
+          {PROYECTO.map((l) => <li><a href={l.href}>{l.texto}</a></li>)}
+          <li><a href={SITIO.repo} rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>© {anio} {SITIO.nombre} · contenido {SITIO.licencias.contenido} · código {SITIO.licencias.codigo}</span>
+      <span>Pulsa <kbd>/</kbd> para buscar</span>
+    </div>
+  </div>
+</footer>

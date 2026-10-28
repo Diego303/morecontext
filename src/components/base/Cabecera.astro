@@ -1,0 +1,68 @@
+---
+// Cabecera fija: logo, «Aprender» desplegable (PARTES[0] con datos calculados), NAV, buscador y menú móvil.
+import { NAV, PARTES } from '../../config/sitio';
+import { publicados } from '../../lib/contenido';
+import Icono from './Icono.astro';
+
+const ruta = Astro.url.pathname;
+const esActual = (href: string) => ruta === href || ruta.startsWith(href);
+
+const niveles = await publicados('niveles');
+const horas = niveles.reduce((n, e) => n + e.data.horas, 0);
+const cursos = await publicados('cursos');
+const DATO: Record<string, string> = {
+  '/roadmap/': `${niveles.length} niveles · ~${horas} h`,
+  '/cursos/': `${cursos.length} cursos`,
+};
+const aprender = PARTES[0].enlaces;
+const enAprender = aprender.some((l) => esActual(l.href));
+---
+<header class="hdr">
+  <div class="wrap hdr-in">
+    <a class="logo" href="/" aria-label="MoreContext, inicio"><Icono nombre="marca" tamano={28} />morecontext</a>
+
+    <nav class="nav" aria-label="Principal">
+      <div class="dd">
+        <button type="button" class:list={[{ 'is-actual': enAprender }]} aria-expanded="false" aria-controls="dd-aprender">
+          Aprender
+          <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><path d="m2 3.5 3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+        </button>
+        <div class="dd-menu" id="dd-aprender" hidden>
+          {aprender.map((l) => (
+            <a href={l.href} aria-current={esActual(l.href) ? 'page' : undefined}>
+              {l.texto}
+              {'nota' in l && <small>{l.nota}</small>}
+              {DATO[l.href] && <span class="d">{DATO[l.href]}</span>}
+            </a>
+          ))}
+        </div>
+      </div>
+      {NAV.map((l) => <a href={l.href} aria-current={esActual(l.href) ? 'page' : undefined}>{l.texto}</a>)}
+    </nav>
+
+    <div class="hdr-right">
+      <button class="search-mini" type="button" data-buscar="">
+        <Icono nombre="buscar" tamano={15} />
+        <span class="ph">buscar…</span>
+        <kbd data-kbd>Ctrl K</kbd>
+      </button>
+      <a class="btn sm" href="/empieza-aqui/"><span class="pr" aria-hidden="true">$</span>Empezar<span class="sr-only"> aquí</span></a>
+      <button class="menu-btn" type="button" aria-label="Menú" aria-expanded="false" aria-controls="mnav">
+        <Icono nombre="menu" tamano={18} />
+      </button>
+    </div>
+  </div>
+
+  <nav class="mnav" id="mnav" aria-label="Principal (móvil)" hidden>
+    <div class="wrap">
+      {PARTES.map((p) => (
+        <div>
+          <h2>{p.num} · {p.nombre}</h2>
+          <ul>
+            {p.enlaces.map((l) => <li><a href={l.href} aria-current={esActual(l.href) ? 'page' : undefined}>{l.texto}</a></li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </nav>
+</header>

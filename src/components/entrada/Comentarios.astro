@@ -1,0 +1,37 @@
+---
+// Comentarios con Giscus (GitHub Discussions). No pinta nada mientras falten los IDs en SITIO.comentarios.
+// El script de giscus.app solo se carga al acercarse a la sección (no afecta a la carga de la página).
+import { SITIO } from '../../config/sitio';
+const c = SITIO.comentarios;
+const activo = Boolean(c.repo && c.repoId && c.categoria && c.categoriaId);
+---
+{activo && (
+  <section class="comentarios" aria-labelledby="h-comentarios" data-pagefind-ignore="all">
+    <h2 id="h-comentarios">Comentarios</h2>
+    <p class="faint">Con tu cuenta de GitHub. Se guardan en las Discussions del repositorio.</p>
+    <div class="giscus" data-giscus data-repo={c.repo} data-repo-id={c.repoId} data-category={c.categoria} data-category-id={c.categoriaId}></div>
+  </section>
+)}
+{activo && (
+  <script>
+    const caja = document.querySelector<HTMLElement>('[data-giscus]');
+    if (caja) {
+      const io = new IntersectionObserver((e) => {
+        if (!e.some((x) => x.isIntersecting)) return;
+        io.disconnect();
+        const s = document.createElement('script');
+        s.src = 'https://giscus.app/client.js';
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const datos: Record<string, string> = {
+          repo: caja.dataset.repo!, 'repo-id': caja.dataset.repoId!, category: caja.dataset.category!, 'category-id': caja.dataset.categoryId!,
+          mapping: 'pathname', strict: '1', 'reactions-enabled': '0', 'emit-metadata': '0', 'input-position': 'bottom',
+          theme: 'transparent_dark', lang: 'es', loading: 'lazy',
+        };
+        for (const [k, v] of Object.entries(datos)) s.setAttribute(`data-${k}`, v);
+        caja.append(s);
+      }, { rootMargin: '400px 0px' });
+      io.observe(caja);
+    }
+  </script>
+)}

@@ -1,0 +1,19 @@
+---
+// Manifiesto en corto: cuatro bloques con el texto de contenido/paginas/manifiesto.md.
+interface Props { bloques: { n: string; t: string; p: string }[]; href: string }
+const { bloques, href } = Astro.props;
+---
+<section class="sec" id="manifiesto" aria-labelledby="h-manifiesto">
+  <div class="wrap">
+    <div class="mani-head">
+      <div>
+        <span class="label sec-label"><b>A</b> / manifiesto, en corto</span>
+        <h2 id="h-manifiesto">Por qué es gratis y cómo se sostiene</h2>
+      </div>
+      <a class="link" href={href}>Leer el manifiesto entero</a>
+    </div>
+    <div class="mani">
+      {bloques.map((b) => <div><span class="n">{b.n}</span><h3>{b.t}</h3><p>{b.p}</p></div>)}
+    </div>
+  </div>
+</section>

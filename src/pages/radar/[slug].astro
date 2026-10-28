@@ -1,0 +1,28 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import Paginador from '../../components/entrada/Paginador.astro';
+import { porFechaDesc, publicados, urlDe, vecinos } from '../../lib/contenido';
+import { ldBlog } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () => {
+  const todas = (await publicados('radar')).sort(porFechaDesc);
+  return todas.map((e) => ({ params: { slug: e.id }, props: { e, ...vecinos(todas, e.id) } }));
+}) satisfies GetStaticPaths;
+
+const { e, anterior, siguiente } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+const CATEGORIA: Record<string, string> = { modelos: 'Modelos', herramientas: 'Herramientas', practicas: 'Prácticas', seguridad: 'Seguridad', evals: 'Evals' };
+---
+<LecturaLayout entrada={e} headings={headings} seccion="radar" jsonld={ldBlog(e)}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/radar/', texto: 'Radar' }, { texto: e.data.titulo }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo"><b>Radar</b> · {CATEGORIA[e.data.categoria]}</span>
+  {e.data.fuente && (
+    <p slot="cabecera" class="ficha-datos mono" style="font-size:13px">Fuente: <a href={e.data.fuente.url} class="ext" target="_blank" rel="noopener noreferrer">{e.data.fuente.titulo}</a></p>
+  )}
+  <Content />
+  <Paginador slot="paginador"
+    anterior={siguiente && { href: urlDe(siguiente), titulo: siguiente.data.titulo, etiqueta: 'Más antigua' }}
+    siguiente={anterior && { href: urlDe(anterior), titulo: anterior.data.titulo, etiqueta: 'Más reciente' }} />
+</LecturaLayout>

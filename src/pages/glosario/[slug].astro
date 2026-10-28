@@ -1,0 +1,22 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import { publicados } from '../../lib/contenido';
+import { ldTermino } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () =>
+  (await publicados('glosario')).map((e) => ({ params: { slug: e.id }, props: { e } }))) satisfies GetStaticPaths;
+
+const { e } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+const CATEGORIA: Record<string, string> = { fundamentos: 'Fundamentos', prompting: 'Prompting', herramientas: 'Herramientas', contexto: 'Contexto', agentes: 'Agentes', evals: 'Evals', produccion: 'Producción', seguridad: 'Seguridad' };
+---
+<LecturaLayout entrada={e} headings={headings} seccion="glosario" jsonld={ldTermino(e)} estrecho peso={10}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/glosario/', texto: 'Glosario' }, { texto: e.data.titulo }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo"><b>Glosario</b> · {CATEGORIA[e.data.categoria]}{e.data.ingles && e.data.ingles !== e.data.titulo && <> · <span lang="en">{e.data.ingles}</span></>}</span>
+  {e.data.aliases.length > 0 && (
+    <p slot="cabecera" class="alias mono">También: {e.data.aliases.join(' · ')}</p>
+  )}
+  <Content />
+</LecturaLayout>

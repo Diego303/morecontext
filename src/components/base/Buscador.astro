@@ -1,0 +1,17 @@
+---
+// Paleta de búsqueda (Ctrl/⌘+K y «/»). La lógica está en src/scripts/buscador.ts (Pagefind).
+import Icono from './Icono.astro';
+---
+<dialog id="buscador" class="buscador" aria-label="Buscar en MoreContext" data-pagefind-ignore="all">
+  <div class="bus-in">
+    <Icono nombre="buscar" tamano={18} />
+    <input type="search" aria-label="Buscar en MoreContext" placeholder="busca un concepto, una lección, un patrón…"
+      autocomplete="off" spellcheck="false" enterkeyhint="go" aria-controls="bus-resultados" />
+    <form method="dialog"><button class="bus-cerrar" type="submit" aria-label="Cerrar la búsqueda"><kbd>Esc</kbd></button></form>
+  </div>
+  <ul class="bus-lista" id="bus-resultados" data-resultados aria-label="Resultados"></ul>
+  <p class="sr-only" role="status" aria-live="polite" data-bus-estado></p>
+  <div class="bus-pie" aria-hidden="true">
+    <span><kbd>↑</kbd> <kbd>↓</kbd> moverte</span><span><kbd>Enter</kbd> abrir</span><span><kbd>Esc</kbd> cerrar</span>
+  </div>
+</dialog>
