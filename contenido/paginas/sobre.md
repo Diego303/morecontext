@@ -22,7 +22,7 @@ Si es tu primera visita, ve a [[paginas/empieza-aqui]].
 
 ## Quién escribe
 
-MoreContext lo escribe y lo mantiene [Tu nombre]. Las correcciones y aportaciones de otras personas se reconocen en el historial del repositorio.
+MoreContext lo escribe y lo mantiene [Diego](https://diego303.github.io/Portfolio/). Las correcciones y aportaciones de otras personas se reconocen en el historial del repositorio.
 
 Los textos del blog son opinión del autor y van firmados. El resto del contenido intenta ser referencia: cuando algo es opinión, se dice.
 

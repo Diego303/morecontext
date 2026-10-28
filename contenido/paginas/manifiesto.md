@@ -32,7 +32,7 @@ Aquí intentamos juntarlo, explicarlo desde la base y enlazarlo. Cada término l
 
 ## Cómo se financia
 
-Ahora mismo MoreContext no tiene patrocinadores ni ingresos. Lo escribe y lo mantiene [Tu nombre] en su tiempo.
+Ahora mismo MoreContext no tiene patrocinadores ni ingresos. Lo escribe y lo mantiene Diego en su tiempo.
 
 Si algún día hay patrocinio, se dirá aquí y en cada página afectada, de forma visible. Un patrocinador no podrá decidir qué se publica ni revisar contenido antes de que salga.
 
@@ -48,4 +48,4 @@ Nos vamos a equivocar. Cuando pase:
 > [!nota] Si algo no funciona
 > Si un ejemplo de código falla con la versión actual de la API, es un error nuestro. Avísanos con la versión del SDK que usas y el mensaje de error.
 
-[Tu nombre]
+Diego

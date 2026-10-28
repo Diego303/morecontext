@@ -7,8 +7,8 @@ const abs = (ruta: string) => new URL(ruta, SITIO.url).href;
 type Entrada = CollectionEntry<CollectionKey>;
 
 export const editor = { '@type': 'Organization', name: SITIO.nombre, url: SITIO.url, logo: abs('/icon-512.png') };
-/** Mientras el autor sea el marcador «[Tu nombre]», firma la organización (sin datos inventados). */
-export const autor = /\[.*\]/.test(SITIO.autor) ? editor : { '@type': 'Person', name: SITIO.autor };
+/** Si el autor es aún un marcador («[…]»), firma la organización (sin datos inventados). */
+export const autor = /\[.*\]/.test(SITIO.autor) ? editor : { '@type': 'Person', name: SITIO.autor, url: SITIO.autorUrl };
 
 function comun(e: Entrada) {
   const d = e.data as typeof e.data & { actualizado?: Date };
