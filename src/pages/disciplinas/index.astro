@@ -1,0 +1,39 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import { minutosLectura, porOrden, publicados, urlDe } from '../../lib/contenido';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'disciplinas'))!;
+const { Content } = await render(s);
+const todas = (await publicados('disciplinas')).sort(porOrden);
+const COLUMNAS = [
+  { tipo: 'disciplina', titulo: 'Disciplinas' },
+  { tipo: 'forma-de-trabajar', titulo: 'Formas de trabajar' },
+] as const;
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="disciplinas"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/disciplinas/')}>
+  <Content />
+  <div slot="despues" class="wrap listado">
+    <div class="grid-2" style="gap:48px">
+      {COLUMNAS.map(({ tipo, titulo }) => {
+        const lista = todas.filter((e) => e.data.tipo === tipo);
+        return (
+          <section aria-labelledby={`h-${tipo}`}>
+            <div class="listado-cab"><h2 id={`h-${tipo}`}>{titulo}</h2><span class="mono">{lista.length}</span></div>
+            <ol class="entradas">
+              {lista.map((e) => (
+                <li>
+                  <h3><a href={urlDe(e)}>{e.data.titulo}</a></h3>
+                  <p>{e.data.descripcion}</p>
+                  <div class="meta" style="margin-top:6px"><span>{minutosLectura(e.body)} min</span></div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        );
+      })}
+    </div>
+  </div>
+</PaginaLayout>

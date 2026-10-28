@@ -1,0 +1,10 @@
+---
+interface Props { proyecto: { titulo: string; descripcion: string; entregable: string }; etiqueta?: string }
+const { proyecto, etiqueta = 'Proyecto del nivel' } = Astro.props;
+---
+<section class="ficha-proyecto panel" aria-labelledby="h-proyecto">
+  <span class="label"><b>§</b> {etiqueta}</span>
+  <h2 id="h-proyecto">{proyecto.titulo}</h2>
+  <p>{proyecto.descripcion}</p>
+  <p class="entregable"><span class="label">Entregable</span>{proyecto.entregable}</p>
+</section>

@@ -1,0 +1,36 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import Paginador from '../../components/entrada/Paginador.astro';
+import Dificultad from '../../components/entrada/Dificultad.astro';
+import { porOrden, publicados, urlDe, vecinos } from '../../lib/contenido';
+import { ldArticulo } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () => {
+  const todos = (await publicados('patrones')).sort(porOrden);
+  return todos.map((e) => ({ params: { slug: e.id }, props: { e, ...vecinos(todos, e.id) } }));
+}) satisfies GetStaticPaths;
+
+const { e, anterior, siguiente } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+const d = e.data;
+---
+<LecturaLayout entrada={e} headings={headings} seccion="patrones" jsonld={ldArticulo(e)}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/patrones/', texto: 'Patrones' }, { texto: d.titulo }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo"><b>Patrón</b> · {d.tipo}</span>
+  {(d.coste || d.latencia || d.cuandoUsar || d.cuandoNo) && (
+    <div slot="cabecera" class="ficha-datos">
+      <dl class="datos">
+        {d.coste && <div><dt>Coste</dt><dd><Dificultad valor={d.coste} etiqueta="Coste" /> {d.coste} de 3</dd></div>}
+        {d.latencia && <div><dt>Latencia</dt><dd><Dificultad valor={d.latencia} etiqueta="Latencia" /> {d.latencia} de 3</dd></div>}
+        {d.cuandoUsar && <div class="ancho"><dt>Cuándo usarlo</dt><dd>{d.cuandoUsar}</dd></div>}
+        {d.cuandoNo && <div class="ancho"><dt>Cuándo no</dt><dd>{d.cuandoNo}</dd></div>}
+      </dl>
+    </div>
+  )}
+  <Content />
+  <Paginador slot="paginador"
+    anterior={anterior && { href: urlDe(anterior), titulo: anterior.data.titulo }}
+    siguiente={siguiente && { href: urlDe(siguiente), titulo: siguiente.data.titulo }} />
+</LecturaLayout>

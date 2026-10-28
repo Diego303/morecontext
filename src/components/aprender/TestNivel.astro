@@ -1,0 +1,58 @@
+---
+// Test de nivel interactivo de /empieza-aqui/. Las preguntas y la tabla de destinos son las del texto
+// (contenido/paginas/empieza-aqui.md); aquí solo se responde con botones. filtros.ts lo coloca
+// después de la lista de preguntas y muestra la ruta recomendada.
+import { getEntry } from 'astro:content';
+import { urlDe } from '../../lib/contenido';
+
+const nivel = async (id: string) => {
+  const e = await getEntry('niveles', id);
+  if (!e) throw new Error(`TestNivel: no existe el nivel ${id}`);
+  return { href: urlDe(e), titulo: e.data.titulo };
+};
+const [n00, n10, n20, n40, n80, n100] = await Promise.all(
+  ['00-fundamentos', '10-prompting', '20-herramientas', '40-primer-agente', '80-evals', '100-produccion'].map(nivel));
+const cursos = await getEntry('secciones', 'cursos');
+---
+<template data-test-nivel>
+  <div class="test-nivel panel" data-pagefind-ignore>
+    <span class="label"><b>§</b> Contesta aquí</span>
+    <ol>
+      {[1, 2, 3].map((n) => (
+        <li data-pregunta={n}>
+          <span>Pregunta {n}</span>
+          <span class="chips" role="group" aria-label={`Respuesta a la pregunta ${n}`}>
+            <button class="chip" type="button" data-p={n} data-v="si" aria-pressed="false">Sí</button>
+            <button class="chip" type="button" data-p={n} data-v="no" aria-pressed="false">No</button>
+          </span>
+        </li>
+      ))}
+    </ol>
+    <div class="resultado" aria-live="polite">
+      <div data-resultado="A" hidden>
+        <p class="ruta">Ruta A · Nunca he usado la API de un modelo</p>
+        <p>Empieza en <a href={n00.href}>{n00.titulo}</a>.</p>
+        <a class="link" href="#nunca-he-usado-la-api-de-un-modelo">Ver la ruta A</a>
+      </div>
+      <div data-resultado="B1" hidden>
+        <p class="ruta">Ruta B · Ya uso LLMs y quiero construir agentes</p>
+        <p>Empieza en <a href={n20.href}>{n20.titulo}</a>, o en <a href={n10.href}>{n10.titulo}</a> si tus prompts fallan a menudo.</p>
+        <a class="link" href="#ya-uso-llms-y-quiero-construir-agentes">Ver la ruta B</a>
+      </div>
+      <div data-resultado="B2" hidden>
+        <p class="ruta">Ruta B · Ya uso LLMs y quiero construir agentes</p>
+        <p>Empieza en <a href={n40.href}>{n40.titulo}</a> y, en paralelo, <a href={n80.href}>{n80.titulo}</a>.</p>
+        <a class="link" href="#ya-uso-llms-y-quiero-construir-agentes">Ver la ruta B</a>
+      </div>
+      <div data-resultado="C" hidden>
+        <p class="ruta">Ruta C · Quiero llevar algo a producción</p>
+        <p>Empieza en <a href={n100.href}>{n100.titulo}</a> y, después, los <a href={cursos ? urlDe(cursos) : '/cursos/'}>cursos específicos</a> que te toquen.</p>
+        <a class="link" href="#quiero-llevar-algo-a-producción">Ver la ruta C</a>
+      </div>
+      <p class="faint">¿Trabajas en producto o gestión? <a href="#trabajo-en-producto-o-gestión">Mira la ruta D</a>.</p>
+    </div>
+  </div>
+</template>
+<script>
+  import '../../scripts/filtros.ts';
+</script>

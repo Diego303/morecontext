@@ -1,0 +1,9 @@
+---
+// Barra de progreso de un conjunto de lecciones (progreso.ts rellena barra y texto).
+interface Props { ids: string[]; etiqueta?: string }
+const { ids, etiqueta = 'Tu progreso' } = Astro.props;
+---
+<div class="progreso" data-progreso-de={ids.join(',')}>
+  <div class="progreso-cab"><span class="label">{etiqueta}</span><span class="mono faint" data-texto aria-live="polite">0 de {ids.length} · 0 %</span></div>
+  <div class="progress" role="presentation"><i data-barra></i></div>
+</div>

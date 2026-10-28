@@ -1,0 +1,17 @@
+---
+// «Enlazado desde»: páginas que apuntan a esta con [[wikilinks]] o en «relacionados».
+import { NOMBRE_SECCION } from '../../config/sitio';
+import { retroenlaces } from '../../lib/retroenlaces';
+interface Props { url: string; max?: number }
+const { url, max = 12 } = Astro.props;
+const todos = await retroenlaces(url);
+const lista = todos.slice(0, max);
+---
+{lista.length > 0 && (
+  <section aria-labelledby="h-retro">
+    <h2 id="h-retro">Enlazado desde{todos.length > max && <span class="faint"> · {max} de {todos.length}</span>}</h2>
+    <ul class="lista-flecha">
+      {lista.map((r) => <li><a href={r.url}>{r.titulo}<span class="s">{NOMBRE_SECCION[r.seccion] ?? 'Página'}</span></a></li>)}
+    </ul>
+  </section>
+)}

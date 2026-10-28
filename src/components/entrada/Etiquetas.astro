@@ -1,0 +1,10 @@
+---
+import { urlDeTag } from '../../lib/etiquetas';
+interface Props { tags: string[] }
+const { tags } = Astro.props;
+---
+{tags.length > 0 && (
+  <ul class="tags" aria-label="Etiquetas">
+    {tags.map((t) => <li><a class="tag" href={urlDeTag(t)}>{t}</a></li>)}
+  </ul>
+)}

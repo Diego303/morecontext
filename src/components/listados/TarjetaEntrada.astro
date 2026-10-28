@@ -1,0 +1,23 @@
+---
+// Tarjeta-enlace de listados (cursos, sistemas, recetas…). Las etiquetas van como texto:
+// la tarjeta entera ya es un enlace y no se anidan enlaces.
+interface Props {
+  href: string;
+  titulo: string;
+  descripcion?: string;
+  datos?: Record<string, string>;   // atributos data-* para filtrar (data-tema, data-nivel…)
+  nivelTitulo?: 2 | 3;
+}
+const { href, titulo, descripcion, datos = {}, nivelTitulo = 3 } = Astro.props;
+const Titulo = `h${nivelTitulo}` as 'h2' | 'h3';
+const atributos = Object.fromEntries(Object.entries(datos).map(([k, v]) => [`data-${k}`, v]));
+---
+<li class="tarjeta" {...atributos}>
+  <a class="card" href={href}>
+    {Astro.slots.has('meta') && <div class="meta"><slot name="meta" /></div>}
+    <Titulo>{titulo}</Titulo>
+    {descripcion && <p>{descripcion}</p>}
+    <slot />
+    {Astro.slots.has('pie') && <div class="foot"><slot name="pie" /></div>}
+  </a>
+</li>

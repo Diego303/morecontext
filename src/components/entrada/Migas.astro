@@ -1,0 +1,26 @@
+---
+// Migas de pan: ruta mono separada por «/»; el último elemento sin enlace y con aria-current.
+interface Props {
+  items: { href?: string; texto: string }[];
+  jsonld?: boolean;
+}
+const { items, jsonld = true } = Astro.props;
+const lista = jsonld && {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: items.map((it, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: it.texto,
+    item: new URL(it.href ?? Astro.url.pathname, Astro.site).href,
+  })),
+};
+---
+<nav class="migas" aria-label="Migas de pan" data-pagefind-ignore>
+  <ol>
+    {items.map((it, i) => (
+      <li>{it.href && i < items.length - 1 ? <a href={it.href}>{it.texto}</a> : <span aria-current="page">{it.texto}</span>}</li>
+    ))}
+  </ol>
+</nav>
+{lista && <script type="application/ld+json" set:html={JSON.stringify(lista).replace(/</g, '\\u003c')} />}

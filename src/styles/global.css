@@ -1,0 +1,8 @@
+/* Estilos globales: fuentes autoalojadas (Fontsource) y design system. */
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+@import '@fontsource/patrick-hand';
+@import './tokens.css';
+@import './base.css';
+@import './componentes.css';
+@import './prosa.css';

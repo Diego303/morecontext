@@ -1,0 +1,109 @@
+---
+// /roadmap/<nivel>/ (ficha) y /roadmap/<nivel>/<leccion>/ (lección con navegación de todo el temario)
+import type { GetStaticPaths } from 'astro';
+import { render, type CollectionEntry } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import BarraCurso from '../../components/aprender/BarraCurso.astro';
+import FichaProyecto from '../../components/aprender/FichaProyecto.astro';
+import FilaLeccion from '../../components/aprender/FilaLeccion.astro';
+import MarcarHecha from '../../components/aprender/MarcarHecha.astro';
+import Paginador from '../../components/entrada/Paginador.astro';
+import Relacionados from '../../components/entrada/Relacionados.astro';
+import Retroenlaces from '../../components/entrada/Retroenlaces.astro';
+import EditarEnGitHub from '../../components/entrada/EditarEnGitHub.astro';
+import { resolverEnlaces, urlDe, vecinos } from '../../lib/contenido';
+import { temarioRoadmap, navRoadmap, idLeccion } from '../../lib/navegacion';
+import { ldAprendizaje } from '../../lib/jsonld';
+import { ogDe } from '../../lib/og';
+
+type Nivel = CollectionEntry<'niveles'>;
+type Leccion = CollectionEntry<'lecciones'>;
+type Props =
+  | { tipo: 'nivel'; nivel: Nivel; lecciones: Leccion[]; anterior?: Nivel; siguiente?: Nivel }
+  | { tipo: 'leccion'; leccion: Leccion; nivel: Nivel; anterior?: Leccion; siguiente?: Leccion };
+
+export const getStaticPaths = (async () => {
+  const temario = await temarioRoadmap();
+  const niveles = temario.map((t) => t.nivel);
+  const todas = temario.flatMap((t) => t.lecciones); // orden de lectura: cruza niveles
+  return [
+    ...temario.map(({ nivel, lecciones }) => ({
+      params: { slug: nivel.id },
+      props: { tipo: 'nivel' as const, nivel, lecciones, ...vecinos(niveles, nivel.id) },
+    })),
+    ...temario.flatMap(({ nivel, lecciones }) => lecciones.map((leccion) => ({
+      params: { slug: leccion.id },
+      props: { tipo: 'leccion' as const, leccion, nivel, ...vecinos(todas, leccion.id) },
+    }))),
+  ];
+}) satisfies GetStaticPaths;
+
+const p = Astro.props as Props;
+const nav = p.tipo === 'leccion' ? await navRoadmap() : null;
+const entrada = p.tipo === 'nivel' ? p.nivel : p.leccion;
+const { Content, headings } = await render(entrada);
+const corto = (n: Nivel) => `Nivel ${n.data.nivel}`;
+const nombreNivel = (n: Nivel) => n.data.titulo.replace(/^Nivel \d+ · /, '');
+const TIPO = { teoria: 'teoría', practica: 'práctica', proyecto: 'proyecto' } as const;
+---
+{p.tipo === 'nivel' && (
+  <PaginaLayout titulo={p.nivel.data.titulo} descripcion={p.nivel.data.descripcion} lead={p.nivel.data.descripcion} seccion="roadmap"
+    migas={[{ href: '/', texto: 'Inicio' }, { href: '/roadmap/', texto: 'Roadmap' }, { texto: corto(p.nivel) }]}
+    jsonld={ldAprendizaje(p.nivel, { nivel: corto(p.nivel), horas: p.nivel.data.horas })} imagen={ogDe(p.nivel)}>
+    <BarraCurso slot="cabecera" horas={p.nivel.data.horas} lecciones={p.lecciones.map(idLeccion)}
+      minutos={p.lecciones.reduce((n, l) => n + l.data.minutos, 0)} />
+    <div slot="antes" class="wrap narrow">
+      <section class="ficha-objetivo panel" style="margin-top:var(--s8)" aria-label="Objetivo y prerrequisitos">
+        <span class="label">Objetivo</span>
+        <p>{p.nivel.data.objetivo}</p>
+        {resolverEnlaces(p.nivel.data.prerrequisitos).length > 0 && (
+          <>
+            <span class="label" style="display:block;margin-top:16px">Antes conviene</span>
+            <ul class="lista-flecha">{resolverEnlaces(p.nivel.data.prerrequisitos).map((r) => <li><a href={r.url}>{r.titulo}</a></li>)}</ul>
+          </>
+        )}
+      </section>
+    </div>
+    <Content />
+    <div slot="despues" class="wrap narrow listado" style="padding-top:0">
+      <section aria-labelledby="h-lecciones">
+        <div class="listado-cab"><h2 id="h-lecciones">Lecciones</h2><span class="mono">{p.lecciones.length} · marca las que termines</span></div>
+        <ol class="lecciones">
+          {p.lecciones.map((l) => (
+            <FilaLeccion numero={`${p.nivel.data.nivel}.${l.data.orden}`} href={urlDe(l)} titulo={l.data.titulo}
+              minutos={l.data.minutos} tipo={l.data.tipo} leccion={idLeccion(l)} />
+          ))}
+        </ol>
+      </section>
+      <FichaProyecto proyecto={p.nivel.data.proyecto} />
+      <footer class="pie-entrada" data-pagefind-ignore="all">
+        <Relacionados lista={p.nivel.data.relacionados} />
+        <Retroenlaces url={urlDe(p.nivel)} />
+        <Paginador
+          anterior={p.anterior && { href: urlDe(p.anterior), titulo: nombreNivel(p.anterior), etiqueta: `← ${corto(p.anterior)}` }}
+          siguiente={p.siguiente && { href: urlDe(p.siguiente), titulo: nombreNivel(p.siguiente), etiqueta: `${corto(p.siguiente)} →` }} />
+        <EditarEnGitHub filePath={p.nivel.filePath} />
+      </footer>
+    </div>
+  </PaginaLayout>
+)}
+{p.tipo === 'leccion' && nav && (
+  <DocsLayout entrada={p.leccion} headings={headings} seccion="roadmap" navegacion={nav} comentarios
+    migas={[{ href: '/', texto: 'Inicio' }, { href: '/roadmap/', texto: 'Roadmap' }, { href: urlDe(p.nivel), texto: corto(p.nivel) }, { texto: p.leccion.data.titulo }]}
+    jsonld={ldAprendizaje(p.leccion, { nivel: corto(p.nivel), minutos: p.leccion.data.minutos })}>
+    <span slot="sobre-titulo" class="label sobre-titulo"><b>Lección {p.nivel.data.nivel}.{p.leccion.data.orden}</b> · {TIPO[p.leccion.data.tipo]}</span>
+    <section slot="antes" class="objetivos panel" aria-labelledby="h-objetivos">
+      <span class="label" id="h-objetivos">Al terminar podrás</span>
+      <ul>{p.leccion.data.objetivos.map((o) => <li>{o}</li>)}</ul>
+      {resolverEnlaces(p.leccion.data.requiere).length > 0 && (
+        <p class="requiere">Requiere: {resolverEnlaces(p.leccion.data.requiere).map((r, i) => <>{i > 0 && ' · '}<a href={r.url}>{r.titulo}</a></>)}</p>
+      )}
+    </section>
+    <Content />
+    <MarcarHecha slot="antes-pie" leccion={idLeccion(p.leccion)} />
+    <Paginador slot="paginador"
+      anterior={p.anterior && { href: urlDe(p.anterior), titulo: p.anterior.data.titulo }}
+      siguiente={p.siguiente && { href: urlDe(p.siguiente), titulo: p.siguiente.data.titulo }} />
+  </DocsLayout>
+)}

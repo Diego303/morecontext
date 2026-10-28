@@ -1,0 +1,11 @@
+---
+type Enlace = { href: string; titulo: string; etiqueta?: string };
+interface Props { anterior?: Enlace | false; siguiente?: Enlace | false }
+const { anterior, siguiente } = Astro.props;
+---
+{(anterior || siguiente) && (
+  <nav class="pager" aria-label="Anterior y siguiente" data-pagefind-ignore>
+    {anterior && <a href={anterior.href} rel="prev"><span class="label">{anterior.etiqueta ?? 'Anterior'}</span>{anterior.titulo}</a>}
+    {siguiente && <a class="next" href={siguiente.href} rel="next"><span class="label">{siguiente.etiqueta ?? 'Siguiente'}</span>{siguiente.titulo}</a>}
+  </nav>
+)}

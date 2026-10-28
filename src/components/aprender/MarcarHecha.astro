@@ -1,0 +1,11 @@
+---
+// Casilla de progreso local. El id es <carpeta>/<id> para que roadmap y cursos no choquen.
+interface Props { leccion: string; titulo?: string; compacta?: boolean }
+const { leccion, titulo, compacta = false } = Astro.props;
+---
+<label class:list={['check', 'marcar', { compacta }]}>
+  <input type="checkbox" data-leccion={leccion} />
+  {compacta
+    ? <span class="sr-only">Marcar «{titulo}» como hecha</span>
+    : <span>Marcar como hecha</span>}
+</label>

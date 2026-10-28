@@ -1,0 +1,33 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import TarjetaEntrada from '../../components/listados/TarjetaEntrada.astro';
+import Dificultad from '../../components/entrada/Dificultad.astro';
+import { porOrden, publicados, resolverEnlaces, urlDe } from '../../lib/contenido';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'sistemas'))!;
+const { Content } = await render(s);
+const sistemas = (await publicados('sistemas')).sort(porOrden);
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="sistemas"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/sistemas/')}>
+  <Content />
+  <section slot="despues" class="wrap listado" aria-labelledby="h-sistemas">
+    <div class="listado-cab"><h2 id="h-sistemas">{sistemas.length} arquitecturas</h2><span class="mono">complejidad · tiempo · stack</span></div>
+    <ul class="tarjetas">
+      {sistemas.map((e) => (
+        <TarjetaEntrada href={urlDe(e)} titulo={e.data.titulo} descripcion={e.data.descripcion}>
+          <Fragment slot="meta"><Dificultad valor={e.data.complejidad} etiqueta="Complejidad" /><span>{e.data.tiempo}</span></Fragment>
+          {e.data.componentes.length > 0 && (
+            <ul class="compo" aria-label="Componentes">{e.data.componentes.slice(0, 4).map((c) => <li>{c}</li>)}{e.data.componentes.length > 4 && <li>+{e.data.componentes.length - 4}</li>}</ul>
+          )}
+          <Fragment slot="pie">
+            <span>{e.data.stack.slice(0, 3).join(' · ')}</span>
+            {resolverEnlaces(e.data.patrones).length > 0 && <span>{resolverEnlaces(e.data.patrones).length} patrones</span>}
+          </Fragment>
+        </TarjetaEntrada>
+      ))}
+    </ul>
+  </section>
+</PaginaLayout>

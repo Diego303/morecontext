@@ -1,0 +1,60 @@
+---
+// Laboratorio: calculadora de tokens y costes. Sin precios por defecto: los introduce quien la usa.
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import { ldColeccion } from '../../lib/jsonld';
+
+const titulo = 'Laboratorio';
+const descripcion = 'Calculadora de costes de llamadas a un modelo con tus tokens y tus precios, y un estimador aproximado de tokens a partir de un texto.';
+const campo = (id: string, etiqueta: string, ayuda?: string) => ({ id, etiqueta, ayuda });
+const TOKENS = [campo('entrada', 'Tokens de entrada'), campo('salida', 'Tokens de salida'), campo('cacheLectura', 'Tokens leídos de caché', 'opcional'), campo('cacheEscritura', 'Tokens escritos en caché', 'opcional')];
+const PRECIOS = [campo('pEntrada', 'Entrada'), campo('pSalida', 'Salida'), campo('pCacheLectura', 'Lectura de caché', 'opcional'), campo('pCacheEscritura', 'Escritura de caché', 'opcional')];
+---
+<PaginaLayout titulo={titulo} descripcion={descripcion} lead={descripcion} seccion="laboratorio"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: titulo }]} jsonld={{ ...ldColeccion(titulo, descripcion, '/laboratorio/'), '@type': 'WebApplication', applicationCategory: 'DeveloperApplication', isAccessibleForFree: true }}>
+  <p>Todo se calcula en tu navegador. Los precios cambian y dependen del proveedor y del modelo: cópialos de su página de precios. Para saber cuántos tokens usa de verdad una llamada, mira el campo <code>usage</code> de la respuesta o el endpoint de conteo de tokens de tu proveedor.</p>
+  <div slot="despues" class="wrap narrow listado pegado">
+    <form class="calc panel" data-calculadora aria-labelledby="h-calc" novalidate>
+      <h2 id="h-calc">Coste de una llamada</h2>
+      <fieldset>
+        <legend class="label">Tokens por llamada</legend>
+        <div class="calc-campos">
+          {TOKENS.map((c) => <label for={c.id}><span>{c.etiqueta}{c.ayuda && <small> · {c.ayuda}</small>}</span><input class="input" id={c.id} name={c.id} type="number" min="0" step="1" inputmode="numeric" /></label>)}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend class="label">Precio por millón de tokens <small>(en tu moneda)</small></legend>
+        <div class="calc-campos">
+          {PRECIOS.map((c) => <label for={c.id}><span>{c.etiqueta}{c.ayuda && <small> · {c.ayuda}</small>}</span><input class="input" id={c.id} name={c.id} type="number" min="0" step="any" inputmode="decimal" /></label>)}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend class="label">Uso</legend>
+        <div class="calc-campos">
+          <label for="llamadas"><span>Llamadas al día</span><input class="input" id="llamadas" name="llamadas" type="number" min="0" step="1" inputmode="numeric" /></label>
+          <label for="dias"><span>Días al mes</span><input class="input" id="dias" name="dias" type="number" min="1" max="31" step="1" value="30" inputmode="numeric" /></label>
+        </div>
+      </fieldset>
+      <div role="status" aria-live="polite"><dl class="calc-resultado" data-resultado>
+        <div><dt>Por llamada</dt><dd data-r="llamada">—</dd></div>
+        <div><dt>Al día</dt><dd data-r="dia">—</dd></div>
+        <div><dt>Al mes</dt><dd data-r="mes">—</dd></div>
+      </dl></div>
+      <p class="mono faint calc-nota" data-falta>Rellena al menos los tokens y los precios de entrada y salida.</p>
+    </form>
+
+    <form class="calc panel" data-estimador aria-labelledby="h-est" novalidate>
+      <h2 id="h-est">Estimar tokens de un texto</h2>
+      <p class="faint">Aproximación sin tokenizador: divide los caracteres entre una relación que tú eliges. Varía según el idioma, el modelo y el contenido (el código y los números suelen usar más tokens). Para el dato exacto, cuenta los tokens con tu proveedor.</p>
+      <label for="texto" class="sr-only">Texto</label>
+      <textarea class="input" id="texto" rows="6" placeholder="pega aquí un prompt o un documento…"></textarea>
+      <div class="calc-campos">
+        <label for="ratio"><span>Caracteres por token</span><input class="input" id="ratio" type="number" min="1" max="10" step="0.1" value="4" inputmode="decimal" /></label>
+      </div>
+      <p class="calc-est" role="status" aria-live="polite"><span data-est>0 caracteres · ~0 tokens</span></p>
+      <button class="btn-sketch" type="button" data-usar>Usar como tokens de entrada</button>
+    </form>
+  </div>
+</PaginaLayout>
+<script>
+  import '../../scripts/laboratorio.ts';
+</script>

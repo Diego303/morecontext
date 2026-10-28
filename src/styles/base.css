@@ -1,0 +1,108 @@
+/* Reset y elementos base. */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--header-h) + 24px);
+  overflow-x: clip;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-void);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+img, svg, video { max-width: 100%; }
+img { height: auto; }
+::selection { background: var(--accent-yellow); color: var(--ink); }
+[hidden] { display: none !important; }
+
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
+p { margin: 0 0 1em; max-width: 65ch; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+a { color: var(--accent-cyan); text-decoration: none; }
+a:hover { color: var(--accent-pink); }
+
+:focus-visible { outline: 2px solid var(--accent-yellow); outline-offset: 3px; }
+
+code, kbd, samp, pre { font-family: var(--font-mono); }
+
+hr { border: 0; border-top: 1px dashed var(--border); margin: var(--s7) 0; }
+
+/* Solo para lectores de pantalla; el enlace de salto se ve al recibir el foco. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.sr-only.skip:focus {
+  position: fixed;
+  left: 16px;
+  top: 12px;
+  z-index: 200;
+  width: auto;
+  height: auto;
+  margin: 0;
+  clip: auto;
+  padding: 8px 12px;
+  background: var(--accent-yellow);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border-radius: var(--radius-sm);
+}
+
+/* Contenedores */
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap.narrow { max-width: calc(var(--lectura) + 32px); }
+
+/* Retícula de ingeniería: solo en cabeceras de página */
+.grid-bg { position: relative; isolation: isolate; }
+.grid-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-size: 40px 40px;
+  background-image:
+    linear-gradient(to right, var(--border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+  -webkit-mask-image: radial-gradient(circle at center, #000 40%, transparent 100%);
+  mask-image: radial-gradient(circle at center, #000 40%, transparent 100%);
+  opacity: .15;
+}
+
+/* Llegar a un ancla: contorno discontinuo que se desvanece (lo añade un script) */
+.is-target { outline: 1px dashed var(--accent-yellow); outline-offset: 8px; transition: outline-color 1.6s ease; }
+.is-target.fade { outline-color: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

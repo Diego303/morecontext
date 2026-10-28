@@ -1,0 +1,37 @@
+---
+// Portada «El índice» (docs/referencia/landing-indice.html) con todos los datos calculados del contenido.
+import '../styles/portada.css';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Hero from '../components/portada/Hero.astro';
+import EmpiezaAqui from '../components/portada/EmpiezaAqui.astro';
+import IndiceGeneral from '../components/portada/IndiceGeneral.astro';
+import UltimosEscritos from '../components/portada/UltimosEscritos.astro';
+import Manifiesto from '../components/portada/Manifiesto.astro';
+import { SITIO } from '../config/sitio';
+import { datosPortada } from '../lib/portada';
+
+const d = await datosPortada();
+const descripcion = `${SITIO.descripcion} Roadmap 0→100, cursos, documentación, sistemas, patrones, recetas, glosario y radar. Gratis y sin registro.`;
+const jsonld = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: SITIO.nombre,
+  url: `${SITIO.url}/`,
+  description: SITIO.descripcion,
+  inLanguage: 'es',
+  publisher: { '@type': 'Organization', name: SITIO.nombre, url: SITIO.url, logo: new URL('/icon-512.png', SITIO.url).href },
+};
+---
+<BaseLayout titulo={SITIO.nombre} descripcion={descripcion} jsonld={jsonld}>
+  <main id="main">
+    <Hero cifras={d.cifras} />
+    <EmpiezaAqui rutas={d.rutas} urlTest={d.urlTest} />
+    <IndiceGeneral partes={d.partes} apendices={d.apendices} colofon={d.colofon} />
+    <UltimosEscritos destacado={d.escritos.destacado} anteriores={d.escritos.anteriores} tipo={d.escritos.tipo}
+      ultimoBoletin={d.escritos.ultimoBoletin} fechaCorta={d.fechaCorta} />
+    <Manifiesto bloques={d.manifiesto} href={d.urlManifiesto} />
+  </main>
+</BaseLayout>
+<script>
+  import '../scripts/portada.ts';
+</script>

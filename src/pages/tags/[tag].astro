@@ -1,0 +1,35 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import { NOMBRE_SECCION } from '../../config/sitio';
+import { indiceTags } from '../../lib/etiquetas';
+import { ldColeccion } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () =>
+  [...(await indiceTags())].map(([slug, grupo]) => ({ params: { tag: slug }, props: grupo }))) satisfies GetStaticPaths;
+
+const { nombre, entradas } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const ORDEN = ['roadmap', 'cursos', 'docs', 'modelos', 'sistemas', 'patrones', 'disciplinas', 'recetas', 'glosario', 'radar', 'blog', 'boletin'];
+const porSeccion = new Map<string, typeof entradas>();
+for (const e of entradas) {
+  const s = ORDEN.includes(e.seccion) ? e.seccion : '';
+  porSeccion.set(s, [...(porSeccion.get(s) ?? []), e]);
+}
+const secciones = [...ORDEN, ''].filter((s) => porSeccion.has(s));
+const descripcion = `Páginas de MoreContext con la etiqueta «${nombre}»: ${entradas.length} en ${secciones.length} secciones.`;
+---
+<PaginaLayout titulo={`#${nombre}`} descripcion={descripcion} lead={`${entradas.length} páginas con esta etiqueta.`} indexar={false}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/tags/', texto: 'Etiquetas' }, { texto: nombre }]} jsonld={ldColeccion(`#${nombre}`, descripcion, `/tags/${Astro.params.tag}/`)}>
+  <div slot="despues" class="wrap narrow listado">
+    {secciones.map((s) => (
+      <section aria-labelledby={`sec-${s || 'paginas'}`} style="margin-bottom:var(--s7)">
+        <div class="listado-cab"><h2 id={`sec-${s || 'paginas'}`}>{NOMBRE_SECCION[s] ?? 'Páginas'}</h2><span class="mono">{porSeccion.get(s)!.length}</span></div>
+        <ul class="entradas">
+          {porSeccion.get(s)!.sort((a, b) => a.titulo.localeCompare(b.titulo, 'es')).map((e) => (
+            <li><h3><a href={e.url}>{e.titulo}</a></h3><p>{e.descripcion}</p></li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</PaginaLayout>

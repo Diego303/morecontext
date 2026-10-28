@@ -1,0 +1,24 @@
+---
+// Fila de metadatos: fecha (publicado / actualizado), minutos, nivel y etiquetas.
+import type { CollectionEntry, CollectionKey } from 'astro:content';
+import { fecha, fechaISO, minutosLectura } from '../../lib/contenido';
+import Icono from '../base/Icono.astro';
+import Dificultad from './Dificultad.astro';
+import Etiquetas from './Etiquetas.astro';
+
+interface Props { entrada: CollectionEntry<CollectionKey>; etiquetas?: boolean }
+const { entrada, etiquetas = true } = Astro.props;
+const d = entrada.data as typeof entrada.data & { actualizado?: Date; minutos?: number; nivel?: unknown; };
+const minutos = d.minutos ?? minutosLectura(entrada.body);
+const nivel = typeof d.nivel === 'string' && ['inicial', 'intermedio', 'avanzado'].includes(d.nivel) ? (d.nivel as 'inicial' | 'intermedio' | 'avanzado') : undefined;
+---
+<div class="meta-entrada">
+  <span>
+    {d.actualizado
+      ? <>Actualizado <time datetime={fechaISO(d.actualizado)}>{fecha(d.actualizado)}</time></>
+      : <>Publicado <time datetime={fechaISO(d.creado)}>{fecha(d.creado)}</time></>}
+  </span>
+  <span><Icono nombre="reloj" tamano={13} />{minutos} min{d.minutos ? '' : ' de lectura'}</span>
+  {nivel && <span><Dificultad valor={nivel} texto /></span>}
+  {etiquetas && <Etiquetas tags={d.tags} />}
+</div>
