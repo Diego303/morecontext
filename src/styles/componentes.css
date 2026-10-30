@@ -408,7 +408,7 @@ details.faq .a { padding: 0 0 18px; color: var(--text-muted); }
   align-items: center;
   gap: 5px;
   position: relative;
-  padding: 6px 9px;
+  padding: 6px 7px; /* 7 px: con «Herramientas», los 10 enlaces caben desde 1181 px */
   font-size: 13.5px;
   color: var(--text-muted);
   white-space: nowrap;
@@ -422,8 +422,8 @@ details.faq .a { padding: 0 0 18px; color: var(--text-muted); }
 .nav > a[aria-current="page"]::after, .nav .dd > button.is-actual::after {
   content: "";
   position: absolute;
-  left: 9px;
-  right: 9px;
+  left: 7px;
+  right: 7px;
   bottom: -1px;
   height: 2px;
   background: var(--accent-yellow);

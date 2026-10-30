@@ -532,3 +532,36 @@ Aceptación:
 - Capturas a 400 y 1440 px de `/plantillas/` y `agents-md`, `/herramientas/` y `langgraph`, `/biblioteca/` y `react`, `/problemas/` y `tool-result-sin-tool-use`, `/cursos/ruta-en-video/` y una lección, `/patrones/`, `/docs/`, `/cursos/`, `/roadmap/`, `/mapa/` y `/recetas/`: sin scroll horizontal ni errores de consola.
 - Descargar, probado con Playwright en 6 plantillas (`agents-md`, `criterios-de-aceptacion` en yaml, `subagente`, `skill`, `plan-de-olas` y `prompt-apuntes-de-video`, estas tres con bloque exterior de cuatro acentos): nombre esperado y contenido idéntico al bloque del Markdown.
 - Teclado: todo son botones y enlaces nativos.
+
+---
+
+## Fase I4 · hecho
+
+Cambios:
+
+| Archivo | Cambio |
+|---|---|
+| `src/lib/portada.ts` | Capítulos nuevos con recuentos calculados: **Biblioteca** («27 textos») y **Problemas frecuentes** («16 problemas») en la parte II; **Plantillas** («14 plantillas») y **Herramientas** («42 herramientas») en la parte III. Sus entradas llevan el tipo, el tema, el formato o la categoría a la derecha, y sus claves de filtrado incluyen autores, síntoma y nombre de archivo. La numeración de capítulos y entradas se calcula (antes iba escrita a mano), así que pasa de 14 a 18 capítulos sin tocar números. «Fuentes» (`/fuentes/`, página nueva del paquete) entra en los apéndices. El texto de la parte III menciona plantillas y herramientas |
+| `src/config/sitio.ts` | `PARTES`: II + Biblioteca y Problemas frecuentes; III + Plantillas y Herramientas (cabecera móvil y pie las toman de aquí). `NAV`: + «Herramientas» detrás de Recetas |
+| `src/components/base/Pie.astro` | + «Fuentes» en «Proyecto». Las cuatro secciones ya salen en las columnas de `PARTES`, no repetidas en «Proyecto» |
+| `src/styles/componentes.css` | Relleno horizontal de los enlaces de la barra de 9 a 7 px (y el subrayado de la página actual, igual). Con «Herramientas», los 10 enlaces necesitaban 718 px y la caja tiene 704 (685 a 1181 px): «Blog» tocaba el buscador. Ahora caben a cualquier ancho desde 1181 px, donde aparece la barra |
+| `src/styles/portada.css` | Columna del número a 38 px (36 px por debajo de 420): «12.10» o «13.42» no cabían en 30. El dato de una entrada se parte a la derecha solo si pasa del 55 % de la línea: «medio día sobre el harness base», de los sistemas nuevos, se salía del capítulo a 400 y 1024 px |
+
+Comparación de la portada, antes y después:
+
+| | Antes (tras I3) | Después |
+|---|---|---|
+| Composición | Partes I–V a dos columnas, apéndices con letras | **Igual** |
+| Capítulos | 14 | 18 |
+| Entradas del índice | 216 | 315 (+99: 27 + 16 + 14 + 42) |
+| Apéndices | A–H (8) | A–I (9: + Fuentes) |
+| Alto a 1440 / 1024 / 400 px | 10 213 / 12 249 / 17 673 px | 13 515 / 16 806 / 23 199 px |
+
+Comprobaciones:
+
+- **Desbordamiento:** medido con Playwright a 400, 1024 y 1440 px: ninguna de las 315 líneas se sale de su capítulo y ningún número desborda su columna.
+- **Sin scroll horizontal** en la portada, `/empieza-aqui/` y `/roadmap/`.
+- **Anclas de `/empieza-aqui/`:** las 4 rutas A–D y el test de nivel siguen iguales.
+- **«Continúa donde lo dejaste»**, probado con Playwright: con las lecciones hasta la 40.6 marcadas, propone `/roadmap/50-skills/que-es-una-skill/` («Llevas 29 de 60»). La lista incluye los niveles 50, 70 y 90 en su orden.
+
+Aceptación: `pnpm validar` 0 · `pnpm check` 0 · `pnpm build` 1083 páginas sin avisos · `pnpm enlaces` 0 · `wikilink--roto` 0.
