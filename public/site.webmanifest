@@ -2,26 +2,23 @@
   "name": "MoreContext",
   "short_name": "MoreContext",
   "description": "La guía abierta y gratuita en español para entender y construir agentes de IA.",
-  "lang": "es",
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#0f0f11",
   "background_color": "#0f0f11",
+  "theme_color": "#0f0f11",
   "icons": [
     {
       "src": "/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
       "src": "/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/png"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

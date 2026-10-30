@@ -1,6 +1,6 @@
 ---
-// Iconos de línea (trazo 1.5 px, currentColor) y la marca [+]. Decorativos por defecto;
-// con `titulo` se anuncian como imagen.
+// Iconos de línea (trazo 1.5 px, currentColor) y la marca [+] estática. Decorativos por defecto;
+// con `titulo` se anuncian como imagen. El [+] animado (hero, buscador, Copiar) está en src/scripts/icono-marca.ts.
 export type NombreIcono =
   | 'marca' | 'buscar' | 'flecha' | 'externo' | 'copiar' | 'check' | 'aviso' | 'info' | 'consejo'
   | 'peligro' | 'menu' | 'cerrar' | 'github' | 'rss' | 'reloj' | 'nivel';
@@ -12,6 +12,10 @@ interface Props {
   titulo?: string;
 }
 const { nombre, tamano = 16, clase, titulo } = Astro.props;
+
+// Marca [+] v1 (docs/marca/): cara #fafafa con borde negro y sombra #fde047 dentro de la caja, abajo a la
+// derecha (retícula 26 × 26). Por debajo de 24 px, la versión pequeña del kit: borde y trazos más gruesos.
+const MARCA = tamano < 24 ? { x: 0.8, lado: 22, borde: 1.6, trazo: 2.8 } : { x: 0.6, lado: 22.4, borde: 1.2, trazo: 2.2 };
 
 const TRAZOS: Record<Exclude<NombreIcono, 'marca'>, string> = {
   buscar: '<circle cx="11" cy="11" r="7"/><path d="m20 20-4.2-4.2"/>',
@@ -32,9 +36,10 @@ const TRAZOS: Record<Exclude<NombreIcono, 'marca'>, string> = {
 };
 ---
 {nombre === 'marca' ? (
-  <svg class:list={['mark', clase]} width={tamano} height={tamano} viewBox="0 0 24 24" role={titulo ? 'img' : undefined} aria-label={titulo} aria-hidden={titulo ? undefined : 'true'}>
-    <rect width="24" height="24" rx="0.5" style="fill: var(--accent-yellow)" />
-    <path d="M8 5H5v14h3M16 5h3v14h-3M12 9.25v6M9 12.25h6" fill="none" stroke-width="2.2" stroke-linecap="square" style="stroke: var(--ink)" />
+  <svg class:list={['mark', clase]} width={tamano} height={tamano} viewBox="0 0 26 26" role={titulo ? 'img' : undefined} aria-label={titulo} aria-hidden={titulo ? undefined : 'true'}>
+    <path d="M23.6 3H26V26H3V23.6H23.6Z" fill="#fde047" />
+    <rect x={MARCA.x} y={MARCA.x} width={MARCA.lado} height={MARCA.lado} fill="#fafafa" stroke="#000" stroke-width={MARCA.borde} />
+    <path d="M7.8 4.8H4.8v14h3M15.8 4.8h3v14h-3M11.8 9.05v6M8.8 12.05h6" fill="none" stroke="#000" stroke-width={MARCA.trazo} stroke-linecap="square" />
   </svg>
 ) : (
   <svg class:list={['ico', clase]} width={tamano} height={tamano} viewBox="0 0 24 24" fill="none" stroke="currentColor"

@@ -87,7 +87,7 @@ kbd, .key {
 .dots i.on { background: var(--accent-yellow); border-color: var(--accent-yellow); }
 
 /* Icono [+] */
-.mark { display: inline-block; flex: none; border-radius: var(--radius-sm); }
+.mark { display: inline-block; flex: none; } /* sin radio ni sombra: la sombra va dentro del SVG */
 .ico { flex: none; vertical-align: -.15em; }
 
 /* ---------- Botones y enlaces ---------- */
@@ -401,7 +401,7 @@ details.faq .a { padding: 0 0 18px; color: var(--text-muted); }
 .hdr-in { display: flex; align-items: center; gap: 18px; height: var(--header-h); }
 .logo { display: flex; flex: none; align-items: center; gap: 10px; color: var(--text); font-family: var(--font-mono); font-weight: 700; font-size: 16px; letter-spacing: -.01em; white-space: nowrap; }
 .logo:hover { color: var(--text); }
-.logo .mark { width: 28px; height: 28px; box-shadow: var(--shadow-sm); }
+.logo .mark { width: 31px; height: 31px; } /* 31 px de caja = cara de 28 px, como el [+] anterior */
 .nav { display: flex; align-items: center; min-width: 0; }
 .nav > a, .nav .dd > button {
   display: inline-flex;
