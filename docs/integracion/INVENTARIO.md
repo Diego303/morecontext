@@ -429,3 +429,30 @@ Respuestas del autor (30 de octubre de 2026), anotadas antes de empezar I1.
 | 3 | Portada y `NAV` | Capítulos en II y III según el plan + «Herramientas» en `NAV` | Lo recomendado |
 | 4 | Canario `<TU NOMBRE> ·` | Dejarlo como marcador para el lector | Se deja el marcador |
 | 5 | JSON-LD de biblioteca | `TechArticle` (tu ficha) con `about` → `ScholarlyArticle`/`CreativeWork` del original | Lo recomendado |
+
+---
+
+## Fase I1 · hecho
+
+Cambios:
+
+| Archivo | Cambio |
+|---|---|
+| `src/content.config.ts` | `temaReceta` (con `seguridad`; recetas y problemas) y `categoriaGlosario` (glosario y biblioteca) extraídos. Lecciones: `profundidad?` y `revisado?`. `problemas`: + `tema`, `nivel`. `plantillas`: + `tipo`, `archivo`. `biblioteca`: + `tipo`, `tema`, `nivel`. `herramientas`: + `open_source`, `lenguajes`, `repositorio?`, `version?`, `revisado`. No se renombra nada (`url`, `formato` y `categoria` siguen como estaban) |
+| `src/pages/recetas/index.astro`, `[slug].astro` | `seguridad: 'Seguridad'` en `TEMA` |
+| `src/scripts/codigo.ts` | `codigo.v2.ts` del paquete tal cual: mi archivo era idéntico al del kit. Memoria de hasta 12 etiquetas en `mc.pestanas`, por orden de uso; lee `mc.pestana` como valor inicial |
+| `src/lib/jsonld.ts` | `ldBiblioteca`: `TechArticle` (nuestra ficha, autor Diego) con `about` → `ScholarlyArticle` (paper), `Book` (libro) o `CreativeWork` (ensayo, especificación), con `creditText` = `autores` (texto tal cual, sin inventar personas), `datePublished` = `anio` y `url` |
+| `src/pages/[apendice]/[slug].astro` | Usa `ldBiblioteca` en las fichas de biblioteca |
+| `contenido/` | Borradas las 4 fichas esqueleto en borrador: `problemas/agente-en-bucle`, `plantillas/prompt-de-sistema`, `herramientas/model-context-protocol` y `biblioteca/react` (pregunta 2) |
+| `CLAUDE.md` | «22 colecciones» y `docs/integracion/` en los documentos de referencia. `docs/investigacion/` se añade en I2, cuando exista |
+
+Aceptación:
+
+- `pnpm validar`: 275 archivos · 0 errores · 0 avisos.
+- `pnpm check`: 0 · 0 · 0.
+- `pnpm build`: **435 páginas**, como en I0.
+- `pnpm enlaces`: 0 rotos.
+- Mismo conjunto de archivos en `dist/` (sin contar `_astro/` y `pagefind/`) y **0 HTML distintos** del de I0, una vez normalizados los nombres con hash de los assets.
+- Capturas a 400 y 1440 px (portada, una lección, un curso y `/recetas/`): **idénticas byte a byte** a las de antes.
+
+Aviso nuevo en el build, transitorio: «The collection "biblioteca" / "herramientas" / "plantillas" / "problemas" does not exist or is empty». Esas colecciones se quedan sin entradas al borrar los esqueletos; desaparece en I2.

@@ -30,6 +30,19 @@ export const ldArticulo = (e: Entrada) => ({ ...comun(e), '@type': 'TechArticle'
 
 export const ldBlog = (e: Entrada) => ({ ...comun(e), '@type': 'BlogPosting', headline: e.data.titulo });
 
+/** Ficha de la biblioteca: el artículo es nuestro comentario (autor, el de SITIO); el texto original va en
+ *  `about`, con sus autores tal como los escribe la ficha (`creditText`), su año y su enlace. */
+export const ldBiblioteca = (e: CollectionEntry<'biblioteca'>) => ({
+  ...ldArticulo(e),
+  about: {
+    '@type': e.data.tipo === 'paper' ? 'ScholarlyArticle' : e.data.tipo === 'libro' ? 'Book' : 'CreativeWork',
+    name: e.data.titulo.replace(/\s*\([^()]*\d{4}\)$/, ''),
+    creditText: e.data.autores,
+    datePublished: String(e.data.anio),
+    url: e.data.url,
+  },
+});
+
 /** Lecciones y fichas de curso o nivel. `minutos` u `horas` → timeRequired ISO 8601. */
 export const ldAprendizaje = (e: Entrada, o: { nivel?: string; minutos?: number; horas?: number }) => ({
   ...comun(e),

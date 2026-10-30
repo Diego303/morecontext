@@ -5,7 +5,7 @@ import { render } from 'astro:content';
 import LecturaLayout from '../../layouts/LecturaLayout.astro';
 import { urlDe } from '../../lib/contenido';
 import { apendicesVisibles, type EntradaApendice } from '../../lib/apendices';
-import { ldArticulo } from '../../lib/jsonld';
+import { ldArticulo, ldBiblioteca } from '../../lib/jsonld';
 
 export const getStaticPaths = (async () =>
   (await apendicesVisibles()).flatMap(({ id, portadilla, entradas }) =>
@@ -20,7 +20,7 @@ const DATOS: [string, unknown][] = [
   ['Categoría', d.categoria], ['Licencia', d.licencia], ['Autor', d.autor],
 ];
 ---
-<LecturaLayout entrada={e} headings={headings} seccion={e.collection} jsonld={ldArticulo(e)}
+<LecturaLayout entrada={e} headings={headings} seccion={e.collection} jsonld={e.collection === 'biblioteca' ? ldBiblioteca(e) : ldArticulo(e)}
   migas={[{ href: '/', texto: 'Inicio' }, { href: urlDe(portadilla), texto: portadilla.data.titulo }, { texto: e.data.titulo }]}>
   <span slot="sobre-titulo" class="label sobre-titulo"><b>{portadilla.data.titulo}</b></span>
   <div slot="cabecera" class="ficha-datos">

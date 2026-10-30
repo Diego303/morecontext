@@ -19,6 +19,8 @@ const base = z.object({
   relacionados: wikilinks,
 });
 const nivelDificultad = z.enum(['inicial', 'intermedio', 'avanzado']);
+const temaReceta = z.enum(['prompting', 'herramientas', 'rag', 'agentes', 'evals', 'produccion', 'seguridad']); // recetas y problemas
+const categoriaGlosario = z.enum(['fundamentos', 'prompting', 'herramientas', 'contexto', 'agentes', 'evals', 'produccion', 'seguridad']); // glosario y biblioteca
 const escala = z.number().int().min(1).max(3);
 
 // ---------- Portadillas de sección: contenido/<seccion>/index.md ----------
@@ -44,6 +46,8 @@ const leccion = base.extend({
   tipo: z.enum(['teoria', 'practica', 'proyecto']).default('teoria'),
   objetivos: z.array(z.string()).min(1),
   requiere: wikilinks,
+  profundidad: z.enum(['imprescindible', 'por-encima', 'extra']).optional(), // ruta en vídeo
+  revisado: z.coerce.date().optional(),     // última comprobación de los enlaces externos
 });
 const lecciones = defineCollection({
   loader: glob({ pattern: ['*/*.md', '!*/index.md'], base: `${C}/roadmap`, generateId: generarId }),
@@ -105,11 +109,11 @@ const disciplinas = plana('disciplinas', base.extend({
 const recetas = plana('recetas', base.extend({
   nivel: nivelDificultad,
   minutos: z.number().int().positive(),
-  tema: z.enum(['prompting', 'herramientas', 'rag', 'agentes', 'evals', 'produccion']),
+  tema: temaReceta,
   stack: z.array(z.string()).default([]),
 }));
 const glosario = plana('glosario', base.extend({
-  categoria: z.enum(['fundamentos', 'prompting', 'herramientas', 'contexto', 'agentes', 'evals', 'produccion', 'seguridad']),
+  categoria: categoriaGlosario,
   ingles: z.string().optional(),            // término original si se usa en inglés
 }));
 const radar = plana('radar', base.extend({
@@ -128,20 +132,32 @@ const paginas = plana('paginas', base);
 const problemas = plana('problemas', base.extend({
   orden: z.number().int().optional(),
   sintoma: z.string().min(10),              // «Mi agente entra en bucle»
+  tema: temaReceta,
+  nivel: nivelDificultad.default('intermedio'),
 }));
 const plantillas = plana('plantillas', base.extend({
   orden: z.number().int().optional(),
   formato: z.enum(['md', 'txt', 'json', 'jsonl', 'yaml']),
+  tipo: z.enum(['prompt', 'spec', 'checklist', 'configuracion', 'agente', 'skill']),
+  archivo: z.string(),                      // nombre al descargarla: «AGENTS.md», «acceptance.yaml»…
 }));
 const biblioteca = plana('biblioteca', base.extend({
   autores: z.string(),                       // «Yao et al.»
   anio: z.number().int().min(1950).max(2100),
   url: z.url(),
+  tipo: z.enum(['paper', 'ensayo', 'especificacion', 'libro']),
+  tema: categoriaGlosario,
+  nivel: nivelDificultad.default('intermedio'),
 }));
 const herramientas = plana('herramientas', base.extend({
-  url: z.url(),
+  url: z.url(),                              // web oficial (en el paquete v2 se llama «web»)
   categoria: z.string(),                     // framework, observabilidad, evals…
   licencia: z.string().optional(),
+  open_source: z.boolean(),
+  lenguajes: z.array(z.string()).default([]),
+  repositorio: z.url().optional(),
+  version: z.string().optional(),            // versión revisada
+  revisado: z.coerce.date(),                 // fecha de la revisión de la ficha
 }));
 const comunidad = plana('comunidad', base.extend({
   autor: z.string(),

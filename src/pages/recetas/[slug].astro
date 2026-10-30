@@ -10,7 +10,7 @@ export const getStaticPaths = (async () =>
 
 const { e } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
 const { Content, headings } = await render(e);
-const TEMA: Record<string, string> = { prompting: 'Prompting', herramientas: 'Herramientas', rag: 'RAG', agentes: 'Agentes', evals: 'Evals', produccion: 'Producción' };
+const TEMA: Record<string, string> = { prompting: 'Prompting', herramientas: 'Herramientas', rag: 'RAG', agentes: 'Agentes', evals: 'Evals', produccion: 'Producción', seguridad: 'Seguridad' };
 ---
 <LecturaLayout entrada={e} headings={headings} seccion="recetas" jsonld={ldArticulo(e)}
   migas={[{ href: '/', texto: 'Inicio' }, { href: '/recetas/', texto: 'Recetas' }, { texto: e.data.titulo }]}>
