@@ -2,6 +2,7 @@
 titulo: Trabajar con documentos largos
 descripcion: Dónde colocar los documentos en el prompt, cómo pedir citas, por qué extraer antes de razonar y cuándo trocear frente a usar contexto largo.
 creado: 2026-10-14
+actualizado: 2026-10-29
 orden: 7
 tags: [documentos, contexto-largo, citas, modelos]
 relacionados: ["[[glosario/contexto-largo]]", "[[roadmap/30-contexto-y-rag/05-respuestas-con-citas]]", "[[radar/2026-09-22-contexto-largo-no-sustituye-recuperacion]]", "[[modelos/02-ingenieria-de-contexto]]"]
@@ -13,7 +14,7 @@ relacionados: ["[[glosario/contexto-largo]]", "[[roadmap/30-contexto-y-rag/05-re
 
 Con documentos largos, el reto es que el modelo encuentre y use la parte que importa. Tres hechos explican las técnicas de esta página:
 
-- **La posición importa.** [Liu et al. (2023)](https://arxiv.org/abs/2307.03172), en *Lost in the Middle*, mostraron que los modelos aprovechan mejor la información al principio y al final del contexto que la situada en medio. Los modelos han mejorado, pero el efecto de la posición sigue siendo una buena razón para ordenar bien.
+- **La posición importa.** [Liu et al. (2023)](https://arxiv.org/abs/2307.03172), en *Lost in the Middle* ([[biblioteca/lost-in-the-middle]]), mostraron que los modelos aprovechan mejor la información al principio y al final del contexto que la situada en medio. Los modelos han mejorado, pero el efecto de la posición sigue siendo una buena razón para ordenar bien.
 - **La pregunta al final ayuda.** Con la consulta detrás de los documentos, el modelo los lee sabiendo ya qué contienen y responde con todo a la vista justo antes de generar.
 - **Extraer antes de razonar reduce el ruido.** Si el modelo primero copia los fragmentos relevantes, razona sobre un texto corto en lugar de sobre cien páginas.
 
@@ -68,11 +69,11 @@ def citas_no_encontradas(salida: str, documentos: dict[str, str]) -> list[str]:
     return fallos
 ```
 
-La función espera el formato `<cita doc="id">…</cita>` que pide el prompt de arriba. La API también ofrece una función de citas nativa para documentos; consulta cómo activarla en la [documentación oficial](https://platform.claude.com/docs). La lección [[roadmap/30-contexto-y-rag/05-respuestas-con-citas]] y el sistema [[sistemas/rag-con-citas]] desarrollan el flujo completo.
+La función espera el formato `<cita doc="id">…</cita>` que pide el prompt de arriba. La API también ofrece una función de citas nativa para documentos (`"citations": {"enabled": true}` en el bloque `document`); no se puede combinar con salidas estructuradas. Consulta los detalles en la [documentación oficial](https://platform.claude.com/docs). La lección [[roadmap/30-contexto-y-rag/05-respuestas-con-citas]] y el sistema [[sistemas/rag-con-citas]] desarrollan el flujo completo.
 
 ## Trocear o usar contexto largo
 
-Las ventanas de contexto actuales admiten documentos muy largos. Que quepan no significa que meterlos enteros sea siempre lo mejor.
+Las ventanas de contexto actuales admiten documentos muy largos: los modelos de Claude de la familia 5.x tienen 1M de tokens, y una petición admite hasta 600 imágenes o páginas de PDF. Que quepan no significa que meterlos enteros sea siempre lo mejor: el rendimiento baja a medida que crece la entrada ([[glosario/context-rot]]), y la comparación entre contexto largo y recuperación no tiene un ganador fijo ([Li et al., 2024](https://arxiv.org/abs/2407.16833); [LaRA, 2025](https://arxiv.org/abs/2502.09977)).
 
 | Situación | Mejor opción | Por qué |
 |---|---|---|
@@ -106,3 +107,4 @@ Así evitas que el modelo mezcle lo que dice un documento con lo que dice otro.
 - [[modelos/02-ingenieria-de-contexto]]: el orden del contexto en general.
 - [[docs/contexto/03-rag]]: cuándo y cómo recuperar.
 - [[cursos/rag-a-fondo/index]]: el curso completo de recuperación.
+- [[recetas/rag-minimo-viable]]: un RAG funcionando en una tarde, cuando trocear gana.

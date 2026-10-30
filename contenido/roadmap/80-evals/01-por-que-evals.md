@@ -2,6 +2,7 @@
 titulo: "Por qué evals: lo que no mides, se rompe"
 descripcion: Qué se rompe en un sistema con modelos cuando cambias algo sin medir, qué es exactamente una eval y cómo escribir tu primera en una tarde.
 creado: 2026-10-01
+actualizado: 2026-10-29
 orden: 1
 minutos: 25
 tipo: teoria
@@ -101,7 +102,7 @@ if __name__ == "__main__":
 Es tosco y ya es útil. Ejecútalo antes y después de cada cambio. Las líneas `FALLA` te dicen qué mirar; la tabla por categoría te dice si has empeorado algo que no estabas tocando.
 
 > [!aviso] Una ejecución no es una medida
-> Las salidas varían entre ejecuciones. Si una diferencia de un caso te hace cambiar de decisión, ejecuta varias veces o amplía el conjunto antes de concluir.
+> Las salidas varían entre ejecuciones, y en la API de Claude ya no existe `temperature` para fijarlas. Si una diferencia de un caso te hace cambiar de decisión, ejecuta varias veces o amplía el conjunto antes de concluir. Para un agente, lo que suele importar es si acierta **siempre**, no si acierta alguna vez: es la diferencia entre [[glosario/pass-k|pass@k y pass^k]].
 
 ## Dónde encaja en tu trabajo
 
@@ -138,3 +139,4 @@ La eval es el bucle interno de cualquier cambio. El ciclo que propone [[discipli
 - [[roadmap/80-evals/02-conjunto-de-prueba]]
 - [[docs/evals/01-disenar-evals]]
 - [[blog/2026-09-10-evals-antes-que-prompts]]
+- [[biblioteca/demystifying-evals]]

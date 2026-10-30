@@ -2,6 +2,7 @@
 titulo: Costes y límites
 descripcion: Cómo leer usage, qué palancas reducen el coste (caché, lotes, modelo, contexto) y cómo manejar límites de tasa y errores 429 y 529 con reintentos y backoff.
 creado: 2026-10-21
+actualizado: 2026-10-29
 orden: 2
 nivel: intermedio
 tags: [produccion, costes, rate-limits, reintentos, prompt-caching]
@@ -22,9 +23,9 @@ Cada respuesta trae un objeto `usage`:
 | `input_tokens` | Tokens de entrada que no se leyeron ni se escribieron en caché. |
 | `cache_creation_input_tokens` | Tokens de entrada que se escribieron en caché en esta petición. Cuestan algo más que la entrada normal. |
 | `cache_read_input_tokens` | Tokens de entrada leídos de caché. Cuestan mucho menos que la entrada normal. |
-| `output_tokens` | Tokens generados, incluidos los de razonamiento si está activado. Son los más caros. |
+| `output_tokens` | Tokens generados, incluidos los de razonamiento si está activado (el desglose está en `output_tokens_details.thinking_tokens`). Son los más caros. |
 
-La entrada total de la petición es la suma de los tres primeros. El coste se calcula multiplicando cada campo por su precio:
+`usage` trae además `cache_creation` (separa las escrituras de 5 minutos y de 1 hora), `server_tool_use`, `service_tier`, `speed` e `inference_geo`. Los dos campos de caché pueden venir a `None`, así que trátalos como cero. La entrada total de la petición es la suma de los tres primeros. El coste se calcula multiplicando cada campo por su precio:
 
 ```python title="coste.py"
 # Rellena PRECIOS con los valores actuales de la documentación oficial (por millón de tokens).
@@ -32,14 +33,14 @@ PRECIOS = {"entrada": 0.0, "escritura_cache": 0.0, "lectura_cache": 0.0, "salida
 
 def coste(usage) -> float:
     return (usage.input_tokens * PRECIOS["entrada"]
-            + usage.cache_creation_input_tokens * PRECIOS["escritura_cache"]
-            + usage.cache_read_input_tokens * PRECIOS["lectura_cache"]
+            + (usage.cache_creation_input_tokens or 0) * PRECIOS["escritura_cache"]
+            + (usage.cache_read_input_tokens or 0) * PRECIOS["lectura_cache"]
             + usage.output_tokens * PRECIOS["salida"]) / 1_000_000
 ```
 
 En un agente, el coste de una tarea es la suma de todas sus llamadas. Ojo con el detalle que más sorprende: **cada vuelta del bucle reenvía el historial completo**. Una tarea de 15 pasos paga la entrada inicial 15 veces, más todo lo que se va acumulando. Por eso el caché es tan importante en agentes.
 
-Para estimar antes de enviar, usa `client.messages.count_tokens(model=MODEL, messages=...)`, que devuelve `.input_tokens` sin generar nada.
+Para estimar antes de enviar, usa `client.messages.count_tokens(model=MODEL, messages=...)`, que devuelve `.input_tokens` sin generar nada. Con razonamiento adaptativo, el pensamiento se factura como salida y cuenta dentro de `max_tokens`: un `effort` alto en una tarea sencilla es dinero que no compra calidad.
 
 ## Palancas para reducir el coste
 
@@ -49,7 +50,7 @@ Ordenadas por la relación entre esfuerzo e impacto habitual:
 |---|---|---|
 | [[glosario/prompt-caching]] | Prefijos repetidos: prompt de sistema largo, herramientas, documentos, historial de un agente. | `cache_control` en el último bloque estable. Ver [[docs/contexto/02-prompt-caching]]. |
 | Modelo adecuado | Tareas que un modelo más pequeño resuelve igual de bien. | Mide con evals antes de bajar. Ver [[modelos/05-elegir-modelo-por-tarea]]. |
-| Procesamiento por lotes | Trabajo que no necesita respuesta inmediata: clasificar miles de documentos, evals nocturnas. | Precio reducido a cambio de esperar. Ver abajo. |
+| Procesamiento por lotes | Trabajo que no necesita respuesta inmediata: clasificar miles de documentos, evals nocturnas. | Descuento del 50 % a cambio de esperar. Ver abajo. |
 | Contexto más corto | Historiales que crecen sin control, documentos enteros cuando bastaba un fragmento. | Recuperación selectiva, [[glosario/compactacion|compactación]]. |
 | Menos salida | Respuestas más largas de lo necesario. | Pide brevedad, ajusta `max_tokens`, baja `effort` si usas razonamiento. |
 | Menos pasos | Agentes que dan vueltas. | Mejores descripciones de herramientas, herramientas que devuelven lo justo. |
@@ -60,7 +61,7 @@ En un agente, coloca un punto de caché al final de las herramientas y el prompt
 
 ### Procesamiento por lotes
 
-La API de lotes (*Message Batches*) acepta muchas peticiones a la vez, las procesa de forma asíncrona y te cobra menos que la API normal. No es apta para usuarios esperando respuesta; sí para trabajo en segundo plano.
+La API de lotes (*Message Batches*) acepta muchas peticiones a la vez, las procesa de forma asíncrona y te cobra la mitad que la API normal; el descuento se acumula con el de la caché. No es apta para usuarios esperando respuesta; sí para trabajo en segundo plano. No admite `stream` ni el modo rápido (`speed: "fast"`).
 
 ```python title="lotes.py"
 import time
@@ -72,7 +73,8 @@ client = anthropic.Anthropic()
 textos = ["Ticket 1…", "Ticket 2…"]
 lote = client.messages.batches.create(requests=[
     {"custom_id": f"ticket-{i}",
-     "params": {"model": MODEL, "max_tokens": 50,
+     "params": {"model": MODEL, "max_tokens": 1024,
+                "output_config": {"effort": "low"},
                 "messages": [{"role": "user", "content": f"Clasifica: {t}"}]}}
     for i, t in enumerate(textos)
 ])
@@ -82,12 +84,13 @@ while client.messages.batches.retrieve(lote.id).processing_status != "ended":
 
 for r in client.messages.batches.results(lote.id):
     if r.result.type == "succeeded":
-        print(r.custom_id, r.result.message.content[0].text)
+        texto = "".join(b.text for b in r.result.message.content if b.type == "text")
+        print(r.custom_id, texto)
     else:
         print(r.custom_id, "falló:", r.result.type)
 ```
 
-Los resultados pueden llegar en cualquier orden: usa `custom_id` para emparejarlos. El plazo máximo de procesamiento y los límites de tamaño del lote están en la documentación oficial.
+Los resultados pueden llegar en cualquier orden: usa `custom_id` para emparejarlos. El lote se procesa en 24 horas como máximo, admite hasta 100.000 peticiones o 256 MB, y sus resultados se conservan 29 días. Comprueba los límites vigentes en la documentación oficial. Dentro de cada resultado, mira también `stop_reason`: un `max_tokens` demasiado corto da respuestas cortadas sin error.
 
 ### Presupuesto por tarea
 
@@ -108,7 +111,7 @@ Dos errores que tu sistema debe esperar:
 
 ## Reintentos con backoff exponencial
 
-El SDK oficial ya reintenta automáticamente algunos de estos errores un número pequeño de veces. Puedes ajustar ese número con `max_retries` al crear el cliente (`anthropic.Anthropic(max_retries=5)`). Si necesitas más control, por ejemplo registrar cada reintento o limitar el tiempo total, desactiva los automáticos con `max_retries=0` y escribe los tuyos:
+El SDK oficial ya reintenta automáticamente algunos de estos errores (por defecto, dos veces). Puedes ajustar ese número con `max_retries` al crear el cliente (`anthropic.Anthropic(max_retries=5)`). Si necesitas más control, por ejemplo registrar cada reintento o limitar el tiempo total, desactiva los automáticos con `max_retries=0` y escribe los tuyos:
 
 ```python tab="Python" title="reintentos.py"
 import random, time
@@ -173,6 +176,10 @@ El *jitter* (espera aleatoria entre cero y el tope de cada intento) evita que mu
 
 Con muchos usuarios o [[docs/agentes/02-subagentes|subagentes]] en paralelo, el problema no es un error aislado sino ráfagas. Limita las peticiones simultáneas con un semáforo o una cola, y reparte el tráfico entre modelos si tienes límites separados. Un 429 de vez en cuando es normal; muchos seguidos indican que tu concurrencia supera tu capacidad.
 
+## Con LangChain o un modelo local
+
+`ChatAnthropic` acepta `max_retries` y gestiona los reintentos con el SDK; el coste lo lees en `usage_metadata` de cada `AIMessage`, con los mismos nombres de entrada y salida para cualquier proveedor. Con un modelo local no hay precio por token ni 429 de proveedor, pero sí un techo propio: la memoria de la GPU y la concurrencia que aguante el servidor. La contabilidad de tokens sigue valiendo para dimensionarlo. Ver [[docs/modelos-abiertos/01-ollama]] y [[docs/modelos-abiertos/02-vllm-y-llama-cpp]].
+
 ## Errores frecuentes
 
 - **Reintentar errores 400**: la petición seguirá estando mal.
@@ -184,5 +191,6 @@ Con muchos usuarios o [[docs/agentes/02-subagentes|subagentes]] en paralelo, el 
 
 - [[recetas/reintentos-y-limites-de-tasa]]: la receta paso a paso.
 - [[recetas/recortar-costes-con-prompt-caching]]: caché aplicada a un caso real.
+- [[docs/produccion/01-observabilidad]]: dónde registrar `usage` y el coste por tarea.
 - [[roadmap/00-fundamentos/05-coste-y-latencia]]: el concepto desde la base.
 - [[docs/produccion/03-latencia]]: la otra cara de la optimización.

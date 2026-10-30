@@ -2,6 +2,7 @@
 titulo: Permisos y mínimo privilegio
 descripcion: Cómo limitar lo que puede hacer un agente con herramientas acotadas, credenciales de alcance mínimo, políticas en el código, sandbox y auditoría.
 creado: 2026-10-24
+actualizado: 2026-10-29
 orden: 2
 nivel: avanzado
 tags: [seguridad, permisos, minimo-privilegio, sandbox]
@@ -135,7 +136,44 @@ export async function ejecutar(
 }
 ```
 
-Fíjate en dos cosas. El `usuario_id` sale de la sesión, nunca de los argumentos que propone el modelo. Y la denegación vuelve al modelo como `is_error`, para que pueda explicárselo al usuario o pedir aprobación por la vía correcta ([[docs/agentes/03-humano-en-el-bucle]]).
+```python tab="LangChain" title="politicas_langchain.py"
+from langchain.agents import create_agent
+from langchain.agents.middleware import wrap_tool_call
+from langchain.messages import ToolMessage
+from langchain.tools import tool
+
+MODEL = "anthropic:claude-sonnet-5-5"
+
+@tool
+def reembolsar(pedido_id: str, importe: float) -> str:
+    """Reembolsa un pedido."""
+    return f"Reembolsado {importe} de {pedido_id}"
+
+@wrap_tool_call
+def politicas(request, handler):
+    # La política vive en código y se ejecuta antes de la herramienta.
+    nombre, args = request.tool_call["name"], request.tool_call["args"]
+    if nombre == "reembolsar" and args["importe"] > 100:
+        return ToolMessage(
+            content="Denegado: importe por encima del límite automático; requiere aprobación",
+            tool_call_id=request.tool_call["id"], status="error",
+        )
+    return handler(request)
+
+agente = create_agent(model=MODEL, tools=[reembolsar], middleware=[politicas])
+```
+
+En LangChain, el *middleware* `wrap_tool_call` es el sitio equivalente: envuelve cada ejecución de herramienta y puede devolver un `ToolMessage` con `status="error"` en lugar de ejecutarla (el `is_error` de la API). Fíjate en dos cosas. El `usuario_id` sale de la sesión, nunca de los argumentos que propone el modelo. Y la denegación vuelve al modelo como `is_error`, para que pueda explicárselo al usuario o pedir aprobación por la vía correcta ([[docs/agentes/03-humano-en-el-bucle]]).
+
+## Aprobaciones que no protegen
+
+Pedir permiso a una persona por cada acción parece la defensa ideal, pero se degrada con la costumbre. Anthropic documentó en mayo de 2026 que los usuarios aprobaban en torno al 93 % de las solicitudes de permiso: a esa tasa, la aprobación deja de ser una revisión y pasa a ser un clic. Tres consecuencias de diseño:
+
+- **Pide aprobación solo donde el daño sea real**, y que el resto esté permitido o denegado por política. Muchas pausas triviales entrenan a aprobar sin leer.
+- **Un aislamiento reduce preguntas sin reducir seguridad.** Un [[glosario/sandbox|sandbox]] con red denegada por defecto permite dejar libres las acciones dentro de él; Claude Code midió un 84 % menos de peticiones de permiso con el suyo ([[docs/claude-code/06-permisos-y-sandbox]]).
+- **Una lista blanca de dominios es una capacidad.** Si permites un dominio al que cualquiera puede subir datos, o una API en la que el atacante puede usar su propia clave, has abierto un canal de salida. Ajusta la lista al destino concreto, no al servicio en general.
+
+Los clasificadores automáticos que deciden por ti (el modo automático de Claude Code, por ejemplo) ayudan, pero Anthropic reconoce que no sustituyen la revisión humana en infraestructura crítica. En cuanto a la identidad, el abuso de privilegios es uno de los riesgos del Top 10 de OWASP para aplicaciones agénticas 2026 (ASI03).
 
 ## Auditoría
 
@@ -146,7 +184,7 @@ Registra cada ejecución de herramienta con sesión, argumentos, resultado y si 
 
 ## Servidores MCP
 
-Si conectas [[glosario/servidor-mcp|servidores MCP]], cada uno es un conjunto de herramientas con sus propios permisos. Revisa qué expone cada servidor antes de conectarlo, habilita solo las herramientas que necesitas y prefiere servidores de solo lectura. Ver [[recetas/servidor-mcp-de-solo-lectura]] y [[cursos/mcp-de-cero-a-servidor/04-seguridad-y-despliegue]].
+Si conectas [[glosario/servidor-mcp|servidores MCP]], cada uno es un conjunto de herramientas con sus propios permisos. Revisa qué expone cada servidor antes de conectarlo, habilita solo las herramientas que necesitas y prefiere servidores de solo lectura. Ver [[recetas/servidor-mcp-de-solo-lectura]], [[cursos/mcp-de-cero-a-servidor/04-seguridad-y-despliegue]] y, para servidores y skills de terceros, [[docs/seguridad/04-mcp-y-skills-de-terceros]].
 
 ## Errores frecuentes
 
@@ -161,4 +199,6 @@ Si conectas [[glosario/servidor-mcp|servidores MCP]], cada uno es un conjunto de
 - [[cursos/seguridad-y-prompt-injection/04-permisos-y-sandbox]]: la lección guiada.
 - [[sistemas/asistente-de-datos-con-mcp]]: un sistema de solo lectura con límites.
 - [[radar/2026-07-02-uso-del-ordenador-en-sandbox]]: por qué el aislamiento es obligatorio.
+- [[docs/seguridad/03-patrones-contra-inyeccion]]: arquitecturas que limitan el daño de una inyección.
+- [[docs/modelos-abiertos/09-guardrails-y-sandbox]]: sandbox y guardrails con herramientas abiertas.
 - [[docs/seguridad/index]]: el resto del grupo.

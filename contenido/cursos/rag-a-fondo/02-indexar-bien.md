@@ -2,6 +2,7 @@
 titulo: "Indexar bien: limpieza, troceado y metadatos"
 descripcion: Cómo convertir documentos reales en fragmentos limpios, con estructura, IDs estables y metadatos que sirven para filtrar, citar y reindexar.
 creado: 2026-09-16
+actualizado: 2026-10-29
 orden: 2
 minutos: 55
 tipo: practica
@@ -37,7 +38,7 @@ flowchart LR
 
 ## Extraer y limpiar
 
-Extrae **conservando la estructura**: encabezados, listas y tablas. Si tu extractor de PDF devuelve texto plano sin saltos de sección, pierdes la información que necesitas para trocear bien. Convierte todo a un formato intermedio común; Markdown funciona bien porque mantiene encabezados y tablas de forma legible para el modelo.
+Extrae **conservando la estructura**: encabezados, listas y tablas. Si tu extractor de PDF devuelve texto plano sin saltos de sección, pierdes la información que necesitas para trocear bien. Convierte todo a un formato intermedio común; Markdown funciona bien porque mantiene encabezados y tablas de forma legible para el modelo. Para PDF hay conversores abiertos que lo hacen, como [[herramientas/docling|Docling]] (receta: [[recetas/pdf-a-markdown-con-docling]]); revisa la licencia antes de elegir otro (PyMuPDF, por ejemplo, es AGPL-3.0). Los casos difíciles (escaneados, OCR, tablas complejas) tienen lección propia: [[cursos/rag-a-fondo/06-el-corpus-manda]].
 
 Limpia lo que no aporta y se repite:
 
@@ -143,7 +144,7 @@ Cada campo de metadatos debe servir para algo concreto. Estos son los que suelen
 | `hash` | saber si un fragmento cambió y hay que recalcular su embedding |
 
 > [!peligro] Los permisos se filtran en la recuperación
-> Si tus documentos tienen permisos distintos, filtra por `acl` en la consulta al índice. Pedirle al modelo que «no muestre lo confidencial» no es un control: el texto ya estaba en su contexto. Lo verás a fondo en [[cursos/seguridad-y-prompt-injection/04-permisos-y-sandbox]].
+> Si tus documentos tienen permisos distintos, filtra por `acl` en la consulta al índice. Pedirle al modelo que «no muestre lo confidencial» no es un control: el texto ya estaba en su contexto. Lo verás a fondo en [[cursos/rag-a-fondo/07-permisos-y-multi-tenant]] y en [[cursos/seguridad-y-prompt-injection/04-permisos-y-sandbox]].
 
 ## Reindexar de forma incremental
 
@@ -163,7 +164,7 @@ def sincronizar(indice, doc_id: str, md: str, meta_doc: dict):
     return len(a_escribir), len(a_borrar)
 ```
 
-`indice` representa tu [[glosario/vector-store|vector store]]; casi todos ofrecen *upsert* por id y filtros por metadatos. Si cambias de modelo de embeddings o de estrategia de troceado, en cambio, reindexa todo y guarda el nombre de la configuración como metadato del índice: mezclar vectores de dos modelos distintos rompe la similitud.
+`indice` representa tu [[glosario/vector-store|vector store]]; casi todos ofrecen *upsert* por id y filtros por metadatos. Si cambias de modelo de embeddings o de estrategia de troceado, en cambio, reindexa todo y guarda el nombre de la configuración como metadato del índice: mezclar vectores de dos modelos distintos rompe la similitud. Cómo hacerlo sin cortar el servicio (doble índice, borrados, frescura) está en [[cursos/rag-a-fondo/08-mantener-el-indice]] y en la receta [[recetas/reindexado-incremental]].
 
 ## Errores frecuentes
 
@@ -194,4 +195,5 @@ def sincronizar(indice, doc_id: str, md: str, meta_doc: dict):
 
 - [[cursos/rag-a-fondo/03-recuperar-bien]]
 - [[recetas/trocear-documentos]]
+- [[recetas/chunks-padre-hijo]]
 - [[glosario/chunking]]

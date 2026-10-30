@@ -2,12 +2,13 @@
 titulo: Seguridad y prompt injection
 descripcion: Monográfico avanzado para proteger agentes que leen contenido no fiable y actúan sobre sistemas reales, desde el modelo de amenazas hasta permisos, confirmación y sandbox.
 creado: 2026-10-16
+actualizado: 2026-10-29
 orden: 4
 nivel: avanzado
 horas: 4
 objetivo: Modelar las amenazas de un agente, entender la inyección directa e indirecta y diseñar defensas en capas que limiten el daño aunque el modelo sea engañado.
 requiere: ["[[roadmap/40-primer-agente/index]]", "[[roadmap/100-produccion/index]]"]
-relacionados: ["[[glosario/inyeccion-de-prompt]]", "[[disciplinas/seguridad]]", "[[docs/seguridad/01-prompt-injection]]", "[[radar/2026-10-20-inyeccion-por-herramientas]]"]
+relacionados: ["[[glosario/inyeccion-de-prompt]]", "[[disciplinas/seguridad]]", "[[docs/seguridad/01-prompt-injection]]", "[[radar/2026-10-20-inyeccion-por-herramientas]]", "[[docs/seguridad/03-patrones-contra-inyeccion]]"]
 tags: [seguridad, prompt-injection, agentes, permisos]
 ---
 
@@ -29,10 +30,10 @@ Para quien diseña o mantiene agentes con acceso a datos privados o con capacida
 
 ## Temario
 
-1. [[cursos/seguridad-y-prompt-injection/01-modelo-de-amenazas]]. Activos, actores, puntos de entrada y capacidades. La combinación peligrosa de datos privados, contenido no fiable y un canal de salida. Un diagrama de flujo de datos con fronteras de confianza.
-2. [[cursos/seguridad-y-prompt-injection/02-inyeccion-directa-e-indirecta]]. Del *jailbreak* a la inyección indirecta descrita por Greshake et al. (2023): webs, correos, documentos, resultados de herramientas y descripciones de servidores MCP. Exfiltración por enlaces e imágenes. Una batería de ataques reproducible.
-3. [[cursos/seguridad-y-prompt-injection/03-defensas-en-capas]]. Por qué ninguna defensa basta sola. Separar datos de instrucciones, seguimiento de contenido contaminado, confirmación, filtrado de salida y detección. El OWASP Top 10 para aplicaciones con LLM como lista de control.
-4. [[cursos/seguridad-y-prompt-injection/04-permisos-y-sandbox]]. [[glosario/minimo-privilegio|Mínimo privilegio]] por herramienta y por usuario, políticas de aprobación, credenciales acotadas, [[glosario/sandbox|sandbox]] con contenedores y control de salida de red.
+1. [[cursos/seguridad-y-prompt-injection/01-modelo-de-amenazas]]. Activos, actores, puntos de entrada y capacidades. La combinación peligrosa de datos privados, contenido no fiable y un canal de salida ([[glosario/trifecta-letal|trifecta letal]]) y la regla de dos de Meta. Un diagrama de flujo de datos con fronteras de confianza.
+2. [[cursos/seguridad-y-prompt-injection/02-inyeccion-directa-e-indirecta]]. Del *jailbreak* a la inyección indirecta descrita por Greshake et al. (2023): webs, correos, documentos, resultados de herramientas, descripciones de servidores MCP, skills y memoria. Exfiltración por enlaces e imágenes. Una batería de ataques reproducible.
+3. [[cursos/seguridad-y-prompt-injection/03-defensas-en-capas]]. Por qué ninguna defensa basta sola. Separar datos de instrucciones, seguimiento de contenido contaminado, patrones de diseño (Dual LLM, Plan-Then-Execute, CaMeL), confirmación, filtrado de salida y detección, y por qué los ataques adaptativos tumban los detectores. El OWASP Top 10 para aplicaciones con LLM (2025) y el de aplicaciones agénticas (2026) como listas de control.
+4. [[cursos/seguridad-y-prompt-injection/04-permisos-y-sandbox]]. [[glosario/minimo-privilegio|Mínimo privilegio]] por herramienta y por usuario, políticas de aprobación y fatiga de aprobación, el clasificador del modo auto de Claude Code con sus tasas publicadas, credenciales acotadas, [[glosario/sandbox|sandbox]] con contenedores y control de salida de red (una lista blanca de dominios también es una capacidad).
 
 ## Qué construyes
 

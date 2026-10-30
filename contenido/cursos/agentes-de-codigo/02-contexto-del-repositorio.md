@@ -2,6 +2,7 @@
 titulo: El contexto del repositorio
 descripcion: Cómo darle a un agente de código las convenciones de tu proyecto con un archivo de memoria (CLAUDE.md o AGENTS.md), qué poner en él y qué dejar fuera.
 creado: 2026-09-16
+actualizado: 2026-10-29
 orden: 2
 minutos: 40
 tipo: practica
@@ -10,7 +11,7 @@ objetivos:
   - Distinguir qué información conviene precargar y cuál debe descubrir el agente bajo demanda
   - Implementar la carga del archivo de memoria en el prompt de sistema con prompt caching
 requiere: ["[[cursos/agentes-de-codigo/01-como-trabaja-un-agente-de-codigo]]"]
-relacionados: ["[[disciplinas/context-engineering]]", "[[glosario/memoria]]", "[[docs/contexto/02-prompt-caching]]", "[[cursos/context-engineering/02-que-meter-y-que-no]]"]
+relacionados: ["[[disciplinas/context-engineering]]", "[[glosario/memoria]]", "[[docs/contexto/02-prompt-caching]]", "[[cursos/context-engineering/02-que-meter-y-que-no]]", "[[docs/claude-code/01-memoria-claude-md-y-agents-md]]", "[[plantillas/agents-md]]"]
 tags: [agentes, codigo, contexto]
 ---
 
@@ -20,7 +21,9 @@ Al terminar esta lección sabrás escribir el archivo que le explica tu proyecto
 
 Cada sesión de un agente empieza en blanco. No sabe que tus tests se lanzan con `make test` y no con `pytest`, que la carpeta `legacy/` no se toca o que el equipo prefiere `httpx` a `requests`. Puede descubrir parte de eso explorando, pero gasta pasos, tokens y a veces se equivoca.
 
-La solución habitual es un **archivo de memoria del proyecto**: un Markdown en la raíz del repositorio que el agente carga al empezar. Distintas herramientas usan nombres distintos (`CLAUDE.md`, `AGENTS.md` y otros), pero la idea es la misma: un documento corto con lo que un desarrollador nuevo tardaría una semana en aprender. Es una forma de [[glosario/memoria|memoria]] explícita, escrita por humanos y versionada con el código.
+La solución habitual es un **archivo de memoria del proyecto**: un Markdown en la raíz del repositorio que el agente carga al empezar. Es un documento corto con lo que un desarrollador nuevo tardaría una semana en aprender, una forma de [[glosario/memoria|memoria]] explícita, escrita por humanos y versionada con el código.
+
+El nombre más compartido es [[glosario/agents-md|AGENTS.md]], un formato abierto que leen Codex, OpenCode y otros agentes ([[docs/estandares/04-agent-skills-y-agents-md]]). Claude Code usa [[glosario/claude-md|CLAUDE.md]] y, desde la versión 2.1.277, **lee `AGENTS.md` de forma nativa cuando no encuentra ningún `CLAUDE.md`** (ni `.claude/CLAUDE.md` ni `CLAUDE.local.md`) en el directorio de trabajo o por encima. Si tu equipo usa varias herramientas y quieres un único archivo, escribe `AGENTS.md` y deja un `CLAUDE.md` de una línea que lo importe con `@AGENTS.md`: funciona en cualquier versión y te permite añadir debajo lo específico de Claude Code. Los detalles de carga están en [[docs/claude-code/01-memoria-claude-md-y-agents-md]].
 
 ## Qué poner
 
@@ -79,7 +82,7 @@ Hay dos formas de dar contexto a un agente de código, y conviene combinarlas.
 
 La regla práctica: **precarga lo que se necesita en casi todas las tareas y deja el resto como referencias**. Una línea como «La guía de migraciones está en `docs/migraciones.md`» cuesta diez tokens y permite al agente leer la guía solo cuando toque una migración. Anthropic describe este enfoque de recuperación «justo a tiempo» en *[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)*: el agente mantiene identificadores ligeros (rutas, consultas) y carga los datos con herramientas cuando los necesita.
 
-En repositorios grandes ayuda tener archivos de memoria por carpeta: uno general en la raíz y otro en `frontend/` con sus propios comandos. El agente carga el de la raíz siempre y el de la subcarpeta cuando trabaja en ella.
+En repositorios grandes ayuda tener archivos de memoria por carpeta: uno general en la raíz y otro en `frontend/` con sus propios comandos. El agente carga el de la raíz siempre y el de la subcarpeta cuando trabaja en ella. Claude Code lo hace así: los `CLAUDE.md` de los directorios superiores se cargan al arrancar y los de las subcarpetas cuando toca un archivo dentro de ellas, y todos se concatenan en lugar de sustituirse. Para reglas que solo aplican a ciertos archivos tiene además `.claude/rules/*.md` con un campo `paths` en el frontmatter.
 
 ## Cargarlo en tu agente
 
@@ -91,7 +94,7 @@ import anthropic
 
 MODEL = "claude-sonnet-5-5"
 client = anthropic.Anthropic()
-NOMBRES = ("AGENTS.md", "CLAUDE.md")
+NOMBRES = ("CLAUDE.md", "AGENTS.md")  # como Claude Code: AGENTS.md solo si no hay CLAUDE.md
 
 def cargar_memoria(raiz: pathlib.Path, carpeta: pathlib.Path | None = None) -> str:
     """Archivo de la raíz y, si hay, el de la carpeta de trabajo."""
@@ -106,11 +109,12 @@ def cargar_memoria(raiz: pathlib.Path, carpeta: pathlib.Path | None = None) -> s
     return "\n\n".join(partes)
 
 def construir_system(raiz: pathlib.Path) -> list[dict]:
-    return [
-        {"type": "text", "text": "Eres un agente de código. Sigue las convenciones del proyecto."},
-        {"type": "text", "text": cargar_memoria(raiz),
-         "cache_control": {"type": "ephemeral"}},  # prefijo estable: se cachea
-    ]
+    bloques = [{"type": "text", "text": "Eres un agente de código. Sigue las convenciones del proyecto."}]
+    memoria = cargar_memoria(raiz)
+    if memoria:  # un bloque de texto vacío da 400
+        bloques.append({"type": "text", "text": memoria})
+    bloques[-1]["cache_control"] = {"type": "ephemeral"}  # prefijo estable: se cachea
+    return bloques
 
 resp = client.messages.create(
     model=MODEL, max_tokens=2048,
@@ -130,7 +134,7 @@ const MODEL = "claude-sonnet-5-5";
 const client = new Anthropic();
 
 function cargarMemoria(raiz: string): string {
-  for (const nombre of ["AGENTS.md", "CLAUDE.md"]) {
+  for (const nombre of ["CLAUDE.md", "AGENTS.md"]) {
     const ruta = join(raiz, nombre);
     if (existsSync(ruta)) {
       return `<memoria_proyecto ruta="${nombre}">\n${readFileSync(ruta, "utf-8")}\n</memoria_proyecto>`;
@@ -139,19 +143,25 @@ function cargarMemoria(raiz: string): string {
   return "";
 }
 
+const memoria = cargarMemoria(process.cwd());
+const system: Anthropic.TextBlockParam[] = [
+  { type: "text", text: "Eres un agente de código. Sigue las convenciones del proyecto." },
+  ...(memoria ? [{ type: "text" as const, text: memoria }] : []),  // un bloque vacío da 400
+];
+system[system.length - 1].cache_control = { type: "ephemeral" };
+
 const resp = await client.messages.create({
   model: MODEL,
   max_tokens: 2048,
-  system: [
-    { type: "text", text: "Eres un agente de código. Sigue las convenciones del proyecto." },
-    { type: "text", text: cargarMemoria(process.cwd()), cache_control: { type: "ephemeral" } },
-  ],
+  system,
   messages: [{ role: "user", content: "¿Con qué comando lanzo solo los tests de la API?" }],
 });
 console.log(resp.usage);
 ```
 
-Ten en cuenta que hay un mínimo de tokens para que un bloque se cachee, y depende del modelo. Si tu archivo es muy corto, quizá no llegue; no pasa nada, el coste también es pequeño. Lo tienes en [[docs/contexto/02-prompt-caching]].
+El cargador sigue la misma prioridad que Claude Code (`CLAUDE.md` gana), pero no resuelve importaciones `@ruta`: si en tu agente propio usas el truco del `CLAUDE.md` que importa `@AGENTS.md`, lee directamente `AGENTS.md` o expande tú esas líneas.
+
+Ten en cuenta que hay un mínimo de tokens para que un prefijo se cachee (512 en los modelos actuales). Si tu archivo es muy corto, quizá no llegue; no pasa nada, el coste también es pequeño. Lo tienes en [[docs/contexto/02-prompt-caching]].
 
 ## Mantenerlo vivo
 
@@ -185,3 +195,4 @@ Trata el archivo de memoria como código: va en el repositorio, se revisa en las
 - [[cursos/agentes-de-codigo/03-explorar-planificar-implementar-verificar]]
 - [[cursos/context-engineering/02-que-meter-y-que-no]]
 - [[modelos/02-ingenieria-de-contexto]]
+- [[plantillas/agents-md]]

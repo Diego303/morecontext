@@ -2,6 +2,7 @@
 titulo: Guardrails
 descripcion: Controles alrededor del modelo que validan entradas, salidas y acciones para impedir comportamientos no deseados.
 creado: 2026-09-15
+actualizado: 2026-10-29
 categoria: seguridad
 aliases: [barreras de seguridad, salvaguardas, guardarraíles]
 tags: [seguridad, produccion]
@@ -12,7 +13,7 @@ Los *guardrails* son comprobaciones que pones antes, después o alrededor de cad
 
 ## En la práctica
 
-Los más útiles son deterministas: validar el JSON contra un esquema, rechazar URLs fuera de una lista permitida, limitar importes, exigir aprobación para herramientas con efectos. Un clasificador (otro modelo o una regla) puede filtrar temas fuera de alcance o detectar intentos de [[glosario/inyeccion-de-prompt]], pero no es infalible. Combina varias capas y aplica [[glosario/minimo-privilegio]]: lo que una herramienta no puede hacer, no hay que vigilarlo.
+Los más útiles son deterministas: validar el JSON contra un esquema, rechazar URLs fuera de una lista permitida, limitar importes, exigir aprobación para herramientas con efectos. Un clasificador (otro modelo o una regla) puede filtrar temas fuera de alcance o detectar intentos de [[glosario/inyeccion-de-prompt]], pero no es infalible; hay clasificadores de pesos abiertos como [[herramientas/llama-guard]]. En agentes de código, un [[glosario/hook]] que se ejecuta antes de cada herramienta es un guardrail determinista. Combina varias capas y aplica [[glosario/minimo-privilegio]]: lo que una herramienta no puede hacer, no hay que vigilarlo.
 
 ## No confundir con
 
@@ -24,3 +25,5 @@ Los más útiles son deterministas: validar el JSON contra un esquema, rechazar 
 - [[disciplinas/seguridad]]
 - [[docs/seguridad/02-permisos-y-minimo-privilegio]]
 - [[glosario/humano-en-el-bucle]]
+- [[docs/modelos-abiertos/09-guardrails-y-sandbox]]
+- [[docs/seguridad/03-patrones-contra-inyeccion]]

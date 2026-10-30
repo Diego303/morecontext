@@ -2,6 +2,7 @@
 titulo: Token
 descripcion: Unidad mínima de texto que procesa el modelo, normalmente un trozo de palabra; con ella se miden contexto, coste y límites.
 creado: 2026-07-01
+actualizado: 2026-10-29
 categoria: fundamentos
 aliases: [tokens]
 tags: [fundamentos, costes]
@@ -18,7 +19,7 @@ Todo se mide en tokens: el tamaño de la [[glosario/ventana-de-contexto]], el l�
 n = client.messages.count_tokens(model=MODEL, messages=messages).input_tokens
 ```
 
-Tras cada llamada, `resp.usage` te da `input_tokens` y `output_tokens`. Los de salida suelen costar más y son los que más tiempo tardan en generarse. El español, el código y el JSON tienden a ocupar más tokens por palabra que el inglés corriente.
+Tras cada llamada, `resp.usage` te da `input_tokens` y `output_tokens`. Los de salida suelen costar más y son los que más tiempo tardan en generarse. El español, el código y el JSON tienden a ocupar más tokens por palabra que el inglés corriente. Con modelos abiertos, además, la [[glosario/plantilla-de-chat]] añade tokens especiales que marcan cada turno y también ocupan contexto.
 
 ## No confundir con
 
@@ -30,3 +31,4 @@ Tras cada llamada, `resp.usage` te da `input_tokens` y `output_tokens`. Los de s
 - [[roadmap/00-fundamentos/02-tokens]]
 - [[roadmap/00-fundamentos/05-coste-y-latencia]]
 - [[docs/produccion/02-costes-y-limites]]
+- [[roadmap/00-fundamentos/07-empresa-modelo-herramienta]]

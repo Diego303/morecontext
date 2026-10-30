@@ -2,6 +2,7 @@
 titulo: Inyección directa e indirecta
 descripcion: Qué distingue la inyección directa de la indirecta, por dónde llega cada una a un agente, cómo se exfiltran datos y cómo montar una batería de ataques reproducible.
 creado: 2026-10-19
+actualizado: 2026-10-29
 orden: 2
 minutos: 55
 tipo: practica
@@ -11,7 +12,7 @@ objetivos:
   - Explicar por qué la inyección no tiene hoy una solución completa a nivel de modelo.
   - Implementar una batería de ataques que planta instrucciones en resultados de herramientas y detecta acciones prohibidas y fugas.
 requiere: ["[[cursos/seguridad-y-prompt-injection/01-modelo-de-amenazas]]"]
-relacionados: ["[[glosario/inyeccion-de-prompt]]", "[[docs/seguridad/01-prompt-injection]]", "[[radar/2026-10-20-inyeccion-por-herramientas]]", "[[cursos/evals-para-agentes/02-datasets-de-evaluacion]]"]
+relacionados: ["[[glosario/inyeccion-de-prompt]]", "[[docs/seguridad/01-prompt-injection]]", "[[radar/2026-10-20-inyeccion-por-herramientas]]", "[[cursos/evals-para-agentes/02-datasets-de-evaluacion]]", "[[biblioteca/inyeccion-indirecta-greshake]]"]
 tags: [seguridad, prompt-injection, red-team]
 ---
 
@@ -38,7 +39,7 @@ flowchart LR
 
 ## Inyección indirecta
 
-Greshake et al. (2023) describieron y demostraron el problema de forma sistemática en [*Not what you've signed up for*](https://arxiv.org/abs/2302.12173): aplicaciones integradas con LLM que leen contenido externo pueden ser manipuladas por quien controla ese contenido, con efectos como robo de datos, propagación entre usuarios o manipulación de lo que el usuario ve. Lo que el artículo planteaba con los primeros asistentes con navegación aplica hoy a cualquier agente con herramientas.
+Greshake et al. (2023) describieron y demostraron el problema de forma sistemática en [*Not what you've signed up for*](https://arxiv.org/abs/2302.12173): aplicaciones integradas con LLM que leen contenido externo pueden ser manipuladas por quien controla ese contenido, con efectos como robo de datos, propagación entre usuarios o manipulación de lo que el usuario ve. Lo que el artículo planteaba con los primeros asistentes con navegación aplica hoy a cualquier agente con herramientas (comentario en [[biblioteca/inyeccion-indirecta-greshake]]).
 
 Los vectores habituales:
 
@@ -49,9 +50,11 @@ Los vectores habituales:
 | Documento compartido | un párrafo en un PDF o en una hoja de cálculo que pide modificar el resumen |
 | Fragmento recuperado por RAG | una página de la wiki editada por cualquiera del equipo |
 | Resultado de herramienta | el campo `descripcion` de un issue público, la biografía de un perfil, un comentario de código |
-| Definición de herramienta | la descripción de una herramienta de un servidor MCP de terceros con instrucciones ocultas |
+| Definición de herramienta | la descripción de una herramienta de un servidor MCP de terceros con instrucciones ocultas ([[glosario/envenenamiento-de-herramientas|envenenamiento de herramientas]]) |
+| Skill de terceros | un `SKILL.md` o un script incluido en una skill instalada de un registro público |
+| Memoria persistente | una nota que el agente guardó tras leer contenido malicioso y que relee en sesiones futuras |
 
-El último caso es especial: la descripción entra en el contexto **en todas las llamadas**, antes de que el usuario pida nada. Lo viste desde el lado del servidor en [[cursos/mcp-de-cero-a-servidor/02-usar-servidores-existentes]].
+El último caso es especial: la descripción entra en el contexto **en todas las llamadas**, antes de que el usuario pida nada. Lo viste desde el lado del servidor en [[cursos/mcp-de-cero-a-servidor/02-usar-servidores-existentes]]. Las skills son el mismo problema con otra forma: Snyk analizó casi 4.000 skills de registros públicos y encontró decenas maliciosas confirmadas ([*ToxicSkills*](https://snyk.io/blog/toxicskills-malicious-ai-agent-skills-clawhub/), 5 feb. 2026; cifras de detección del propio proveedor). Trátalas como dependencias de npm o PyPI: [[docs/seguridad/04-mcp-y-skills-de-terceros]].
 
 ## Cómo salen los datos
 
@@ -65,7 +68,7 @@ La inyección que solo cambia un texto es molesta. La que saca datos es un incid
 
 ## Por qué no se arregla en el modelo
 
-Los proveedores entrenan sus modelos para resistir inyecciones, y mejoran con cada generación. Pero la resistencia es estadística: reduce la tasa de éxito, no la lleva a cero, y los atacantes iteran sobre los mismos modelos que tú usas. Los filtros de entrada que buscan frases como «ignora las instrucciones» se saltan reformulando, traduciendo o codificando.
+Los proveedores entrenan sus modelos para resistir inyecciones, y mejoran con cada generación. Pero la resistencia es estadística: reduce la tasa de éxito, no la lleva a cero, y los atacantes iteran sobre los mismos modelos que tú usas. Los filtros de entrada que buscan frases como «ignora las instrucciones» se saltan reformulando, traduciendo o codificando. Y las defensas que se publican con tasas de éxito del atacante cercanas a cero suelen medirse con ataques fijos: cuando el atacante adapta el ataque a la defensa, la mayoría caen (lo verás con datos en la [[cursos/seguridad-y-prompt-injection/03-defensas-en-capas|lección 3]]).
 
 La conclusión de diseño es la de la lección 1: **la defensa principal está fuera del modelo**, en lo que el agente puede hacer y en lo que puede salir. Las defensas en el modelo y en el prompt reducen la probabilidad; las de arquitectura limitan el daño.
 

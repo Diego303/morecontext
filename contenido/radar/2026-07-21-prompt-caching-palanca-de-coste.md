@@ -2,6 +2,7 @@
 titulo: El prompt caching es la primera palanca de coste
 descripcion: En agentes y asistentes con prefijos largos y repetidos, cachear el prompt suele ser el ahorro más grande y más fácil antes de tocar nada más.
 creado: 2026-07-21
+actualizado: 2026-10-29
 categoria: practicas
 tags: [costes, prompt-caching, produccion]
 fuente:
@@ -27,3 +28,6 @@ Un agente reenvía en cada paso lo mismo: definiciones de herramientas, [[glosar
 2. Mide `cache_creation_input_tokens` y `cache_read_input_tokens` en `resp.usage` para comprobar aciertos.
 3. Sigue la receta [[recetas/recortar-costes-con-prompt-caching]] y la referencia [[docs/contexto/02-prompt-caching]].
 4. Integra la medición en tu control de costes: [[docs/produccion/02-costes-y-limites]].
+
+> [!nota] Actualización (oct. 2026)
+> Dos datos concretos que aquí quedaban en «consulta la documentación»: en los modelos actuales el mínimo cacheable es de 512 tokens, y la caché automática ocupa uno de los 4 puntos de corte. Además, la API ya explica por qué no acertó la caché respecto a una petición anterior (`diagnostics`, GA): lo tienes en [[recetas/diagnosticar-fallos-de-cache]] y, por síntomas, en [[problemas/la-cache-no-se-aprovecha]].

@@ -2,6 +2,7 @@
 titulo: Formato y salidas estructuradas
 descripcion: Cómo pedir el formato que necesitas, cuándo usar ejemplos de salida, salidas estructuradas por esquema y herramientas estrictas, y por qué validar siempre.
 creado: 2026-10-10
+actualizado: 2026-10-29
 orden: 3
 tags: [prompting, salida-estructurada, json, modelos]
 relacionados: ["[[glosario/salida-estructurada]]", "[[docs/prompting/03-salida-estructurada]]", "[[roadmap/10-prompting/03-formato-de-salida]]", "[[recetas/extraer-facturas-a-json]]"]
@@ -103,15 +104,20 @@ const datos = bloque.type === "text" ? JSON.parse(bloque.text) : null;
 
 Con Pydantic en Python puedes usar `client.messages.parse(..., output_format=MiModelo)` y leer `.parsed_output` ya convertido en objeto.
 
+En LangChain, el equivalente es `llm.with_structured_output(MiModelo, method="json_schema")`, que envía el mismo `output_config.format`. Pon el `method` explícito: el valor por defecto con `ChatAnthropic` es forzar una herramienta, que con `claude-sonnet-5-5` no funciona. En `create_agent` se pasa como `response_format` ([[docs/frameworks/04-langchain]]). Con modelos abiertos, Ollama y vLLM aceptan también un esquema JSON ([[docs/modelos-abiertos/01-ollama]]).
+
 ### Herramientas estrictas
 
 Si el JSON son los argumentos de una herramienta, añade `"strict": True` en su definición. Así los argumentos del `tool_use` cumplen siempre su `input_schema`. Es útil en agentes donde un argumento mal formado rompería la ejecución.
 
+No uses una herramienta forzada para obtener el resultado final: en Opus 5.5, Sonnet 5.5 y Fable 5.1, `tool_choice` con `any` o `tool` devuelve 400. Para «entregar el resultado al final» de un agente, haz la última llamada con `output_config.format` ([[recetas/entregar-resultado-sin-forzar-herramienta]]).
+
 ### Limitaciones del esquema
 
 - Sin esquemas recursivos.
-- Sin restricciones numéricas (mínimos, máximos) ni de longitud.
+- Sin restricciones numéricas (`minimum`, `maximum`) ni de longitud (`minLength`, `maxLength`); `minItems` solo admite 0 o 1.
 - `additionalProperties` debe ser `false` en los objetos.
+- No se combinan con las citas nativas de documentos: con citas activas, la petición da 400.
 
 Lo que el esquema no puede expresar lo compruebas tú después.
 
@@ -133,7 +139,7 @@ def validar(d: dict) -> list[str]:
     return errores  # si hay errores: reintenta con el error en el prompt o envía a revisión humana
 ```
 
-Y comprueba `stop_reason`. Si es `max_tokens`, el JSON está cortado aunque el esquema estuviera activo. Si es `refusal`, no hay JSON que leer.
+Y comprueba `stop_reason`. Si es `max_tokens` o `model_context_window_exceeded`, el JSON está cortado aunque el esquema estuviera activo. Si es `refusal`, no hay JSON que leer. Si te llega JSON roto, repasa [[problemas/json-invalido-del-modelo]].
 
 ## Cuándo no aplica
 

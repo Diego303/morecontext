@@ -2,6 +2,7 @@
 titulo: Despliegue
 descripcion: Secretos, límites de tasa, reintentos con backoff, prompts versionados y feature flags para desplegar un agente y volver atrás sin sustos.
 creado: 2026-10-24
+actualizado: 2026-10-29
 orden: 6
 minutos: 40
 tipo: proyecto
@@ -10,6 +11,7 @@ objetivos:
   - Implementar reintentos con backoff exponencial y jitter que respeten retry-after y no repitan acciones con efectos.
   - Versionar prompts y configuración del modelo como código y registrar la versión en cada traza.
   - Desplegar cambios de prompt o modelo de forma gradual con feature flags y revertir sin desplegar.
+  - "Elegir dónde corre el agente: servicio propio, modelo autoalojado, ejecución duradera o agente alojado."
 requiere: ["[[roadmap/100-produccion/05-humano-en-el-bucle]]", "[[roadmap/80-evals/05-regresiones-en-ci]]"]
 tags: [produccion, despliegue, fiabilidad]
 relacionados: ["[[recetas/reintentos-y-limites-de-tasa]]", "[[docs/produccion/02-costes-y-limites]]", "[[modelos/09-checklist-produccion]]"]
@@ -51,8 +53,10 @@ import anthropic
 MODEL = "claude-sonnet-5-5"
 client = anthropic.Anthropic(max_retries=0, timeout=60.0)
 
-REINTENTABLES = (anthropic.RateLimitError, anthropic.APIConnectionError,
-                 anthropic.InternalServerError)
+REINTENTABLES = (anthropic.RateLimitError,         # 429
+                 anthropic.OverloadedError,        # 529: en el SDK 2.x no hereda de InternalServerError
+                 anthropic.InternalServerError,    # otros 5xx
+                 anthropic.APIConnectionError)     # red y tiempos de espera
 
 def crear_con_reintentos(max_intentos: int = 5, base: float = 1.0, tope: float = 30.0, **kwargs):
     for intento in range(max_intentos):
@@ -151,6 +155,20 @@ El hash del usuario hace que cada persona vea siempre la misma versión: su expe
 > [!consejo] Decide antes qué significa «va bien»
 > Antes de subir el porcentaje, apunta qué métricas miras y con qué umbral: tasa de errores de herramienta, `stop_reason` inesperados, coste y latencia por petición, quejas o escaladas a humanos. Si lo decides después de ver los datos, cualquier resultado parecerá aceptable.
 
+## Dónde corre el agente
+
+Hasta aquí has supuesto un servicio tuyo que llama a una API. Es lo más común, pero no la única forma. Cuatro decisiones que conviene tomar a propósito:
+
+**El servicio del agente.** Un contenedor con tu bucle, separado de todo lo demás, con *healthcheck*, límites de memoria y su propia cola si las tareas duran más que una petición HTTP. Lo que has visto en este nivel (trazas, reintentos, flags) vive aquí.
+
+**El modelo, si lo sirves tú.** Con un modelo de [[glosario/pesos-abiertos|pesos abiertos]], el servidor de inferencia es otra pieza que despliegas y vigilas. En producción, [[herramientas/vllm|vLLM]] (Apache-2.0) es la opción habitual: `vllm serve <modelo> --enable-auto-tool-choice --tool-call-parser <parser>`, con el *parser* de herramientas que indique la ficha del modelo, y expone una API compatible con OpenAI. Mantén el modelo en un volumen, no dentro de la imagen, y recuerda que tu agente pierde lo que solo da el proveedor (la caché de prompts de la API, por ejemplo). [[herramientas/ollama|Ollama]] es cómodo para desarrollo; para servir a muchos usuarios, mira [[recetas/servir-un-modelo-con-vllm]] y [[cursos/agentes-con-modelos-abiertos/03-servir-modelos-en-produccion]].
+
+**Ejecución duradera, si el agente dura minutos u horas.** Un agente largo no puede depender de que el proceso no se reinicie. La [[glosario/ejecucion-duradera|ejecución duradera]] guarda cada paso para retomar donde se quedó: cada llamada al modelo y cada herramienta es un paso con su punto de control, que se puede repetir sin efectos dobles. Opciones abiertas: el *checkpointer* de LangGraph (`SqliteSaver` o `PostgresSaver`, MIT, el mismo de la lección anterior), Temporal (SDKs con licencia MIT), DBOS (MIT, sobre Postgres) o Restate (SDK MIT, servidor con licencia BSL, que no es open source). Ojo con la parte comercial: el Agent Server de LangGraph (`langgraph-api`), que es lo que se despliega con LangSmith, usa licencia Elastic 2.0, distinta de la biblioteca.
+
+**Un agente alojado, si no quieres operar el bucle.** Claude Managed Agents (beta desde abril de 2026) es un *harness* de Anthropic que corre en su infraestructura: defines el agente (modelo, prompt, herramientas, MCP, skills) y un entorno aislado, y lanzas sesiones a las que envías eventos. Te ahorra el bucle, el *sandbox* y la persistencia; a cambio, pagas por hora de sesión además de los tokens, dependes del proveedor y no sirve para todos los requisitos de cumplimiento (por ejemplo, no admite retención cero de datos). Lo tienes en [[docs/agentes/04-managed-agents]].
+
+La regla para elegir es la de todo el roadmap: empieza por lo más simple que funcione (tu servicio y una API), mide, y añade piezas solo cuando un requisito concreto (privacidad, duración, coste a gran escala) lo pida. El marco de decisión entre API, modelo abierto alojado y local está en [[cursos/agentes-con-modelos-abiertos/06-local-o-api]].
+
 ## Lista para el día del despliegue
 
 1. Evals en verde en CI para la versión nueva ([[roadmap/80-evals/05-regresiones-en-ci]]).
@@ -160,6 +178,7 @@ El hash del usuario hace que cada persona vea siempre la misma versión: su expe
 5. Flag al porcentaje inicial y métricas de comparación preparadas.
 6. Herramientas irreversibles detrás de aprobación humana.
 7. Procedimiento de vuelta atrás probado al menos una vez.
+8. Si el agente dura más que una petición, estado persistido y reanudación probada tras un reinicio.
 
 Antes de cada lanzamiento, repasa también [[modelos/09-checklist-produccion]].
 
@@ -171,6 +190,7 @@ Antes de cada lanzamiento, repasa también [[modelos/09-checklist-produccion]].
 - Editar prompts en producción a mano, sin versión ni evals.
 - Usar alias de modelo que cambian solos.
 - Desplegar al 100 % de golpe sin forma rápida de volver atrás.
+- Confundir la licencia de la biblioteca con la de la plataforma (LangGraph MIT frente a su servidor Elastic 2.0; Restate SDK frente a servidor BSL).
 
 ## Ejercicio
 
@@ -189,9 +209,11 @@ Antes de cada lanzamiento, repasa también [[modelos/09-checklist-produccion]].
 - Reintentar el modelo es seguro; reintentar herramientas con efectos exige idempotencia.
 - Prompts y configuración versionados en el repositorio, con huella, y versión registrada en cada traza.
 - Feature flags por hash de usuario para desplegar poco a poco y volver atrás sin desplegar.
+- Decide dónde corre cada pieza: servicio propio, modelo autoalojado con vLLM, ejecución duradera o agente alojado, según requisitos concretos.
 
 ## Para seguir
 
 - [[recetas/reintentos-y-limites-de-tasa]]
 - [[modelos/09-checklist-produccion]]
 - [[cursos/seguridad-y-prompt-injection/index]]
+- [[roadmap/90-harness/index]], para el entorno que rodea al agente en sesiones largas

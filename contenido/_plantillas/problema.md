@@ -1,29 +1,23 @@
 ---
 titulo: "{{title}}"
-descripcion: Una frase de 20 a 220 caracteres con el síntoma y a dónde lleva el arreglo.
+descripcion: Una frase de 20 a 220 caracteres con el síntoma y su arreglo.
 creado: {{date:YYYY-MM-DD}}
 estado: borrador
-sintoma: Lo que ves cuando falla, en una frase.
 tags: [problemas]
 relacionados: []
+sintoma: El síntoma o el mensaje de error, tal cual
+tema: agentes
+nivel: intermedio
 ---
 
-## Síntoma
+El síntoma, como lo ve quien lo sufre (mensaje de error literal si lo hay).
 
-Qué ves exactamente: mensaje, comportamiento, trazas.
+## Causas
 
-## Causa
-
-Por qué pasa, explicado desde la base.
+## Cómo confirmarlo
 
 ## Arreglo
 
-Pasos concretos, con código si aplica.
-
-## Cómo comprobar que está resuelto
-
-Una prueba que falle antes y pase después.
+## Cómo evitarlo
 
 ## Ver también
-
-- Wikilinks a la lección, el doc o la receta relacionados.

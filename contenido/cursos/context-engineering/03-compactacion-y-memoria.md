@@ -2,6 +2,7 @@
 titulo: Compactación y memoria
 descripcion: Cómo limpiar resultados antiguos, resumir el historial de un agente sin romper los pares tool_use/tool_result y tomar notas persistentes fuera del contexto.
 creado: 2026-10-09
+actualizado: 2026-10-29
 orden: 3
 minutos: 50
 tipo: practica
@@ -9,8 +10,9 @@ objetivos:
   - Implementar la limpieza de resultados de herramientas antiguos manteniendo la estructura de la conversación
   - Implementar una compactación del historial que conserve decisiones, errores pendientes y estado de la tarea
   - Diseñar herramientas de notas persistentes para que el agente guarde lo importante fuera del contexto
+  - Elegir entre la compactación propia y la del servidor (compact_20260112, limpieza de contexto y herramienta de memoria)
 requiere: ["[[cursos/context-engineering/02-que-meter-y-que-no]]"]
-relacionados: ["[[glosario/compactacion]]", "[[glosario/memoria]]", "[[docs/contexto/04-memoria]]", "[[roadmap/30-contexto-y-rag/06-memoria-entre-sesiones]]"]
+relacionados: ["[[glosario/compactacion]]", "[[glosario/memoria]]", "[[docs/contexto/04-memoria]]", "[[roadmap/30-contexto-y-rag/06-memoria-entre-sesiones]]", "[[docs/contexto/05-compactacion-y-limpieza-en-el-servidor]]"]
 tags: [contexto, memoria, agentes]
 ---
 
@@ -26,7 +28,7 @@ En un bucle agéntico el historial solo crece. Antes o después pasa una de dos 
 | Compactar | Resume el historial antiguo y continúa desde el resumen | Matices no recogidos en el resumen | Al pasar un umbral de tokens |
 | Notas persistentes | El agente escribe lo importante en un archivo y lo lee cuando lo necesita | Nada, si las notas son buenas | Tareas largas o con varias sesiones |
 
-*[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 2025) describe estas técnicas. Sobre la limpieza dice que es una de las formas más seguras y ligeras de compactación: una vez que una herramienta se ejecutó hace muchos pasos, el agente rara vez necesita volver a ver su resultado bruto.
+*[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 29 sept. 2025) describe estas técnicas. Sobre la limpieza dice que es una de las formas más seguras y ligeras de compactación: una vez que una herramienta se ejecutó hace muchos pasos, el agente rara vez necesita volver a ver su resultado bruto.
 
 ## Limpiar resultados antiguos
 
@@ -59,8 +61,8 @@ export function limpiarResultados(messages: Anthropic.MessageParam[], conservar 
   const conResultados = messages.flatMap((m, i) =>
     m.role === "user" && Array.isArray(m.content) && m.content.some((b) => b.type === "tool_result") ? [i] : []);
   const viejos = new Set(conservar ? conResultados.slice(0, -conservar) : conResultados);
-  return messages.map((m, i) =>
-    viejos.has(i) && Array.isArray(m.content)
+  return messages.map((m, i): Anthropic.MessageParam =>
+    viejos.has(i) && m.role === "user" && Array.isArray(m.content)
       ? { ...m, content: m.content.map((b) => (b.type === "tool_result" ? { ...b, content: MARCADOR } : b)) }
       : m);
 }
@@ -129,7 +131,35 @@ def gestionar(system: str, tools: list[dict], messages: list[dict], umbral: int)
 
 Llama a `gestionar` al principio de cada iteración del bucle, antes de `messages.create`. Primero intenta lo barato (limpiar) y solo si no basta, compacta. El primer mensaje del historial nuevo es del usuario y el siguiente del asistente, así que la alternancia de roles se mantiene.
 
-Algunos proveedores ofrecen compactación o gestión de contexto en el propio servidor. Si la tuya lo hace, consulta su documentación: el criterio de qué conservar sigue siendo tuyo.
+Hacerlo a mano te enseña dónde están las trampas y funciona con cualquier proveedor y con modelos abiertos. Con la API de Claude tienes además la vía del servidor, en la sección siguiente.
+
+## La vía del servidor
+
+La API de Claude ofrece las dos primeras técnicas como ediciones de contexto que se declaran en la petición (en beta, con `client.beta.messages`):
+
+| Pieza | Qué hace | Beta |
+|---|---|---|
+| `clear_tool_uses_20250919` | Vacía los resultados de herramientas antiguos al pasar un umbral, conservando los últimos (`keep`) | `context-management-2025-06-27` |
+| `clear_thinking_20251015` | Quita bloques de razonamiento de turnos antiguos; si la usas, va la primera de la lista | `context-management-2025-06-27` |
+| `compact_20260112` | Al pasar un umbral (150.000 tokens por defecto, mínimo 50.000) resume lo anterior y devuelve un bloque `compaction` que **tienes que reenviar**: la API ignora todo lo que va antes de él | `compact-2026-01-12` |
+| `memory_20250818` | Herramienta de memoria de cliente: el modelo ve, crea y edita archivos en `/memories` y tu código decide dónde se guardan | Ninguna |
+
+```python nocheck title="edición de contexto en el servidor (fragmento)"
+resp = client.beta.messages.create(
+    betas=["context-management-2025-06-27", "compact-2026-01-12"],
+    model=MODEL, max_tokens=8192, system=SYSTEM, messages=messages,
+    tools=TOOLS + [{"type": "memory_20250818", "name": "memory"}],  # memoria: la ejecutas tú
+    context_management={"edits": [
+        {"type": "clear_tool_uses_20250919", "trigger": {"type": "input_tokens", "value": 100_000},
+         "keep": {"type": "tool_uses", "value": 3}},
+        {"type": "compact_20260112", "trigger": {"type": "input_tokens", "value": 150_000}},
+    ]})
+messages.append({"role": "assistant", "content": resp.content})  # reenvía el bloque compaction tal cual
+```
+
+Qué ganas: no eliges el punto de corte (la API no rompe parejas `tool_use`/`tool_result`), no haces una llamada aparte para resumir y la respuesta trae `context_management.applied_edits` con lo que se limpió. Qué no cambia: el criterio de qué conservar. Con `instructions` sustituyes el prompt de resumen por defecto, y con `pause_after_compaction: True` la respuesta para con `stop_reason: "compaction"` para que reinyectes tú la tarea y el progreso. La compactación del servidor resume siempre con el modelo de la petición y solo existe en la API de Claude; para otros proveedores o para resumir con un modelo más barato, la casera sigue siendo la opción. El bucle completo está en [[recetas/compactacion-en-el-servidor]] y la referencia en [[docs/contexto/05-compactacion-y-limpieza-en-el-servidor]].
+
+En frameworks abiertos tienes lo mismo como *middleware*: en LangChain, `SummarizationMiddleware` compacta el historial al pasar un umbral y `ContextEditingMiddleware` limpia resultados antiguos ([[cursos/langchain-y-langgraph/04-middleware]]).
 
 > [!aviso] Compactar pierde información
 > Cada resumen es una decisión sobre qué olvidar. Guarda siempre el historial completo fuera del contexto (en tu traza) para poder auditar qué se perdió cuando el agente se equivoque después de compactar.
@@ -164,7 +194,7 @@ TOOLS_NOTAS = [
 ]
 ```
 
-Las secciones fijas obligan a notas útiles: decisiones con motivo, pendientes accionables, hechos comprobados. Una variante habitual es una herramienta de memoria con operaciones de archivo (ver, crear, editar) sobre una carpeta dedicada; la idea es la misma. Para memoria entre sesiones de usuario distintas, mira [[roadmap/30-contexto-y-rag/06-memoria-entre-sesiones]] y [[docs/contexto/04-memoria]].
+Las secciones fijas obligan a notas útiles: decisiones con motivo, pendientes accionables, hechos comprobados. Una variante habitual es una herramienta de memoria con operaciones de archivo (ver, crear, editar) sobre una carpeta dedicada; es lo que hace `memory_20250818` en la API de Claude, con la carpeta `/memories` bajo tu control. Valida las rutas que pide el modelo para que no salga de esa carpeta. Combinada con la limpieza de contexto, el modelo recibe un aviso al acercarse al umbral y puede guardar lo importante antes de que se borre. Para memoria entre sesiones de usuario distintas, mira [[roadmap/30-contexto-y-rag/06-memoria-entre-sesiones]] y [[docs/contexto/04-memoria]].
 
 ## Errores frecuentes
 
@@ -189,9 +219,11 @@ Las secciones fijas obligan a notas útiles: decisiones con motivo, pendientes a
 - Compacta con umbral y un prompt de resumen ajustado con trazas reales.
 - Las notas guardan lo importante en el momento en que se sabe y sobreviven a todo.
 - Guarda el historial completo fuera del contexto para auditar.
+- La API de Claude ofrece limpieza, compactación (reenvía el bloque `compaction`) y memoria en el servidor; el criterio de qué conservar sigue siendo tuyo.
 
 ## Para seguir
 
 - [[cursos/context-engineering/04-contexto-para-agentes-largos]]
 - [[glosario/compactacion]]
 - [[cursos/sistemas-multiagente/03-coordinacion-y-estado]]
+- [[recetas/compactacion-en-el-servidor]]

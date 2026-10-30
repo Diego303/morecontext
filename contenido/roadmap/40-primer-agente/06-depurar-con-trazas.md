@@ -2,6 +2,7 @@
 titulo: Depurar un agente leyendo sus trazas
 descripcion: Registra cada paso de tu agente en una traza JSONL sencilla y aprende a leerla para encontrar herramientas mal elegidas, bucles, errores ignorados y contexto desbordado.
 creado: 2026-10-06
+actualizado: 2026-10-29
 orden: 6
 minutos: 45
 tipo: practica
@@ -152,6 +153,20 @@ Lectura: el primer fallo está en el paso 1. El modelo pasó un email a `ver_ped
 
 Cada fallo que encuentres en una traza es un caso de prueba gratis. Guarda la tarea, lo que esperabas («primera herramienta: buscar_cliente») y la versión que fallaba. Cuando lo arregles, el caso se queda en tu conjunto para que no vuelva a pasar. Así nacen las [[roadmap/80-evals/04-evals-de-trayectoria|evals de trayectoria]].
 
+## La misma traza en herramientas abiertas
+
+Tu JSONL ya tiene la forma que usan las herramientas de observabilidad. Las [[glosario/convenciones-genai-otel|convenciones GenAI de OpenTelemetry]] describen un agente como un árbol de *spans*: uno `invoke_agent` por ejecución, y dentro uno `chat` por llamada al modelo y uno `execute_tool` por herramienta. Cada evento tuyo tiene su equivalente:
+
+| Tu traza | Span de OpenTelemetry | Atributos `gen_ai.*` |
+|---|---|---|
+| `inicio` … `fin` | `invoke_agent` | `gen_ai.agent.name`, `gen_ai.conversation.id` |
+| `modelo` | `chat` | `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.response.finish_reasons` |
+| `herramienta` | `execute_tool` | `gen_ai.tool.name`, `gen_ai.tool.call.id`; el error en `error.type` |
+
+Dos detalles antes de copiar nombres. Las convenciones están en estado *Development* y desde junio de 2026 viven en su propio repositorio ([open-telemetry/semantic-conventions-genai](https://github.com/open-telemetry/semantic-conventions-genai)); cambian entre versiones (`gen_ai.system` pasó a ser `gen_ai.provider.name`), así que fija la versión de tu instrumentación. Y el contenido de los mensajes es *opt-in*: por defecto se registran metadatos, no lo que dijo el usuario, por la misma razón que el aviso de arriba.
+
+Si emites esos spans y los exportas por OTLP, los ves como un árbol navegable en [[herramientas/langfuse|Langfuse]] (SDK open source con licencia MIT, plataforma autoalojable o en la nube) o en [[herramientas/arize-phoenix|Phoenix]] (autoalojable, con licencia Elastic 2.0: código disponible, no open source según la OSI). El bucle instrumentado a mano, con el span que ya emite el SDK de Anthropic, está en [[docs/produccion/04-opentelemetry-genai]], y el montaje con Langfuse en [[recetas/trazas-con-langfuse]]. Si tu agente está hecho con LangGraph, `grafo.stream(..., stream_mode="updates")` te da un evento por nodo y `get_state_history(config)` la secuencia de estados guardados, que es otra forma de leer la misma trayectoria.
+
 ## Errores frecuentes
 
 - Registrar solo la respuesta final.
@@ -182,4 +197,5 @@ Cada fallo que encuentres en una traza es un caso de prueba gratis. Guarda la ta
 - [[roadmap/100-produccion/01-observabilidad-y-trazas]]
 - [[roadmap/80-evals/04-evals-de-trayectoria]]
 - [[docs/produccion/01-observabilidad]]
+- [[recetas/analisis-de-errores-de-trazas]]
 - [[blog/2026-07-15-como-leer-una-traza]]

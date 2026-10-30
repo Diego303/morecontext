@@ -2,6 +2,7 @@
 titulo: Streaming de respuestas
 descripcion: Muestra la respuesta del modelo a medida que se genera, en consola y en un endpoint web con Server-Sent Events, sin perder el mensaje final ni el stop_reason.
 creado: 2026-10-01
+actualizado: 2026-10-29
 nivel: inicial
 minutos: 15
 tema: produccion
@@ -19,7 +20,7 @@ Quieres mostrar el texto conforme llega, tanto en un script como en una web, y s
 ## Ingredientes
 
 - Python 3.10 o superior.
-- `pip install anthropic` (y `fastapi uvicorn` para el paso 3).
+- `pip install "anthropic>=2"` (y `fastapi uvicorn` para el paso 3).
 - La variable de entorno `ANTHROPIC_API_KEY`.
 
 ## Pasos
@@ -55,8 +56,10 @@ def responder(pregunta: str) -> anthropic.types.Message:
     print()
     print(f"\n[primer token: {(primer_token or 0):.2f} s | total: {time.monotonic() - inicio:.2f} s | "
           f"stop_reason: {final.stop_reason} | salida: {final.usage.output_tokens} tokens]", file=sys.stderr)
-    if final.stop_reason == "max_tokens":
-        print("[aviso: la respuesta se cortó por max_tokens]", file=sys.stderr)
+    if final.stop_reason in ("max_tokens", "model_context_window_exceeded"):
+        print(f"[aviso: la respuesta se cortó ({final.stop_reason})]", file=sys.stderr)
+    elif final.stop_reason == "refusal":  # llega con HTTP 200: el texto mostrado puede quedar a medias
+        print("[aviso: el modelo rechazó continuar]", file=sys.stderr)
     return final
 
 
@@ -138,9 +141,30 @@ Un token es la unidad mínima de texto con la que trabaja el modelo…
 - El texto aparece por partes, no de golpe al final.
 - El tiempo hasta el primer token es una fracción pequeña del total.
 - Con `curl -N -X POST localhost:8000/preguntar -H 'Content-Type: application/json' -d '{"texto":"hola"}'` ves llegar los eventos uno a uno. Si llegan todos juntos, algo en medio (un proxy, la compresión) está acumulando la respuesta.
-- Baja `max_tokens` a 20: debe aparecer el aviso de `max_tokens` y el evento final con ese `stop_reason`.
+- Baja `max_tokens` a 20: debe aparecer el aviso de respuesta cortada y el evento final con `stop_reason: max_tokens`.
 
 ## Variaciones
+
+- **Con LangGraph.** Un agente de `create_agent` (o cualquier grafo de [[docs/frameworks/05-langgraph|LangGraph]]) emite los tokens con `stream_mode="messages"`: cada elemento es un par `(trozo, metadatos)` y `metadatos["langgraph_node"]` dice qué nodo lo produjo, así que puedes mostrar solo el texto del modelo y no los resultados de herramientas. Con `stream_mode="updates"` recibes en cambio un evento por paso del grafo, útil para enseñar el progreso.
+
+```python title="streaming_langgraph.py"
+from langchain.agents import create_agent
+from langchain.chat_models import init_chat_model
+
+MODEL = "anthropic:claude-sonnet-5-5"
+agente = create_agent(init_chat_model(MODEL, max_tokens=1024), tools=[])
+
+
+def responder(pregunta: str) -> None:
+    for trozo, meta in agente.stream({"messages": [("user", pregunta)]}, stream_mode="messages"):
+        if meta["langgraph_node"] == "model" and trozo.text:  # solo el texto que genera el modelo
+            print(trozo.text, end="", flush=True)
+    print()
+
+
+if __name__ == "__main__":
+    responder("¿Qué es un token?")
+```
 
 - **TypeScript.** Con `@anthropic-ai/sdk`: `const stream = client.messages.stream({...}); stream.on("text", (t) => process.stdout.write(t)); const final = await stream.finalMessage();`.
 - **Herramientas.** Con herramientas, el stream también trae bloques `tool_use` cuyo `input` llega por partes. No ejecutes nada hasta tener el mensaje final: usa `get_final_message()` y sigue el bucle normal ([[docs/herramientas/01-uso-de-herramientas]]).

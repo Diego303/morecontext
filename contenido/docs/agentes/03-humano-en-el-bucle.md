@@ -2,6 +2,7 @@
 titulo: Humano en el bucle
 descripcion: Cómo y dónde pedir aprobación humana dentro de un agente, cómo pausar el bucle sin perder el estado y cómo devolver un rechazo al modelo.
 creado: 2026-10-17
+actualizado: 2026-10-29
 orden: 3
 nivel: intermedio
 tags: [agentes, aprobacion, seguridad, ux]
@@ -102,7 +103,47 @@ En consola, `input()` bloquea y ya está. En una aplicación real la persona pue
 2. Termina la petición y notifica a la persona (interfaz, correo, Slack).
 3. Cuando decida, carga el estado, construye los `tool_result` que faltan y continúa el bucle con una llamada nueva.
 
-El historial de mensajes es todo el estado que necesita el modelo. Si lo guardas íntegro (incluidos los bloques `thinking` si usas razonamiento), retomar horas después funciona igual que seguir en el momento.
+El historial de mensajes es todo el estado que necesita el modelo. Si lo guardas íntegro (incluidos los bloques `thinking`, que en los modelos 5.x aparecen aunque no pidas razonamiento), retomar horas después funciona igual que seguir en el momento.
+
+## Con LangChain y LangGraph
+
+En los frameworks, la pausa y el estado guardado vienen hechos. `HumanInTheLoopMiddleware` de LangChain pausa el agente antes de las herramientas que elijas; por debajo es un `interrupt()` de LangGraph, así que necesita un *checkpointer* y un `thread_id`, y se reanuda con `Command(resume=…)`:
+
+```python title="aprobacion_lc.py"
+from langchain.agents import create_agent
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langchain.chat_models import init_chat_model
+from langchain.tools import tool
+from langgraph.checkpoint.memory import InMemorySaver  # en producción: SqliteSaver o PostgresSaver
+from langgraph.types import Command
+
+MODEL = "anthropic:claude-sonnet-5-5"
+
+@tool
+def reembolsar(pedido_id: str, importe_eur: float) -> str:
+    """Emite un reembolso. Acción irreversible."""
+    return f"Reembolso de {importe_eur} € emitido para {pedido_id}."
+
+agente = create_agent(
+    init_chat_model(MODEL, max_tokens=2048),
+    tools=[reembolsar],
+    middleware=[HumanInTheLoopMiddleware(
+        interrupt_on={"reembolsar": {"allowed_decisions": ["approve", "edit", "reject"]}},
+    )],
+    checkpointer=InMemorySaver(),
+)
+config = {"configurable": {"thread_id": "ticket-123"}}  # el mismo para pausar y reanudar
+salida = agente.invoke({"messages": [("user", "Devolvedme el pedido P-1001, llegó roto.")]}, config, version="v2")
+
+while salida.interrupts:  # en pausa: aquí iría tu interfaz
+    peticion = salida.interrupts[0].value
+    decisiones = [{"type": "reject", "message": "El supervisor no aprueba este reembolso."}
+                  for _ in peticion["action_requests"]]  # una decisión por acción, en orden
+    salida = agente.invoke(Command(resume={"decisions": decisiones}), config, version="v2")
+print(salida.value["messages"][-1].text)
+```
+
+Un rechazo vuelve al modelo como un `ToolMessage` de error, igual que el `is_error` del código a mano; `edit` ejecuta los argumentos editados. Con `SqliteSaver` o `PostgresSaver`, el proceso puede terminar y la reanudación llegar horas después desde otro. Si escribes el grafo tú, el mismo control es un nodo que llama a `interrupt()` antes del nodo de herramientas; ojo: al reanudar, ese nodo **se ejecuta otra vez desde el principio**, así que lo anterior al `interrupt` debe ser idempotente. Recetas: [[recetas/aprobacion-humana-con-langgraph]] y [[problemas/langgraph-no-reanuda-tras-interrupt]]; lección: [[cursos/langchain-y-langgraph/07-humano-en-el-bucle-con-interrupt]]. En Pydantic AI el equivalente es `requires_approval=True` con `DeferredToolRequests`, y en el OpenAI Agents SDK, `needs_approval=True`. En Claude Code, los permisos `ask` y los hooks `PreToolUse` cumplen este papel: [[docs/claude-code/06-permisos-y-sandbox]].
 
 > [!peligro] Aprueba lo que se ejecuta, no lo que se describe
 > Muestra a la persona los argumentos exactos del `tool_use` (importe, destinatario, texto del correo) y ejecuta esos mismos argumentos. Si enseñas un resumen escrito por el modelo, la persona aprueba la descripción y tu código ejecuta otra cosa.
@@ -120,7 +161,7 @@ Si la persona edita los argumentos, ejecuta los editados y díselo al modelo en 
 
 ## Errores frecuentes
 
-- **Fatiga de aprobación**: pedir permiso para todo. La gente acaba pulsando «sí» sin mirar.
+- **Fatiga de aprobación**: pedir permiso para todo. La gente acaba pulsando «sí» sin mirar. Reserva la aprobación para lo irreversible y acota el resto con permisos y *sandbox*.
 - **Política en el prompt**: el control debe estar en el código que ejecuta la herramienta.
 - **Rechazo silencioso**: cortar el bucle sin devolver `tool_result`. El historial queda inválido y no puedes continuar.
 - **No registrar quién aprobó**: guarda persona, momento y argumentos aprobados. Lo necesitarás para auditar.
@@ -131,3 +172,4 @@ Si la persona edita los argumentos, ejecuta los editados y díselo al modelo en 
 - [[sistemas/soporte-con-aprobacion-humana]]: un sistema completo con aprobaciones.
 - [[disciplinas/humano-en-el-bucle]]: la forma de trabajar.
 - [[docs/agentes/01-el-bucle-agentico]]: el bucle sobre el que se monta todo esto.
+- [[recetas/puerta-humana-con-comandos]] y [[glosario/puerta-humana]]: una sola aprobación en un flujo con especificación.

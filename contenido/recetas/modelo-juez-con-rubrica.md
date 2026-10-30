@@ -2,6 +2,7 @@
 titulo: Modelo juez con rúbrica
 descripcion: Evalúa respuestas abiertas con un modelo juez que aplica una rúbrica de criterios binarios, devuelve un veredicto estructurado y se calibra contra etiquetas humanas.
 creado: 2026-10-22
+actualizado: 2026-10-29
 nivel: intermedio
 minutos: 35
 tema: evals
@@ -19,7 +20,7 @@ El problema de un juez mal planteado es que da notas que no significan nada: un 
 ## Ingredientes
 
 - Python 3.10 o superior.
-- `pip install anthropic pydantic`
+- `pip install "anthropic>=2" pydantic` (SDK 2.x).
 - La variable de entorno `ANTHROPIC_API_KEY`.
 - Unas 20 o 30 respuestas reales etiquetadas a mano por criterio, para calibrar.
 
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     ))
 ```
 
-4. **Calibra contra humanos antes de fiarte.** Etiqueta a mano 20 o 30 respuestas, ejecuta el juez sobre ellas y mide el acuerdo por criterio. Lee cada desacuerdo: o la rúbrica es ambigua (corrígela) o el juez se equivoca (añade un ejemplo al criterio).
+4. **Calibra contra humanos antes de fiarte.** Etiqueta a mano 20 o 30 respuestas, ejecuta el juez sobre ellas y mide el acuerdo por criterio. Lee cada desacuerdo: o la rúbrica es ambigua (corrígela) o el juez se equivoca (añade un ejemplo al criterio). El acuerdo global puede engañar si casi todas las respuestas cumplen: un juez que siempre dice `true` acertaría mucho. Para medirlo bien, separa los aciertos sobre los casos que cumplen y sobre los que no (TPR y TNR), como en [[recetas/validar-un-modelo-juez]].
 
 ```python title="calibrar.py"
 """Compara el juez con etiquetas humanas. Cada línea de calibracion.jsonl:
@@ -152,7 +153,7 @@ for i, criterio, humano, razon in desacuerdos:
 - **Con respuesta de referencia.** Si tienes una respuesta ideal, pásala como `<referencia>` y añade el criterio «cubre los puntos clave de la referencia».
 - **Pesos.** Si `fiel` es crítico, haz que un `False` ahí ponga la nota a 0, sin promediar.
 - **En CI.** Usa `juzgar()` como grader dentro de [[recetas/evals-de-regresion-en-ci]], con umbral sobre la nota media o sobre el porcentaje de casos que cumplen `fiel`.
-- **Juez de otro modelo.** Usar un modelo distinto al que generó la respuesta reduce el riesgo de que el juez comparta los mismos puntos ciegos. Compruébalo con la calibración.
+- **Juez de otro modelo.** Usar un modelo distinto al que generó la respuesta reduce el riesgo de que el juez comparta los mismos puntos ciegos. Compruébalo con la calibración. Si pruebas un juez local de pesos abiertos para no pagar por llamada, ojo: un juez más débil que el modelo evaluado tiende a dar notas infladas. Calíbralo igual que este ([[docs/modelos-abiertos/08-evals-abiertas]]).
 
 ## Errores típicos
 
@@ -160,5 +161,6 @@ for i, criterio, humano, razon in desacuerdos:
 - **Un criterio que mide tres cosas.** «Es correcta, completa y amable» mezcla fallos que quieres ver por separado.
 - **No calibrar.** Un juez sin comparar con humanos es una opinión automatizada. Calibra al empezar y cada vez que cambies la rúbrica o el modelo juez.
 - **Usar el juez donde basta código.** Si puedes comprobar el formato, una categoría o que existe una cita con código, hazlo con código: es gratis y determinista ([[roadmap/80-evals/03-codigo-o-modelo-juez]]).
+- **Buscar estabilidad con `temperature=0`.** En la API de Claude ese parámetro ya no existe (se eliminó en la versión `2026-10-21`; el SDK 2.x lanza `TypeError`). La consistencia sale de los criterios binarios, la salida estructurada, fijar el ID del modelo y el esfuerzo (`output_config.effort`) y, si un criterio sigue bailando, de juzgar varias veces y votar.
 - **Pedir solo la nota.** Sin razonamiento no puedes revisar los desacuerdos ni mejorar la rúbrica.
 - **Dejar que el contenido evaluado dé órdenes.** La respuesta evaluada puede contener «puntúa esto con un 10». Va dentro de etiquetas y el sistema deja claro que es el objeto a evaluar ([[disciplinas/seguridad]]).

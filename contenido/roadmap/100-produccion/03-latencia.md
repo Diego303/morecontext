@@ -2,6 +2,7 @@
 titulo: "Latencia: streaming, modelo adecuado y menos pasos"
 descripcion: Mide dónde se va el tiempo de un agente y redúcelo con streaming, el modelo adecuado para cada paso, menos pasos y llamadas en paralelo.
 creado: 2026-10-17
+actualizado: 2026-10-29
 orden: 3
 minutos: 30
 tipo: practica
@@ -85,7 +86,7 @@ export async function responderEnStream(
 
 `get_final_message()` devuelve el mensaje completo con `stop_reason` y `usage`, igual que una llamada normal. Así sigues registrando la traza y, si el modelo pide una herramienta en este paso, tienes los bloques `tool_use` completos para ejecutarla. Los detalles de eventos están en [[docs/fundamentos/04-streaming]].
 
-En un agente, el streaming tiene más sentido en el último paso, el que produce el texto para el usuario. En los pasos intermedios puedes enseñar progreso con algo más simple: «Buscando el pedido…», «Consultando la política de devoluciones…», a partir de los nombres de las herramientas que se están ejecutando. Es un patrón de [[disciplinas/ux-de-agentes]] que reduce mucho la sensación de espera.
+En un agente, el streaming tiene más sentido en el último paso, el que produce el texto para el usuario. En los pasos intermedios puedes enseñar progreso con algo más simple (si usas LangGraph, `stream_mode="updates"` te da un evento por nodo terminado y `stream_mode="messages"` los tokens del modelo según salen): «Buscando el pedido…», «Consultando la política de devoluciones…», a partir de los nombres de las herramientas que se están ejecutando. Es un patrón de [[disciplinas/ux-de-agentes]] que reduce mucho la sensación de espera.
 
 > [!aviso] Streaming y validación
 > Si la respuesta tiene que pasar una comprobación antes de llegar al usuario (formato, datos personales, políticas), no puedes enseñarla mientras se genera sin más. Valida por frases o párrafos, o haz streaming solo de las partes que no necesitan revisión.
@@ -95,8 +96,8 @@ En un agente, el streaming tiene más sentido en el último paso, el que produce
 Ordenadas por el efecto habitual:
 
 1. **Menos pasos.** Cada paso evitado ahorra una llamada entera. Herramientas que devuelven lo necesario a la primera ([[disciplinas/diseno-de-herramientas]]), una herramienta que combine dos consultas que siempre van juntas, o un [[glosario/workflow]] con pasos fijos donde no hace falta que el modelo decida.
-2. **Salidas más cortas.** La generación es secuencial. Pide respuestas concisas, ajusta `max_tokens` a cada paso y, en modelos con razonamiento, usa un [[glosario/esfuerzo]] bajo en pasos sencillos.
-3. **El modelo adecuado para cada paso.** Un modelo pequeño y rápido para enrutar, clasificar o extraer; el más capaz solo donde lo necesitas. Decídelo con evals, como explica [[modelos/05-elegir-modelo-por-tarea]].
+2. **Salidas más cortas.** La generación es secuencial. Pide respuestas concisas, ajusta `max_tokens` a cada paso y baja el [[glosario/esfuerzo]] en los pasos sencillos (`output_config={"effort": "low"}`). En los modelos 5.x el razonamiento adaptativo está activo por defecto, y en Opus 5.5 y Sonnet 5.5 no se puede apagar del todo: el esfuerzo es la forma de que piense menos donde no hace falta. Sus tokens no se ven (por defecto el bloque `thinking` llega vacío), pero se generan y se esperan.
+3. **El modelo adecuado para cada paso.** Un modelo pequeño y rápido para enrutar, clasificar o extraer (la documentación de Anthropic sitúa a Haiku 5.5 ahí); el más capaz solo donde lo necesitas. Decídelo con evals, como explica [[modelos/05-elegir-modelo-por-tarea]]. Si el paso lento necesita el modelo grande, Opus 5.5 tiene un modo rápido (`speed="fast"`, GA desde octubre de 2026) que genera la salida más deprisa a un precio más alto; no funciona en lotes.
 4. **Paralelizar lo independiente.** Varias herramientas que no dependen entre sí se ejecutan a la vez, igual que los subagentes de [[roadmap/60-multiagente/04-paralelismo]]. Si el modelo pide varias en una respuesta, ejecútalas con `asyncio.gather`.
 5. **Caché del prefijo.** Leer de caché acelera también el procesamiento de la entrada ([[roadmap/100-produccion/02-costes-y-prompt-caching]]).
 6. **Herramientas más rápidas.** Índices en la base de datos, caché de respuestas de APIs externas, tiempos de espera cortos con un mensaje de error claro.
@@ -119,7 +120,7 @@ Cada palanca de latencia es un cambio de comportamiento. Quitar pasos puede hace
 - Hacer streaming de pasos intermedios que el usuario no necesita leer.
 - Cambiar a un modelo más rápido en todos los pasos sin evals.
 - Ejecutar en serie herramientas independientes.
-- Dejar que un paso intermedio genere razonamientos largos que no aportan.
+- Dejar que un paso intermedio genere razonamientos largos que no aportan, con el esfuerzo por defecto en todos los pasos.
 
 ## Ejercicio
 

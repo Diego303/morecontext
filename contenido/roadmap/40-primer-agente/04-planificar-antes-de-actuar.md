@@ -2,6 +2,7 @@
 titulo: Planificar antes de actuar
 descripcion: Pide al agente un plan estructurado antes de tocar herramientas, revísalo y haz que lo mantenga actualizado mientras trabaja.
 creado: 2026-09-26
+actualizado: 2026-10-29
 orden: 4
 minutos: 45
 tipo: practica
@@ -156,7 +157,9 @@ def sistema_con_plan(base: str, plan: dict) -> str:
             "Sigue el plan. Si un paso falla o descubres que sobra, márcalo y adapta los siguientes.")
 ```
 
-En tu bucle, `ejecutar()` despacha `actualizar_plan` a esta función, y en cada vuelta reconstruyes el sistema con `sistema_con_plan` para que el modelo vea siempre el estado actual. Ten en cuenta que cambiar el prompt de sistema en cada paso invalida la caché del prefijo; si te importa el coste, deja el sistema fijo y devuelve el estado del plan en el propio `tool_result`, como ya hace `actualizar_plan`.
+En tu bucle, `ejecutar()` despacha `actualizar_plan` a esta función, y en cada vuelta reconstruyes el sistema con `sistema_con_plan` para que el modelo vea siempre el estado actual. Ten en cuenta que cambiar el prompt de sistema en cada paso invalida la [[glosario/prompt-caching|caché]] del prefijo. Si te importa el coste, deja el sistema fijo y devuelve el estado del plan en el propio `tool_result`, como ya hace `actualizar_plan`, o añade el plan actualizado como un [[glosario/mensaje-de-sistema-intermedio|mensaje de sistema intermedio]] al final del historial, que no rompe el prefijo cacheado.
+
+Los frameworks traen esta misma herramienta hecha. En LangChain, `TodoListMiddleware` da al agente `write_todos` para escribir y marcar su lista de tareas; Claude Code tiene su propia lista de tareas, y [[herramientas/deepagents|Deep Agents]] la tiene si añades ese middleware (desde la 0.7 no viene por defecto). Por dentro es tu `actualizar_plan`: una herramienta que escribe en un estado que guarda el código.
 
 > [!consejo] El plan es una hipótesis
 > No obligues al agente a cumplir el plan a toda costa. Si en el paso 2 descubre que el pedido ya fue entregado, el paso 3 sobra. Lo que quieres es que **los cambios queden registrados**, con su nota, para poder entenderlos después.
@@ -197,3 +200,4 @@ En tu bucle, `ejecutar()` despacha `actualizar_plan` a esta función, y en cada 
 - [[roadmap/40-primer-agente/05-agente-con-varias-herramientas]]
 - [[disciplinas/explorar-planificar-implementar-verificar]]
 - [[patrones/06-orquestador-trabajadores]]
+- [[roadmap/70-flujos-con-especificacion/03-plan-y-tareas]], donde el plan deja de vivir en una ejecución y pasa a un archivo revisable

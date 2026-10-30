@@ -2,6 +2,7 @@
 titulo: Depurar sistemas multiagente
 descripcion: Trazas por agente enlazadas con identificadores padre-hijo, grabación y reproducción de ejecuciones, y cómo diagnosticar los fallos típicos de coordinación.
 creado: 2026-10-02
+actualizado: 2026-10-29
 orden: 4
 minutos: 50
 tipo: practica
@@ -10,7 +11,7 @@ objetivos:
   - Reproducir una ejecución grabando las respuestas de herramientas para aislar un fallo
   - Diagnosticar los fallos típicos de coordinación (duplicación, subagente que no para, síntesis que ignora resultados)
 requiere: ["[[cursos/sistemas-multiagente/03-coordinacion-y-estado]]", "[[roadmap/40-primer-agente/06-depurar-con-trazas]]"]
-relacionados: ["[[disciplinas/observabilidad]]", "[[roadmap/100-produccion/01-observabilidad-y-trazas]]", "[[glosario/trayectoria]]", "[[blog/2026-07-15-como-leer-una-traza]]"]
+relacionados: ["[[disciplinas/observabilidad]]", "[[roadmap/100-produccion/01-observabilidad-y-trazas]]", "[[glosario/trayectoria]]", "[[blog/2026-07-15-como-leer-una-traza]]", "[[recetas/coste-por-subagente]]"]
 tags: [agentes, multiagente, observabilidad, depuracion]
 ---
 
@@ -79,7 +80,7 @@ def registrar_respuesta(agente: str, paso: int, resp) -> None:
 
 Se usa envolviendo cada subagente: `with tr.span("subagente-proveedores", brief=asdict(brief)): ...`. Como `contextvars` se copia en cada tarea de `asyncio`, los subagentes lanzados con `asyncio.gather` dentro del span del orquestador heredan su `padre_id` correctamente.
 
-Un archivo JSONL se filtra con cualquier herramienta. Para producción, el mismo modelo de datos encaja con estándares de trazado distribuido y con las plataformas de [[glosario/observabilidad|observabilidad]] ([[docs/produccion/01-observabilidad]]).
+Un archivo JSONL se filtra con cualquier herramienta. Para producción, el mismo modelo de datos es el de OpenTelemetry: traza, *span* y padre. Sus [[glosario/convenciones-genai-otel|convenciones semánticas GenAI]] definen *spans* `invoke_agent` (un agente), `chat` (una llamada al modelo) y `execute_tool` (una herramienta), y atributos como `gen_ai.provider.name`. Siguen en estado *Development* y desde junio de 2026 viven en su propio repositorio (`open-telemetry/semantic-conventions-genai`), así que fija la versión que uses. El SDK `anthropic` 2.3 ya emite un *span* `anthropic.messages.create` cuando hay un proveedor de OpenTelemetry registrado: si además creas tu *span* `chat`, no sumes los tokens dos veces. Plataformas abiertas como [[herramientas/langfuse|Langfuse]] leen ese formato ([[recetas/trazas-con-langfuse]], [[docs/produccion/01-observabilidad]]).
 
 ## Reproducir una ejecución
 
@@ -115,6 +116,30 @@ Con las herramientas grabadas y el brief guardado en la traza, puedes relanzar s
 
 Guarda también la versión exacta del modelo y de los prompts de cada ejecución. Sin eso, «ayer funcionaba» no se puede comprobar.
 
+## Con LangGraph
+
+Si el sistema está hecho con LangGraph, el árbol de la ejecución te lo da el *runtime*. `stream(..., subgraphs=True)` emite cada actualización con su **ruta de espacios de nombres**: una tupla vacía para el grafo raíz y `("trabajar:<id>",)` para lo que pasa dentro de cada trabajador lanzado con `Send`, con un identificador distinto por tarea. Es el `padre_id` sin escribirlo:
+
+```python nocheck title="arbol_langgraph.py (fragmento)"
+config = {"configurable": {"thread_id": "depuracion-1"}}
+for ruta, actualizacion in grafo.stream(entrada, config, stream_mode="updates", subgraphs=True):
+    print("/".join(ruta) or "(raíz)", "->", list(actualizacion))
+
+for punto in grafo.get_state_history(config):  # cada checkpoint, del más reciente al primero
+    print(punto.config["configurable"]["checkpoint_id"], punto.next)
+```
+
+```text
+# salida de ejemplo
+trabajar:d9fcbd39-… -> ['model']
+trabajar:9980ea1d-… -> ['model']
+trabajar:d9fcbd39-… -> ['tools']
+(raíz) -> ['trabajar']
+(raíz) -> ['trabajar']
+```
+
+Probado con el orquestador de [[cursos/sistemas-multiagente/03-coordinacion-y-estado]] y subagentes de `create_agent` con modelos falsos: cada trabajador aparece con su propio espacio de nombres y sus pasos de modelo y herramientas intercalados con los del otro, como pasa en paralelo. Con `get_state_history` vuelves a cualquier *checkpoint* y puedes relanzar desde ahí con la misma entrada, que es la reproducción de esta lección aplicada al estado del grafo. Lo que no te da es la grabación de las herramientas externas: la `Grabadora` sigue haciendo falta si el entorno cambia entre ejecuciones.
+
 ## Fallos típicos y dónde mirar
 
 | Síntoma | Causa probable | Dónde mirar en la traza |
@@ -122,7 +147,7 @@ Guarda también la versión exacta del modelo y de los prompts de cada ejecució
 | Dos subagentes devuelven lo mismo | Briefs sin límites explícitos | Eventos `inicio` de ambos: campo `limites` |
 | Un subagente agota sus pasos | Parada vaga o herramienta que devuelve poco | Últimos eventos `modelo`: búsquedas repetidas con pequeñas variaciones |
 | La respuesta final omite un hallazgo | Síntesis con demasiado contexto o resumen pobre | Artefacto del subagente frente a lo que recibió la síntesis |
-| Coste disparado en preguntas simples | Orquestador lanza demasiados subagentes | Número de spans hijos por traza frente a complejidad de la pregunta |
+| Coste disparado en preguntas simples | Orquestador lanza demasiados subagentes | Número de spans hijos por traza frente a complejidad de la pregunta ([[recetas/coste-por-subagente]]) |
 | Datos inventados en la síntesis | Subagente sin evidencia o síntesis que rellena huecos | Campo `fuente` de los hallazgos y `lagunas` |
 | Fallo intermitente | Variación del entorno o del modelo | Reproducir con la grabadora |
 
@@ -160,3 +185,4 @@ Una pauta útil: **busca el primer evento donde la información deja de ser corr
 - [[roadmap/100-produccion/01-observabilidad-y-trazas]]
 - [[roadmap/80-evals/04-evals-de-trayectoria]]
 - [[sistemas/investigacion-multiagente]]
+- [[recetas/analisis-de-errores-de-trazas]]

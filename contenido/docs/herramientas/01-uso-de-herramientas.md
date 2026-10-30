@@ -2,6 +2,7 @@
 titulo: Uso de herramientas
 descripcion: Cómo el modelo pide a tu aplicación que ejecute funciones y cómo devolverle el resultado, con definición, ciclo completo, tool_choice y errores.
 creado: 2026-08-05
+actualizado: 2026-10-29
 orden: 1
 nivel: intermedio
 tags: [herramientas, tool-use, api]
@@ -36,6 +37,11 @@ El ciclo se repite mientras `stop_reason` sea `tool_use`. Cuando el modelo encad
 | `description` | Sí en la práctica | Qué hace, cuándo usarla, cuándo no y qué devuelve. Es lo que más influye en que el modelo la use bien. |
 | `input_schema` | Sí | JSON Schema del argumento (`type: "object"`, `properties`, `required`). |
 | `strict` | No | `true` garantiza que el `input` cumple el esquema. Ver [[docs/prompting/03-salida-estructurada]]. |
+| `input_examples` | No | Ejemplos de entrada válidos que orientan al modelo cuando el esquema no basta. |
+| `cache_control` | No | Punto de caché al final de las herramientas. Ver [[docs/contexto/02-prompt-caching]]. |
+| `defer_loading` | No | `true` deja la herramienta fuera del contexto hasta que una búsqueda la encuentre. Ver [[docs/herramientas/05-busqueda-y-carga-diferida]]. |
+| `allowed_callers` | No | Quién puede llamarla: `"direct"` (el modelo) o la ejecución de código. Ver [[docs/herramientas/06-llamada-programatica]]. |
+| `eager_input_streaming` | No | Envía los argumentos en *streaming* sin agrupar (pueden llegar incompletos). |
 
 ```python
 {
@@ -124,6 +130,8 @@ def agente(pregunta: str) -> str:
         if resp.stop_reason != "tool_use":
             if resp.stop_reason == "max_tokens":
                 return "[respuesta cortada por max_tokens]"
+            if resp.stop_reason == "refusal":
+                return "[el modelo rechazó la petición]"
             return "".join(b.text for b in resp.content if b.type == "text")
 
         resultados = []
@@ -198,6 +206,7 @@ async function agente(pregunta: string): Promise<string> {
 
     if (resp.stop_reason !== "tool_use") {
       if (resp.stop_reason === "max_tokens") return "[respuesta cortada por max_tokens]";
+      if (resp.stop_reason === "refusal") return "[el modelo rechazó la petición]";
       return resp.content.map((b) => (b.type === "text" ? b.text : "")).join("");
     }
 
@@ -218,7 +227,53 @@ async function agente(pregunta: string): Promise<string> {
 console.log(await agente("Mi pedido P-100200, ¿todavía puedo devolverlo?"));
 ```
 
-Tres decisiones del ejemplo que conviene copiar: se guarda `resp.content` entero en el historial, los errores se devuelven al modelo con `is_error` en lugar de romper el bucle, y hay un límite de pasos ([[roadmap/40-primer-agente/03-condiciones-de-parada]]).
+Tres decisiones del ejemplo que conviene copiar: se guarda `resp.content` entero en el historial (con los bloques `thinking`, que deben volver intactos), los errores se devuelven al modelo con `is_error` en lugar de romper el bucle, y hay un límite de pasos ([[roadmap/40-primer-agente/03-condiciones-de-parada]]). El resto de motivos de parada (`pause_turn`, `model_context_window_exceeded`…) y qué hacer con cada uno están en [[docs/fundamentos/06-motivos-de-parada-y-rechazos]].
+
+### Con LangChain
+
+El mismo agente con `create_agent` de LangChain (MIT). El bucle, la conversión de funciones a esquemas y el reparto de `tool_result` los hace el framework.
+
+```python title="herramientas_lc.py"
+import json
+from langchain.agents import create_agent
+from langchain.agents.middleware import ModelCallLimitMiddleware, ToolErrorMiddleware
+from langchain.chat_models import init_chat_model
+from langchain.tools import tool
+
+MODEL = "anthropic:claude-sonnet-5-5"  # o "ollama:qwen3.6:27b" con langchain-ollama
+
+PEDIDOS = {"P-100200": {"estado": "entregado", "fecha_entrega": "2026-10-02"}}
+POLITICAS = {"envios": "Envío en 48-72 h laborables.", "devoluciones": "30 días desde la entrega."}
+
+@tool(parse_docstring=True)
+def buscar_pedido(pedido_id: str) -> str:
+    """Devuelve estado y fecha de un pedido a partir de su id.
+
+    Args:
+        pedido_id: Identificador con formato P-123456.
+    """
+    if pedido_id not in PEDIDOS:
+        raise LookupError(f"No existe el pedido {pedido_id}")
+    return json.dumps(PEDIDOS[pedido_id])
+
+@tool
+def consultar_politica(tema: str) -> str:
+    """Devuelve el texto de una política de la tienda: envios o devoluciones."""
+    return POLITICAS.get(tema, "Tema desconocido: usa envios o devoluciones.")
+
+agente = create_agent(
+    init_chat_model(MODEL, max_tokens=1024),
+    tools=[buscar_pedido, consultar_politica],
+    middleware=[
+        ToolErrorMiddleware(on_error=lambda exc, req: f"Error: {exc}"),  # el equivalente a is_error
+        ModelCallLimitMiddleware(run_limit=8, exit_behavior="end"),      # el equivalente a MAX_PASOS
+    ],
+)
+salida = agente.invoke({"messages": [{"role": "user", "content": "Mi pedido P-100200, ¿todavía puedo devolverlo?"}]})
+print(salida["messages"][-1].text)
+```
+
+Lo que esconde y conviene saber: **sin `ToolErrorMiddleware`, una excepción dentro de una herramienta corta el agente** en lugar de volver al modelo como error, y sin un límite explícito el tope de pasos (`recursion_limit`) es demasiado alto para servir de freno. Referencia completa en [[docs/frameworks/04-langchain]]; la tabla de equivalencias con otros frameworks, en [[docs/frameworks/02-equivalencias]].
 
 ## `tool_choice`
 
@@ -227,11 +282,36 @@ Controla si el modelo debe usar herramientas. Referencia breve en [[glosario/too
 | Valor | Comportamiento |
 |---|---|
 | `{"type": "auto"}` | Por defecto. El modelo decide si usa alguna y cuál. |
-| `{"type": "any"}` | Debe usar al menos una, la que elija. |
-| `{"type": "tool", "name": "buscar_pedido"}` | Debe usar esa herramienta concreta. |
 | `{"type": "none"}` | No puede usar herramientas en esta llamada. |
+| `{"type": "any"}` | Debe usar al menos una, la que elija. **400 en los modelos de la tabla siguiente.** |
+| `{"type": "tool", "name": "buscar_pedido"}` | Debe usar esa herramienta concreta. **400 en los modelos de la tabla siguiente.** |
 
-Añade `"disable_parallel_tool_use": True` dentro del objeto para que pida como máximo una herramienta por respuesta (con `auto`) o exactamente una (con `any` o `tool`). Útil cuando las llamadas dependen unas de otras o tienen efectos.
+Añade `"disable_parallel_tool_use": True` dentro del objeto para que pida como máximo una herramienta por respuesta (con `auto`) o exactamente una (con `any` o `tool`, donde se admitan). Útil cuando las llamadas dependen unas de otras o tienen efectos.
+
+### Qué modelos admiten forzar una herramienta
+
+| Modelo | `auto` / `none` | `any` / `tool` |
+|---|---|---|
+| Opus 5.5 | Sí | **No: 400** |
+| Sonnet 5.5 | Sí | **No: 400** |
+| Fable 5.1 (y Mythos 5.1) | Sí | **No: 400** |
+| Cualquier modelo con `thinking` manual (`budget_tokens`) | Sí | No: 400 |
+| Haiku 5.5, Opus 5 y anteriores sin razonamiento manual | Sí | Sí |
+
+Estado a octubre de 2026; compruébalo en la [documentación oficial](https://platform.claude.com/docs). El patrón que rompe es el clásico «fuerza la herramienta `entregar` en el último paso». Las alternativas, de más a menos recomendada:
+
+1. **`output_config.format` en la última llamada**: sin herramientas, con el esquema de entrega. El resultado llega como JSON válido en el bloque `text` ([[docs/prompting/03-salida-estructurada]]).
+2. **Dejar disponible solo la herramienta de entrega** (quitando las demás con `defer_loading` o con un cambio de herramientas a mitad de conversación) y pedirlo en un mensaje `system` de un solo turno ([[docs/contexto/06-mensajes-de-sistema-a-mitad-de-conversacion]]).
+3. **Usar un modelo que sí admita forzar**, si la tarea lo permite.
+
+La receta [[recetas/entregar-resultado-sin-forzar-herramienta]] tiene el código. En LangChain, la misma trampa aparece en `with_structured_output` y en `bind_tools(tool_choice=…)`; en Ollama y otros servidores locales `tool_choice` ni siquiera se implementa.
+
+### Muchas herramientas o llamadas en cadena
+
+Dos funciones de la API cambian el ciclo cuando crece el número de herramientas o de llamadas:
+
+- **Carga diferida y búsqueda de herramientas**: con cientos de herramientas, marca las menos usadas con `defer_loading: true` y deja que el modelo las busque. No ocupan contexto ni rompen la caché. Ver [[docs/herramientas/05-busqueda-y-carga-diferida]].
+- **Llamada programática**: el modelo escribe código que llama a tus herramientas dentro de un contenedor, y los resultados intermedios no pasan por el contexto. Ver [[docs/herramientas/06-llamada-programatica]].
 
 ## Errores de herramienta
 
@@ -250,6 +330,7 @@ Cuando la función falla, **no lances la excepción hacia fuera del bucle**: dev
 - **Resultados en mensajes separados** o con texto delante. Van todos juntos y primero.
 - **Bucle sin límite de pasos.** Un modelo confundido puede llamar herramientas sin parar.
 - **Resultados enormes.** Un `tool_result` de 50 000 tokens llena la [[glosario/ventana-de-contexto]]. Pagina, filtra o resume.
+- **Forzar `tool_choice` con Opus 5.5, Sonnet 5.5 o Fable 5.1.** Error 400. Usa `output_config.format` en el último paso.
 - **Confiar en el contenido de los resultados.** Lo que devuelve una herramienta (una web, un correo) puede contener instrucciones maliciosas: [[docs/seguridad/01-prompt-injection]].
 
 ## Ver también
@@ -258,3 +339,5 @@ Cuando la función falla, **no lances la excepción hacia fuera del bucle**: dev
 - [[docs/herramientas/02-mcp]]: herramientas servidas por un protocolo estándar.
 - [[disciplinas/diseno-de-herramientas]]: diseñar herramientas que el modelo usa bien.
 - [[patrones/02-llamada-aumentada]]: herramientas como bloque básico de un agente.
+- [[problemas/tool-result-sin-tool-use]] y [[problemas/el-agente-repite-la-misma-herramienta]]: dos fallos frecuentes y su arreglo.
+- [[docs/modelos-abiertos/01-ollama]]: herramientas con un modelo local.

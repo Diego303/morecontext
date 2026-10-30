@@ -2,6 +2,7 @@
 titulo: Observabilidad y trazas
 descripcion: Qué registrar en cada llamada al modelo y a cada herramienta, cómo enlazarlo con IDs en una traza y qué métricas sacar para operar un agente.
 creado: 2026-10-13
+actualizado: 2026-10-29
 orden: 1
 minutos: 35
 tipo: practica
@@ -10,6 +11,7 @@ objetivos:
   - Implementar trazas estructuradas con trace_id, span_id y parent_id usando contextvars.
   - Derivar de las trazas métricas de coste, latencia, pasos y errores, y decidir alertas.
   - Aplicar redacción de datos personales y una política de retención a lo que registras.
+  - Emitir las mismas trazas con las convenciones GenAI de OpenTelemetry y verlas en una herramienta abierta.
 requiere: ["[[roadmap/40-primer-agente/06-depurar-con-trazas]]", "[[roadmap/60-multiagente/05-coste-de-multiplicar-agentes]]"]
 tags: [produccion, observabilidad, trazas]
 relacionados: ["[[glosario/observabilidad]]", "[[docs/produccion/01-observabilidad]]", "[[disciplinas/observabilidad]]"]
@@ -127,7 +129,58 @@ def atender(usuario_id: str, pregunta: str) -> str:
 {"trace_id": "9f2c…", "span_id": "c3d4…", "parent_id": "77de…", "ms": 180, "tipo": "herramienta", "nombre": "buscar_pedido", "entrada": {"pedido_id": "4512"}, "is_error": false, "bytes_resultado": 412}
 ```
 
-Cuando el volumen crezca, OpenTelemetry es el estándar abierto para trazas y la mayoría de plataformas de observabilidad lo aceptan. El modelo de datos es el mismo: tramos con IDs y atributos.
+## Las mismas trazas con OpenTelemetry
+
+Cuando el volumen crezca, no mantengas tu propio formato: [OpenTelemetry](https://opentelemetry.io) es el estándar abierto para trazas y casi todas las plataformas de observabilidad lo aceptan. El modelo de datos es el mismo (tramos con IDs y atributos) y, para sistemas con modelos, existen las [[glosario/convenciones-genai-otel|convenciones semánticas GenAI]]: nombres comunes para que cualquier herramienta entienda qué es una llamada al modelo y qué es una herramienta.
+
+| Tu tramo | Span GenAI | Atributos principales |
+|---|---|---|
+| `peticion` | `invoke_agent` | `gen_ai.operation.name`, `gen_ai.agent.name`, `gen_ai.conversation.id` |
+| `modelo` | `chat` | `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.usage.cache_read.input_tokens`, `gen_ai.response.finish_reasons` |
+| `herramienta` | `execute_tool` | `gen_ai.tool.name`, `gen_ai.tool.call.id`, `error.type` |
+
+El mismo `llamar_modelo` con el SDK de OpenTelemetry:
+
+```python title="trazas_otel.py"
+import anthropic
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
+MODEL = "claude-sonnet-5-5"
+proveedor = TracerProvider()
+proveedor.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))  # en producción, un exportador OTLP
+trace.set_tracer_provider(proveedor)
+tracer = trace.get_tracer("agente-soporte")
+client = anthropic.Anthropic(open_telemetry=False)   # el SDK ya emite su propio span: aquí lo emitimos nosotros
+
+def llamar_modelo(**kwargs):
+    with tracer.start_as_current_span(f"chat {MODEL}") as span:
+        span.set_attributes({"gen_ai.operation.name": "chat", "gen_ai.provider.name": "anthropic",
+                             "gen_ai.request.model": MODEL})
+        resp = client.messages.create(model=MODEL, **kwargs)
+        span.set_attributes({"gen_ai.response.id": resp.id,
+                             "gen_ai.response.finish_reasons": [resp.stop_reason],
+                             "gen_ai.usage.input_tokens": resp.usage.input_tokens,
+                             "gen_ai.usage.output_tokens": resp.usage.output_tokens,
+                             "gen_ai.usage.cache_read.input_tokens": resp.usage.cache_read_input_tokens or 0})
+        return resp
+
+def atender(pregunta: str) -> str:
+    with tracer.start_as_current_span("invoke_agent soporte") as span:
+        span.set_attributes({"gen_ai.operation.name": "invoke_agent", "gen_ai.agent.name": "soporte"})
+        resp = llamar_modelo(max_tokens=1024, messages=[{"role": "user", "content": pregunta}])
+        return "".join(b.text for b in resp.content if b.type == "text")
+```
+
+OpenTelemetry propaga el contexto como tus `contextvars`: el span `chat` cuelga solo del `invoke_agent` que lo contiene. Cuatro cosas que conviene saber antes de copiar nombres:
+
+- **Están en estado *Development*.** Desde junio de 2026 viven en su propio repositorio, [open-telemetry/semantic-conventions-genai](https://github.com/open-telemetry/semantic-conventions-genai), y cambian entre versiones: `gen_ai.system` pasó a llamarse `gen_ai.provider.name`. Fija la versión de tu instrumentación y lee el registro de cambios antes de actualizar.
+- **El contenido es *opt-in*.** Los mensajes completos van en `gen_ai.input.messages` y `gen_ai.output.messages` solo si los activas, por la misma razón que el aviso de abajo.
+- **El SDK `anthropic` 2.x ya emite un span por llamada** si hay un `TracerProvider` registrado, con sus propios nombres en algunos campos. O lo usas y añades tú solo `invoke_agent` y `execute_tool`, o lo apagas (`open_telemetry=False`, como arriba) y emites el tuyo. Con los dos a la vez contarías los tokens dos veces.
+- **Lo que no esté en la convención, en tu espacio de nombres** (`app.version_prompt`, `app.coste_usd`), nunca inventando `gen_ai.*`.
+
+Para ver las trazas no hace falta una plataforma comercial. [[herramientas/langfuse|Langfuse]] (SDK con licencia MIT basado en OpenTelemetry; la plataforma se autoaloja o se usa en la nube) recibe OTLP y añade decoradores `@observe` para agentes y herramientas ([[recetas/trazas-con-langfuse]]). [[herramientas/arize-phoenix|Phoenix]] se arranca en local con un comando y muestra el árbol de spans; ojo, su licencia es Elastic 2.0, código disponible pero no open source según la OSI. Si tu agente usa LangChain o LangGraph, los instrumentadores de OpenInference o el *callback* de Langfuse capturan cada nodo sin tocar tu código. El detalle de atributos y el bucle completo instrumentado están en [[docs/produccion/04-opentelemetry-genai]] y [[docs/modelos-abiertos/07-observabilidad-abierta]].
 
 > [!peligro] Las trazas también son datos personales
 > Si registras prompts y respuestas completas, guardas lo que escriben tus usuarios. Redacta antes de escribir, limita quién puede leerlas y fija un plazo de retención. Guarda el texto completo solo si lo necesitas y durante el tiempo justo.
@@ -156,6 +209,7 @@ Las trazas cierran el círculo con [[roadmap/80-evals/index]]. Cuando un usuario
 - Usar IDs distintos en cada servicio y no poder unir los tramos de una misma petición.
 - Guardar prompts completos con datos personales sin redacción ni retención.
 - Mirar solo medias de latencia y coste.
+- Mezclar el span automático del SDK con uno propio y contar los tokens dos veces.
 
 ## Ejercicio
 
@@ -174,9 +228,11 @@ Las trazas cierran el círculo con [[roadmap/80-evals/index]]. Cuando un usuario
 - `contextvars` propaga la traza por funciones y tareas de `asyncio` sin tocar firmas.
 - Saca de las trazas coste, latencia, pasos, errores y `stop_reason`, y alerta solo sobre lo accionable.
 - Redacta datos personales y fija una retención.
+- Para crecer, emite spans OpenTelemetry con las convenciones GenAI (`invoke_agent`, `chat`, `execute_tool`), con la versión fijada.
 
 ## Para seguir
 
 - [[roadmap/100-produccion/02-costes-y-prompt-caching]]
 - [[docs/produccion/01-observabilidad]]
+- [[docs/produccion/04-opentelemetry-genai]]
 - [[blog/2026-07-15-como-leer-una-traza]]

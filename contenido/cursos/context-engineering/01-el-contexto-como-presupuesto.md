@@ -2,15 +2,16 @@
 titulo: El contexto como presupuesto
 descripcion: Por qué el contexto de un modelo es un recurso finito que cuesta dinero, latencia y atención, y cómo medir cuánto ocupa cada componente de tu agente.
 creado: 2026-10-05
+actualizado: 2026-10-29
 orden: 1
 minutos: 40
 tipo: practica
 objetivos:
-  - Explicar los tres costes del contexto (dinero, latencia y atención) y el efecto de la posición descrito en Lost in the Middle
+  - Explicar los tres costes del contexto (dinero, latencia y atención), el context rot y el efecto de la posición descrito en Lost in the Middle
   - Medir con count_tokens y usage cuántos tokens ocupa cada componente de una petición
   - Identificar qué componente crece más en un bucle agéntico y fijar un presupuesto por componente
 requiere: ["[[roadmap/00-fundamentos/03-ventana-de-contexto]]", "[[roadmap/40-primer-agente/02-el-bucle-agentico]]"]
-relacionados: ["[[docs/contexto/01-ventana-de-contexto]]", "[[glosario/contexto-largo]]", "[[modelos/07-documentos-largos]]", "[[blog/2026-09-28-el-contexto-es-un-presupuesto]]"]
+relacionados: ["[[docs/contexto/01-ventana-de-contexto]]", "[[glosario/contexto-largo]]", "[[modelos/07-documentos-largos]]", "[[blog/2026-09-28-el-contexto-es-un-presupuesto]]", "[[biblioteca/context-rot]]"]
 tags: [contexto, tokens, costes]
 ---
 
@@ -18,7 +19,7 @@ Al terminar esta lección sabrás por qué llenar la ventana de contexto «por s
 
 ## La idea
 
-La [[glosario/ventana-de-contexto|ventana de contexto]] es todo lo que el modelo ve en una llamada: prompt de sistema, definiciones de herramientas, historial de mensajes, resultados de herramientas y la propia respuesta que genera. Tiene un tamaño máximo, pero el límite real llega antes de ese máximo.
+La [[glosario/ventana-de-contexto|ventana de contexto]] es todo lo que el modelo ve en una llamada: prompt de sistema, definiciones de herramientas, historial de mensajes, resultados de herramientas y la propia respuesta que genera. Tiene un tamaño máximo (hoy, un millón de tokens en los modelos de Claude, con hasta 128k de salida), pero el límite real llega mucho antes de ese máximo.
 
 Piensa en el contexto como un **presupuesto con tres monedas**:
 
@@ -28,9 +29,11 @@ Piensa en el contexto como un **presupuesto con tres monedas**:
 
 ## La atención también se gasta
 
-*[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 2025) describe el contexto como un recurso finito con rendimientos decrecientes. El artículo explica que, a medida que crece el número de tokens, la capacidad del modelo para recordar con precisión la información de ese contexto disminuye, un fenómeno que se ha llamado *context rot*. La causa está en la arquitectura [[glosario/transformer|transformer]]: cada token se relaciona con todos los demás, y con muchos tokens la atención se reparte entre muchas más relaciones. Por eso el artículo habla de un «presupuesto de atención» que cada token nuevo consume.
+El fenómeno tiene nombre: [[glosario/context-rot|context rot]]. La medición de referencia es de Chroma: Kelly Hong, Anton Troynikov y Jeff Huber publicaron el 14 de julio de 2025 *[Context Rot: How Increasing Input Tokens Impacts LLM Performance](https://www.trychroma.com/research/context-rot)* ([[biblioteca/context-rot]]). Probaron 18 modelos (entre ellos GPT-4.1, Claude 4, Gemini 2.5 y Qwen3) y encontraron que el rendimiento baja al crecer la entrada **incluso en tareas sencillas**. Baja más rápido cuando la pregunta y el dato que responde se parecen poco, y un solo texto distractor ya empeora el resultado. En una prueba de memoria conversacional, un prompt con solo lo relevante rindió muy por encima del historial completo de unos 113k tokens.
 
-A esto se suma el efecto de la posición. Liu et al. (2023), en *[Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172)*, midieron cómo cambiaba el rendimiento al mover la información relevante dentro de un contexto largo. El resultado: los modelos aprovechaban mejor la información situada al principio o al final, y el rendimiento bajaba de forma notable cuando estaba en medio. Los modelos han mejorado desde entonces, pero la lección práctica sigue vigente: **no basta con que la información esté en el contexto; importa cuánta hay alrededor y dónde está**.
+*[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 29 sept. 2025) recoge ese resultado y lo explica desde la arquitectura [[glosario/transformer|transformer]]: cada token se relaciona con todos los demás, y con muchos tokens la atención se reparte entre muchas más relaciones. Por eso habla del contexto como un recurso finito con rendimientos decrecientes y de un «presupuesto de atención» que cada token nuevo consume.
+
+A esto se suma el efecto de la posición. Liu et al. (2023), en *[Lost in the Middle: How Language Models Use Long Contexts](https://arxiv.org/abs/2307.03172)* ([[biblioteca/lost-in-the-middle]]), midieron cómo cambiaba el rendimiento al mover la información relevante dentro de un contexto largo. El resultado: los modelos aprovechaban mejor la información situada al principio o al final, y el rendimiento bajaba de forma notable cuando estaba en medio. Los modelos han mejorado desde entonces, pero la lección práctica sigue vigente: **no basta con que la información esté en el contexto; importa cuánta hay alrededor y dónde está**.
 
 > [!nota] Ventana grande no es permiso
 > Una ventana de cientos de miles de tokens te permite meter mucho. No te garantiza que el modelo lo use bien. Lo tienes desarrollado en [[radar/2026-09-22-contexto-largo-no-sustituye-recuperacion]].
@@ -124,7 +127,7 @@ total                            43402
 
 Guarda el historial de una ejecución real de tu agente en JSON y pásalo por el script. La salida de ejemplo es típica: los resultados de herramientas dominan. Las restas son aproximadas (la plantilla interna añade algunos tokens), pero bastan para saber dónde está el gasto.
 
-En producción, registra `resp.usage` en cada paso. La serie `input_tokens` por paso de una ejecución te dice cómo crece el contexto; si sube en escalones grandes, busca qué herramienta los produce.
+En producción, registra `resp.usage` en cada paso. La serie `input_tokens` por paso de una ejecución te dice cómo crece el contexto; si sube en escalones grandes, busca qué herramienta los produce. Ten en cuenta que, con [[glosario/prompt-caching|caché]], `input_tokens` cuenta solo lo que no se leyó de caché: el tamaño real del contexto es `input_tokens + cache_read_input_tokens + cache_creation_input_tokens`.
 
 ## Fijar un presupuesto
 
@@ -135,6 +138,8 @@ Con el desglose delante, pon límites explícitos por componente. Un punto de pa
 - el historial completo: un umbral (por ejemplo, una fracción de la ventana de tu modelo) a partir del cual compactas.
 
 Los números concretos dependen del modelo, de la tarea y de tus medidas. Lo importante es que existan y que los compruebes con datos. Las técnicas para cumplirlos son el resto del curso.
+
+Si no fijas ninguno, el límite te lo pone la API. Cuando la entrada más `max_tokens` supera la ventana, la petición se acepta y el modelo genera hasta llenarla; entonces para con `stop_reason: "model_context_window_exceeded"`. Trátalo en el bucle como una señal de que toca compactar o empezar una sesión nueva, no como un error de red que se reintenta igual ([[docs/fundamentos/06-motivos-de-parada-y-rechazos]]).
 
 ## Errores frecuentes
 
@@ -155,7 +160,7 @@ Los números concretos dependen del modelo, de la tarea y de tus medidas. Lo imp
 ## Resumen
 
 - El contexto cuesta dinero, latencia y atención; la atención es la moneda que más se olvida.
-- Más tokens reducen la precisión al recordar (*context rot*) y la posición importa (*Lost in the Middle*).
+- Más tokens reducen la precisión incluso en tareas simples (*context rot*, medido por Chroma) y la posición importa (*Lost in the Middle*).
 - En un agente, los resultados de herramientas suelen ser el componente más grande.
 - Mide con `count_tokens` antes y con `usage` después, paso a paso.
 - Fija presupuestos por componente y compruébalos con datos.
@@ -165,3 +170,4 @@ Los números concretos dependen del modelo, de la tarea y de tus medidas. Lo imp
 - [[cursos/context-engineering/02-que-meter-y-que-no]]
 - [[roadmap/00-fundamentos/05-coste-y-latencia]]
 - [[modelos/07-documentos-largos]]
+- [[problemas/contexto-saturado-en-sesiones-largas]]

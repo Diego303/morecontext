@@ -2,27 +2,29 @@
 titulo: "La API de mensajes: roles y bloques"
 descripcion: Referencia de la estructura de una conversación en la API de mensajes, con roles user y assistant, tipos de bloque y reglas de alternancia.
 creado: 2026-07-16
+actualizado: 2026-10-29
 orden: 3
 nivel: inicial
 tags: [api, fundamentos, mensajes]
 relacionados: ["[[docs/fundamentos/02-tu-primera-llamada]]", "[[docs/herramientas/01-uso-de-herramientas]]", "[[glosario/tool-result]]", "[[roadmap/00-fundamentos/03-ventana-de-contexto]]"]
 ---
 
-La API de mensajes representa una conversación como **una lista de mensajes con rol**, y cada mensaje como **una lista de bloques de contenido con tipo**. Hay dos roles (`user` y `assistant`) y un puñado de tipos de bloque (`text`, `image`, `tool_use`, `tool_result`, `thinking`). Con esas dos piezas se construye desde un chat hasta un [[glosario/agente|agente]] con herramientas.
+La API de mensajes representa una conversación como **una lista de mensajes con rol**, y cada mensaje como **una lista de bloques de contenido con tipo**. Los roles principales son `user` y `assistant` (más `system` para cambiar instrucciones a mitad de conversación) y hay un puñado de tipos de bloque (`text`, `image`, `document`, `tool_use`, `tool_result`, `thinking`). Con esas dos piezas se construye desde un chat hasta un [[glosario/agente|agente]] con herramientas.
 
 ## Roles
 
 | Rol | Quién lo escribe | Qué bloques puede llevar |
 |---|---|---|
 | `user` | Tu aplicación (lo que escribe la persona, documentos, resultados de herramientas) | `text`, `image`, `tool_result` |
-| `assistant` | El modelo (o tú, si reenvías una respuesta suya) | `text`, `tool_use`, `thinking` |
+| `assistant` | El modelo (o tú, si reenvías una respuesta suya) | `text`, `tool_use`, `thinking`, `redacted_thinking` y los bloques de herramientas del servidor |
+| `system` | Tu aplicación, a mitad de conversación | `text` (instrucciones que cambian a partir de ese punto) |
 
-El [[glosario/prompt-de-sistema|prompt de sistema]] no es un rol: va en el parámetro `system`, fuera de `messages`. Ver [[docs/prompting/01-prompt-de-sistema]].
+El [[glosario/prompt-de-sistema|prompt de sistema]] principal va en el parámetro `system`, fuera de `messages`. Ver [[docs/prompting/01-prompt-de-sistema]]. Desde la versión `2026-10-21`, los modelos 5.x (salvo Sonnet 5) aceptan además mensajes `{"role": "system", …}` dentro de `messages`: cambian las instrucciones desde ese punto sin invalidar la caché del prefijo. Tienen reglas de posición propias (van justo después de un turno `user` y nunca entre un `tool_use` y su `tool_result`); ver [[docs/contexto/06-mensajes-de-sistema-a-mitad-de-conversacion]].
 
 ### Reglas de la lista `messages`
 
 1. **Empieza por `user`.**
-2. **Alterna** `user` y `assistant`. Si envías dos mensajes seguidos del mismo rol, la API los combina en un solo turno; mantener la alternancia explícita hace tu historial más fácil de depurar.
+2. **Alterna** `user` y `assistant` (los mensajes `system` intermedios no cuentan como turno). Si envías dos mensajes seguidos del mismo rol, la API los combina en un solo turno; mantener la alternancia explícita hace tu historial más fácil de depurar.
 3. **El último mensaje suele ser `user`**: es lo que el modelo contesta.
 4. **Cada `tool_use` de un mensaje `assistant` exige su `tool_result`** en el mensaje `user` inmediatamente posterior, con el mismo `id`.
 
@@ -45,10 +47,12 @@ Usa la forma de lista en cuanto necesites mezclar tipos (texto más imagen, vari
 | Tipo | Rol | Campos | Para qué |
 |---|---|---|---|
 | `text` | ambos | `text` | Texto normal. |
-| `image` | `user` | `source: {type, media_type, data}` | Imagen en base64 (o por URL). |
+| `image` | `user` | `source: {type, media_type, data}` | Imagen en base64 (o por URL, o `file_id` de la Files API). |
+| `document` | `user` | `source` (PDF, texto o `file_id`) | Documentos; admite citas. En un mensaje `assistant` da 400. |
 | `tool_use` | `assistant` | `id`, `name`, `input` | El modelo pide ejecutar una herramienta. |
 | `tool_result` | `user` | `tool_use_id`, `content`, `is_error` | Tu respuesta a un `tool_use`. |
-| `thinking` | `assistant` | contenido del razonamiento y firma | Razonamiento del modelo si activas `thinking`. |
+| `thinking` | `assistant` | `thinking` y `signature` | Razonamiento del modelo. En los modelos 5.x es adaptativo por defecto y llega vacío (`display: "omitted"`) salvo que pidas `"summarized"`. |
+| `redacted_thinking` | `assistant` | `data` cifrado | Razonamiento cifrado. Se reenvía igual que `thinking`. |
 
 ```python title="bloques.py"
 import base64, pathlib
@@ -68,7 +72,7 @@ Pon la imagen o el documento **antes** de la pregunta. El modelo rinde mejor con
 
 ### Bloques en la respuesta
 
-La respuesta del modelo también es una lista. Puede traer un bloque `thinking`, uno o varios `text` y uno o varios `tool_use`, en cualquier combinación. Recorre siempre la lista por tipo:
+La respuesta del modelo también es una lista. Puede traer bloques `thinking`, uno o varios `text`, uno o varios `tool_use` y, si usas herramientas del servidor, bloques como `server_tool_use` y `web_search_tool_result`, en cualquier combinación. Recorre siempre la lista por tipo:
 
 ```python
 for bloque in resp.content:
@@ -144,11 +148,12 @@ El historial crece en cada turno y con él el coste y la [[glosario/latencia|lat
 
 | Situación | Qué pasa | Qué hacer |
 |---|---|---|
-| Último mensaje con rol `assistant` | El modelo continúa ese texto (*prefill*). | No todos los modelos recientes lo admiten. Para forzar formato, usa [[docs/prompting/03-salida-estructurada]]. |
+| Último mensaje con rol `assistant` | El modelo continúa ese texto (*prefill*). | Haiku 5.5 lo rechaza con 400 y no es compatible con salidas estructuradas. Para forzar formato, usa [[docs/prompting/03-salida-estructurada]]. |
 | Varios `tool_use` en una respuesta | El modelo pide herramientas en paralelo. | Devuelve todos los `tool_result` en **un único** mensaje `user`. |
 | `tool_result` con texto detrás | Válido si el texto va después de todos los `tool_result`. | Nunca pongas texto antes de ellos. |
 | Bloques `thinking` en el historial | Llevan una firma que la API verifica. | Reenvíalos sin modificar mientras dure un ciclo de herramientas. |
 | `content` vacío | Error de validación. | No envíes mensajes sin contenido. |
+| `text` con `citations` en un mensaje `user` | 400 desde la versión `2026-10-21`. | Las citas solo vuelven en mensajes `assistant`, tal cual las devolvió el modelo. |
 
 ## Errores frecuentes
 
@@ -160,5 +165,7 @@ El historial crece en cada turno y con él el coste y la [[glosario/latencia|lat
 
 - [[docs/fundamentos/02-tu-primera-llamada]]: parámetros y respuesta.
 - [[docs/herramientas/01-uso-de-herramientas]]: el ciclo `tool_use` → `tool_result` en detalle.
+- [[docs/contexto/06-mensajes-de-sistema-a-mitad-de-conversacion]]: el rol `system` dentro de `messages`.
+- [[problemas/tool-result-sin-tool-use]]: el 400 más común al romper la regla 4.
 - [[glosario/tool-result]] y [[glosario/tool-use]].
 - [[roadmap/00-fundamentos/03-ventana-de-contexto]]: por qué el historial tiene un límite.

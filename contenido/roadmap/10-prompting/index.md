@@ -2,6 +2,7 @@
 titulo: "Nivel 10 · Prompting que funciona"
 descripcion: "Instrucciones claras, ejemplos, JSON validado, prompt de sistema y casos de prueba: cómo escribir prompts que dan resultados repetibles y comprobables."
 creado: 2026-09-10
+actualizado: 2026-10-29
 nivel: 10
 horas: 4
 objetivo: "Escribir prompts que producen salidas correctas y con formato estable, y demostrarlo con un conjunto de casos de prueba que se ejecuta con un comando."
@@ -57,3 +58,5 @@ Está terminado si cumple todo esto:
 ## Después de este nivel
 
 Sigue con [[roadmap/20-herramientas/index]], donde el modelo deja de solo escribir texto y empieza a pedir acciones. Para consultar detalles sueltos, tienes [[docs/prompting/index]] y la [[modelos/index|guía de modelos]].
+
+Si algo se te atasca durante el proyecto, hay páginas para los dos tropiezos más comunes: [[problemas/el-modelo-ignora-instrucciones]] y [[problemas/json-invalido-del-modelo]]. Y cuando quieras automatizar la tabla de versiones con una herramienta abierta en lugar de tu `evaluar.py`, mira [[recetas/evals-con-promptfoo]].

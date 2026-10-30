@@ -2,6 +2,7 @@
 titulo: Qué es un agente (y cuándo basta un workflow)
 descripcion: La diferencia entre un workflow y un agente, la escalera de complejidad de Building effective agents y un método práctico para decidir qué necesita tu problema.
 creado: 2026-09-16
+actualizado: 2026-10-29
 orden: 1
 minutos: 30
 tipo: teoria
@@ -38,6 +39,19 @@ flowchart LR
   end
 ```
 
+## El bucle por dentro
+
+Mira un agente como una caja negra que recibe una tarea en lenguaje natural («haz una API de pedidos en Java») y devuelve un resultado. Dentro hay código corto que repite cuatro pasos:
+
+1. **Recibe** la tarea, o el resultado del paso anterior.
+2. **Piensa**: envía todo lo que lleva acumulado a un [[glosario/llm|LLM]] y le pregunta qué hacer.
+3. **Decide y actúa**: si el modelo responde con texto final, termina; si pide una herramienta (listar archivos, leer uno, lanzar un comando), tu código la ejecuta.
+4. **Observa**: añade el resultado a la conversación y vuelve al paso 2. Cuando la tarea está resuelta, se para y espera al usuario.
+
+El ejemplo de la API en Java sigue ese ciclo: el modelo razona «primero tengo que ver qué hay en la carpeta», pide listar archivos, lee el resultado, decide leer el `pom.xml`, lo lee, escribe un archivo, ejecuta los tests, ve un fallo y lo corrige. Nadie le dijo esos pasos: los decidió mirando cada resultado. Es el patrón [[glosario/react|ReAct]] (razonar y actuar), y lo escribirás entero en [[roadmap/40-primer-agente/02-el-bucle-agentico]].
+
+Dos consecuencias prácticas. El agente razona con un LLM, y un LLM te da la respuesta **más probable**, no la correcta: se equivocará a veces. Y la calidad de lo que hace depende de lo que le pides: «haz que funcione» produce un agente que asume lo que no sabe. Saber qué pedir, con qué restricciones y cómo comprobarlo sigue siendo tu trabajo.
+
 ## La misma tarea, de dos formas
 
 Tarea: responder a un cliente que pregunta por el estado de su pedido.
@@ -65,6 +79,18 @@ respuesta = ejecutar_agente(
 ```
 
 El workflow es predecible, barato y fácil de probar, pero solo resuelve el caso que previste. Si el cliente no da número de pedido, o pregunta además por una devolución, se rompe o necesita otra rama. El agente se adapta: puede buscar por email, mirar varios pedidos y consultar la política de devoluciones. A cambio, cada ejecución puede ser distinta.
+
+## Agente, herramienta agéntica y framework
+
+Tres cosas que se llaman «agente» y conviene separar, igual que separas empresa, modelo y producto ([[roadmap/00-fundamentos/07-empresa-modelo-herramienta]]):
+
+| Qué es | Ejemplos | Qué haces tú |
+|---|---|---|
+| **El patrón**: un LLM en un bucle con herramientas | El código de la próxima lección | Lo escribes y lo controlas entero |
+| **Una herramienta agéntica**: un producto que ya trae el bucle, las herramientas y los permisos | [[herramientas/claude-code|Claude Code]], Codex, [[herramientas/opencode|OpenCode]] | Le das tareas, contexto y límites |
+| **Un [[glosario/framework-de-agentes|framework de agentes]]**: una biblioteca para construir tu propio agente | [[herramientas/langchain|LangChain]], [[herramientas/langgraph|LangGraph]], [[herramientas/claude-agent-sdk|Claude Agent SDK]] | Escribes menos bucle y aceptas sus abstracciones |
+
+Las tres hacen lo mismo por dentro. Si entiendes el bucle, entiendes por qué Claude Code pide permiso antes de ejecutar un comando y qué hace `create_agent` de LangChain cuando lo llamas. Por eso en este nivel lo escribes a mano primero.
 
 ## La escalera de complejidad
 
@@ -101,7 +127,7 @@ Si las tres respuestas son «sí», un agente es candidato. Si alguna es «no»,
 ## Errores frecuentes
 
 - Construir un agente porque «es lo moderno» sin probar antes una llamada o un workflow.
-- Usar un framework que esconde el bucle antes de entender el bucle. Escríbelo a mano una vez, en la próxima lección.
+- Usar un framework que esconde el bucle antes de entender el bucle. Escríbelo a mano una vez, en la próxima lección; luego compáralo con [[cursos/langchain-y-langgraph/01-cuando-usar-un-framework]].
 - Darle al agente herramientas de escritura cuando la tarea solo necesita leer.
 
 ## Ejercicio
@@ -126,6 +152,7 @@ Si las tres respuestas son «sí», un agente es candidato. Si alguna es «no»,
 - Sube por la escalera (llamada, llamada aumentada, workflow, agente) solo con pruebas de que hace falta.
 - Un agente encaja cuando los pasos no se pueden prever, hay feedback del entorno y sus errores se pueden contener.
 - Un agente cuesta más, tarda más, acumula errores y es más difícil de probar y de proteger.
+- Patrón, herramienta agéntica y framework comparten el mismo bucle: recibir, pensar, actuar y observar.
 
 ## Para seguir
 

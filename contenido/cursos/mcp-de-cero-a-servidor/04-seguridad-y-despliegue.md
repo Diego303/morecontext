@@ -2,6 +2,7 @@
 titulo: Seguridad y despliegue de servidores
 descripcion: Amenazas propias de MCP, despliegue remoto con Streamable HTTP, autorización según la especificación, límites y auditoría, con una lista de comprobación antes de publicar un servidor.
 creado: 2026-10-05
+actualizado: 2026-10-29
 orden: 4
 minutos: 55
 tipo: practica
@@ -9,9 +10,9 @@ objetivos:
   - Identificar las amenazas específicas de un servidor MCP local y de uno remoto.
   - Desplegar un servidor con transporte Streamable HTTP detrás de un proxy con TLS.
   - Aplicar validación de entradas, límites de tiempo y tamaño y registro de auditoría en las herramientas.
-  - Explicar el modelo de autorización de MCP y por qué no se reenvían tokens.
+  - Explicar el modelo de autorización de MCP (revisión 2026-07-28) y por qué no se reenvían tokens.
 requiere: ["[[cursos/mcp-de-cero-a-servidor/03-tu-primer-servidor]]"]
-relacionados: ["[[cursos/seguridad-y-prompt-injection/index]]", "[[docs/seguridad/02-permisos-y-minimo-privilegio]]", "[[glosario/minimo-privilegio]]", "[[roadmap/100-produccion/06-despliegue]]"]
+relacionados: ["[[cursos/seguridad-y-prompt-injection/index]]", "[[docs/seguridad/02-permisos-y-minimo-privilegio]]", "[[glosario/minimo-privilegio]]", "[[roadmap/100-produccion/06-despliegue]]", "[[docs/seguridad/04-mcp-y-skills-de-terceros]]"]
 tags: [mcp, seguridad, despliegue, oauth]
 ---
 
@@ -37,13 +38,17 @@ flowchart LR
 | Amenaza | Cómo ocurre | Defensa principal |
 |---|---|---|
 | Argumentos maliciosos | un documento leído por el modelo le sugiere `leer_nota("../../.env")` o una consulta SQL dañina | validar cada argumento en el servidor; listas de permitidos; consultas parametrizadas |
-| Descripciones envenenadas | un servidor de terceros incluye instrucciones ocultas en la descripción de una herramienta | revisar descripciones al instalar y al actualizar; fijar versiones |
-| Cambio tras la aprobación | un servidor cambia sus descripciones o su comportamiento después de que lo revisaste | fijar versiones; alertar cuando cambia `tools/list` |
+| Descripciones envenenadas ([[glosario/envenenamiento-de-herramientas|*tool poisoning*]]) | un servidor de terceros incluye instrucciones ocultas en la descripción de una herramienta | revisar descripciones completas al instalar y al actualizar; fijar versiones |
+| Cambio tras la aprobación ([[glosario/rug-pull|*rug pull*]]) | un servidor cambia sus descripciones o su comportamiento después de que lo revisaste | fijar versiones; guardar un hash de cada descripción y alertar cuando cambia `tools/list` |
+| Sombra entre servidores (*shadowing*) | la descripción de un servidor da instrucciones sobre cómo usar las herramientas de otro | fronteras entre servidores; no mezclar servidores de confianza y ajenos en la misma tarea |
 | Inyección en resultados | el servidor devuelve contenido de terceros (correos, webs, issues) con instrucciones | tratar los resultados como datos no fiables en el host; ver [[cursos/seguridad-y-prompt-injection/02-inyeccion-directa-e-indirecta]] |
 | Exceso de permisos | el servidor usa un token con más alcance del que necesita la tarea | credenciales de [[glosario/minimo-privilegio|mínimo privilegio]] por servidor |
-| Suplantación (*confused deputy*) | un servidor remoto actúa con sus propios privilegios en nombre de un usuario que no los tiene | autorizar por usuario, no por servidor |
+| Suplantación (*confused deputy*) | un servidor remoto actúa con sus propios privilegios en nombre de un usuario que no los tiene | autorizar por usuario, no por servidor; consentimiento por cliente en proxies OAuth |
+| Secuestro de *handles* | el servidor guarda estado entre llamadas en identificadores que el modelo pasa como argumentos, y alguien usa uno ajeno | handles impredecibles y ligados al usuario; comprobar el dueño en cada llamada |
 | Ejecución de comandos | una herramienta concatena argumentos en un comando de shell | nunca `shell=True`; argumentos como lista; mejor aún, no ejecutar comandos |
 | Consumo sin límite | bucles del agente que llaman miles de veces o piden respuestas enormes | límites de tasa, de tiempo y de tamaño |
+
+El envenenamiento de descripciones, el *rug pull* y el *shadowing* los documentó Invariant Labs ([*MCP Security Notification: Tool Poisoning Attacks*](https://invariantlabs.ai/blog/mcp-security-notification), 1 abr. 2025), y siguen siendo la forma más directa de atacar a un agente con servidores ajenos. Las *Security Best Practices* de la especificación añaden los riesgos de la parte remota. Una nota sobre las sesiones: la revisión `2026-07-28` no tiene sesiones de protocolo, así que el secuestro de sesión que verás en guías antiguas se aplica a servidores ≤ 2025-11-25; su equivalente actual son los *handles* de la tabla. El panorama completo de servidores y skills de terceros está en [[docs/seguridad/04-mcp-y-skills-de-terceros]].
 
 ## Endurecer las herramientas
 
@@ -88,7 +93,7 @@ def endurecida(fn):
 
 `functools.wraps` conserva el nombre, el *docstring* y la firma, de los que `MCPServer` genera el esquema. Comprueba con el Inspector que el esquema sigue igual tras decorar. El registro de auditoría guarda argumentos: si pueden contener datos personales, decide qué se enmascara y cuánto tiempo se conserva.
 
-La especificación permite además **anotaciones** en las herramientas (por ejemplo, si es de solo lectura o si es destructiva) para que el host decida cuándo pedir confirmación. Son pistas para el host, no garantías: un servidor malicioso puede mentir en ellas. Consulta los nombres exactos en la especificación vigente.
+La especificación permite además **anotaciones** en las herramientas para que el host decida cuándo pedir confirmación: `readOnlyHint`, `destructiveHint`, `idempotentHint` y `openWorldHint` (si toca sistemas externos). En Python: `@mcp.tool(annotations=ToolAnnotations(read_only_hint=True))`, con `ToolAnnotations` de `mcp.types`. Son pistas para el host, no garantías: un servidor malicioso puede mentir en ellas.
 
 ## Desplegar en remoto
 
@@ -101,10 +106,18 @@ if __name__ == "__main__":
     mcp.run(transport="streamable-http")   # consulta host, puerto y ruta en la documentación del SDK
 ```
 
+Como la revisión `2026-07-28` no tiene sesiones, cada petición HTTP se atiende sola: puedes poner varias réplicas detrás de un balanceador sin afinidad de sesión. Si necesitas recordar algo entre llamadas, guárdalo tú (en una base de datos) y devuélvelo al modelo como *handle*; la receta [[recetas/servidor-mcp-sin-estado-con-handles]] lo desarrolla. Las peticiones llevan las cabeceras obligatorias `Mcp-Method` y `Mcp-Name`, útiles para registrar y limitar en el proxy sin leer el cuerpo.
+
 Ese proceso no debe quedar expuesto tal cual a internet. La arquitectura mínima:
 
 1. **Proxy inverso con TLS** delante (nginx, Caddy o el balanceador de tu nube). El servidor escucha solo en `127.0.0.1` o en la red interna.
-2. **Autorización.** Para transportes HTTP, la especificación de MCP define un flujo basado en OAuth 2.1 en el que el servidor actúa como servidor de recursos y valida los tokens que emite un servidor de autorización. Lee la sección de autorización de [modelcontextprotocol.io](https://modelcontextprotocol.io) y usa el soporte del SDK o una biblioteca de OAuth probada; no implementes criptografía ni validación de tokens a mano.
+2. **Autorización.** Para transportes HTTP, la especificación de MCP define un flujo basado en OAuth 2.1 en el que el servidor actúa como servidor de recursos y valida los tokens que emite un servidor de autorización. La revisión `2026-07-28` trae cambios que conviene conocer:
+   - Los clientes se identifican con **CIMD** (*Client ID Metadata Documents*): un documento de metadatos publicado en una URL que hace de `client_id`. El registro dinámico de clientes (DCR) queda **deprecado**.
+   - El cliente debe **validar el `iss`** de la respuesta de autorización (RFC 9207), para no aceptar un código emitido por otro servidor de autorización (*mix-up*).
+   - Las credenciales quedan **ligadas al emisor** que las dio, y el cliente indica su `application_type`.
+   - Hay extensiones oficiales para casos sin usuario delante (*OAuth Client Credentials*) y para empresas que gestionan el acceso desde su proveedor de identidad (*Enterprise-Managed Authorization*).
+   
+   Lee la sección de autorización de [modelcontextprotocol.io](https://modelcontextprotocol.io) y usa el soporte del SDK o una biblioteca de OAuth probada; no implementes criptografía ni validación de tokens a mano. Cuidado también con el descubrimiento de metadatos OAuth: si tu cliente sigue URLs que le da el servidor, bloquea direcciones privadas para evitar SSRF.
 3. **Identidad por usuario.** Cada llamada debe ejecutarse con los permisos del usuario que la origina, no con una cuenta de servicio que lo ve todo.
 4. **Límites de tasa** por usuario y por herramienta, y tamaño máximo de petición en el proxy.
 5. **Registros centralizados** con el id de usuario en cada entrada de auditoría.
@@ -123,8 +136,8 @@ Ese proceso no debe quedar expuesto tal cual a internet. La arquitectura mínima
 - [ ] Credenciales de mínimo privilegio, fuera del código y rotables.
 - [ ] Límites de tiempo, de tamaño de salida y de tasa.
 - [ ] Auditoría de cada llamada con usuario, herramienta, argumentos y resultado.
-- [ ] TLS, autorización según la especificación y sin reenvío de tokens.
-- [ ] Dependencias con versión fijada y revisadas.
+- [ ] TLS, autorización según la especificación (CIMD, validación de `iss`) y sin reenvío de tokens.
+- [ ] Dependencias y servidores de terceros con versión fijada, revisados y con hash de sus descripciones.
 - [ ] Pruebas con entradas maliciosas en la batería de tests.
 
 ## Errores frecuentes
@@ -149,11 +162,12 @@ Ese proceso no debe quedar expuesto tal cual a internet. La arquitectura mínima
 - Supón que los argumentos de cualquier llamada pueden venir de un atacante.
 - Revisa y fija las versiones de servidores de terceros; sus descripciones entran en el contexto.
 - Endurece cada herramienta con validación, límites y auditoría antes de pensar en red.
-- En remoto: proxy con TLS, autorización según la especificación, permisos por usuario.
+- En remoto: proxy con TLS, autorización según la especificación (CIMD en lugar de DCR, `iss` validado), permisos por usuario.
 - Nunca reenvíes el token del cliente a otra API.
 
 ## Para seguir
 
 - [[cursos/seguridad-y-prompt-injection/index]]
+- [[docs/seguridad/04-mcp-y-skills-de-terceros]]
 - [[sistemas/asistente-de-datos-con-mcp]]
 - [[roadmap/100-produccion/06-despliegue]]

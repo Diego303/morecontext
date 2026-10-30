@@ -2,6 +2,7 @@
 titulo: Trocear documentos con solapamiento
 descripcion: Divide documentos largos en trozos de tamaño controlado que respetan frases y párrafos, con solapamiento entre trozos y posiciones para citar la fuente.
 creado: 2026-08-20
+actualizado: 2026-10-29
 nivel: inicial
 minutos: 20
 tema: rag
@@ -141,14 +142,15 @@ assert all(cubierto[p] or texto[p].isspace() for p in range(len(texto)))
 print(f"{len(trozos)} trozos, todo cubierto")
 ```
 
-- **Lo que de verdad importa:** escribe 20 preguntas con el trozo que debería responderlas y mide si aparece entre los primeros resultados de tu búsqueda. Cambia `max_chars` y `solape` y compara. Lo trata [[cursos/rag-a-fondo/04-evaluar-un-rag]].
+- **Lo que de verdad importa:** escribe 20 preguntas con el trozo que debería responderlas y mide si aparece entre los primeros resultados de tu búsqueda. Cambia `max_chars` y `solape` y compara. Lo trata [[cursos/rag-a-fondo/10-evaluar-un-rag]].
 
 ## Variaciones
 
 - **Por encabezados.** En Markdown, divide primero por secciones (`##`) y trocea cada sección por separado. Así ningún trozo mezcla dos temas.
 - **Con contexto.** Antepón al texto indexado el título del documento y de la sección: «Contrato Acme 2026 > Penalizaciones > …». Ayuda a que el trozo se entienda solo. La idea completa es la [[glosario/recuperacion-contextual|recuperación contextual]] ([Anthropic, 2024](https://www.anthropic.com/news/contextual-retrieval)).
 - **En tokens.** La relación entre caracteres y [[glosario/token|tokens]] cambia según el idioma y el tipo de texto. Si necesitas controlar tokens, calibra una vez con `client.messages.count_tokens(...)` sobre una muestra y ajusta `max_chars`.
-- **Ventana ampliada.** Indexa trozos pequeños para que la búsqueda sea precisa, pero al responder pasa al modelo el trozo con sus vecinos (`indice - 1` e `indice + 1`).
+- **Ventana ampliada.** Indexa trozos pequeños para que la búsqueda sea precisa, pero al responder pasa al modelo el trozo con sus vecinos (`indice - 1` e `indice + 1`). La versión con jerarquía está en [[recetas/chunks-padre-hijo]].
+- **Con un framework.** LangChain (`RecursiveCharacterTextSplitter`, en `langchain-text-splitters`) y LlamaIndex (`SentenceSplitter`) traen divisores con tamaño y solape. Ahorran código, pero comprueba en qué unidad miden (caracteres o tokens) y si guardan la posición en el original; si no, pierdes la cita. Comparativa en [[docs/frameworks/08-llamaindex]].
 
 ## Errores típicos
 
@@ -156,5 +158,5 @@ print(f"{len(trozos)} trozos, todo cubierto")
 - **Solape cero.** Una respuesta que cruza la frontera entre dos trozos no aparece completa en ninguno.
 - **Solape enorme.** Con un 50 % indexas casi todo dos veces, pagas el doble de embeddings y los resultados se llenan de trozos repetidos.
 - **Perder la procedencia.** Sin `doc_id` y posiciones no puedes citar ni depurar por qué se recuperó algo.
-- **Trocear basura.** Cabeceras, pies de página y menús repetidos en cada página acaban en todos los trozos. Limpia antes de trocear ([[cursos/rag-a-fondo/02-indexar-bien]]).
-- **Elegir el tamaño a ojo y no volver a mirarlo.** Mide con preguntas reales.
+- **Trocear basura.** Cabeceras, pies de página y menús repetidos en cada página acaban en todos los trozos. Limpia antes de trocear ([[cursos/rag-a-fondo/02-indexar-bien]]). Si partes de PDF, conviértelos antes a Markdown limpio ([[recetas/pdf-a-markdown-con-docling]]).
+- **Elegir el tamaño a ojo y no volver a mirarlo.** Mide con preguntas reales. Si el RAG no encuentra un documento que existe, el troceado es el primer sospechoso ([[problemas/el-rag-no-encuentra-el-documento]]).

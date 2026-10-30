@@ -2,6 +2,7 @@
 titulo: Por qué MCP importa más de lo que parece
 descripcion: Un análisis de lo que cambia MCP más allá de ser otro formato de herramientas, en reutilización, separación de responsabilidades y seguridad.
 creado: 2026-07-30
+actualizado: 2026-10-29
 estado: revision
 tipo: analisis
 tags: [mcp, herramientas, arquitectura]
@@ -51,5 +52,8 @@ Las prácticas son las de siempre, aplicadas con más disciplina: conectar solo 
 ## Por qué creo que merece la pena aprenderlo ya
 
 Escribir un servidor MCP sencillo con el SDK de Python es poco código: `MCPServer`, un decorador `@mcp.tool()` por función y `mcp.run()`. El coste de entrada es bajo. Lo que ganas es que tus herramientas dejan de depender de un único agente y que te obliga a pensar en ellas como un producto con contrato, dueño y permisos. Si quieres probar, empieza por [[recetas/servidor-mcp-de-solo-lectura]] o por la lección [[roadmap/20-herramientas/05-mcp-conectar-un-servidor]].
+
+> [!nota] Actualización (oct. 2026)
+> Dos cosas que este texto no recogía. La especificación `2026-07-28`, publicada dos días antes, hace MCP **sin estado**: sin saludo `initialize` ni sesiones, con `server/discover` y con Roots, Sampling y Logging deprecados; el SDK de TypeScript v2 se divide en `@modelcontextprotocol/server` y `@modelcontextprotocol/client` ([[docs/estandares/01-mcp-2026-07-28]], [[radar/2026-10-25-mcp-sin-estado]]). Y el coste de contexto de conectar muchos servidores tiene una salida en la API: cargar las definiciones bajo demanda con la búsqueda de herramientas ([[recetas/carga-diferida-de-herramientas]]). Lo demás, la separación de responsabilidades y la seguridad, sigue igual.
 
 *Borrador inicial: pendiente de reescribir con la voz del autor.*

@@ -2,6 +2,7 @@
 titulo: Introducción a la documentación
 descripcion: Qué cubre la documentación de MoreContext, sus convenciones de código y cómo preparar tu entorno para seguir los ejemplos.
 creado: 2026-07-14
+actualizado: 2026-10-29
 orden: 1
 nivel: inicial
 tags: [api, fundamentos, entorno]
@@ -27,21 +28,26 @@ Cada artículo enlaza a las lecciones que enseñan su tema. Por ejemplo, [[docs/
 
 | Grupo | Qué cubre |
 |---|---|
-| [[docs/fundamentos/index]] | Peticiones, mensajes, bloques, streaming |
+| [[docs/fundamentos/index]] | Peticiones, mensajes, bloques, streaming, versiones, motivos de parada |
 | [[docs/prompting/index]] | Prompt de sistema, ejemplos, salida estructurada, razonamiento |
 | [[docs/herramientas/index]] | Uso de herramientas, MCP, herramientas del servidor, uso del ordenador |
 | [[docs/contexto/index]] | Ventana de contexto, prompt caching, RAG, memoria |
 | [[docs/agentes/index]] | Bucle agéntico, subagentes, humano en el bucle |
 | [[docs/evals/index]] | Diseño de evals y modelo como juez |
 | [[docs/produccion/index]] | Observabilidad, costes, latencia |
-| [[docs/seguridad/index]] | Inyección de prompt y permisos |
+| [[docs/seguridad/index]] | Inyección de prompt, permisos, patrones de defensa, MCP y skills de terceros |
+| [[docs/claude-code/index]] | `CLAUDE.md` y `AGENTS.md`, subagentes, skills, hooks, permisos, modo *headless* |
+| [[docs/frameworks/index]] | Claude Agent SDK, LangChain, LangGraph y otros frameworks, con equivalencias |
+| [[docs/modelos-abiertos/index]] | Ollama, vLLM, llama.cpp, embeddings, bases vectoriales y evals abiertas |
+| [[docs/estandares/index]] | MCP 2026-07-28 y sus extensiones, A2A, Agent Skills, `AGENTS.md` |
 
 ## Convenciones del código
 
 Todo el código de la documentación sigue las mismas reglas. Así puedes copiar un fragmento de un artículo y pegarlo junto a otro sin sorpresas.
 
 - **Implementación de referencia**: la API de Mensajes de Anthropic. Los conceptos sirven con cualquier proveedor; los nombres de campos cambian.
-- **Python primero**, con TypeScript en pestañas en el ejemplo central de cada artículo.
+- **Python primero**, con TypeScript en pestañas en el ejemplo central de cada artículo. Donde aporta, el mismo caso con un framework open source (pestañas `LangChain`, `LangGraph`) o con un modelo local (`Ollama`), siempre después del código con el SDK.
+- **Versiones**: API de Claude `2026-10-21`, SDK `anthropic` 2.x (Python 3.10 o superior) y `@anthropic-ai/sdk` 1.x. Esta versión de la API ya no acepta `temperature`, `top_p` ni `top_k`: los ejemplos no los usan. Ver [[docs/fundamentos/05-versiones-de-api-y-sdks]].
 - **Una constante `MODEL`** al principio de cada archivo. Los nombres de modelo cambian con frecuencia; cámbialos en un solo sitio.
 - **La clave de API sale del entorno**, nunca del código.
 - **Salidas inventadas** se marcan con `# salida de ejemplo` en un bloque de texto. Lo demás es código que funciona.
@@ -55,12 +61,12 @@ Todo el código de la documentación sigue las mismas reglas. Así puedes copiar
 Necesitas una clave de API del proveedor y el SDK de tu lenguaje.
 
 ```bash tab="Python"
-pip install anthropic
+pip install "anthropic>=2"
 export ANTHROPIC_API_KEY="sk-ant-..."   # mejor en un .env que no subas al repositorio
 ```
 
 ```bash tab="TypeScript"
-npm install @anthropic-ai/sdk
+npm install "@anthropic-ai/sdk@^1"
 export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
@@ -74,10 +80,11 @@ client = anthropic.Anthropic()  # lee ANTHROPIC_API_KEY del entorno
 
 resp = client.messages.create(
     model=MODEL,
-    max_tokens=64,
+    max_tokens=1024,  # holgura: el razonamiento adaptativo también cuenta como salida
     messages=[{"role": "user", "content": "Responde solo: ok"}],
 )
-print(resp.content[0].text, resp.stop_reason)
+texto = "".join(b.text for b in resp.content if b.type == "text")
+print(texto, resp.stop_reason)
 ```
 
 ```ts tab="TypeScript" title="comprobar.ts"
@@ -88,11 +95,11 @@ const client = new Anthropic(); // lee ANTHROPIC_API_KEY del entorno
 
 const resp = await client.messages.create({
   model: MODEL,
-  max_tokens: 64,
+  max_tokens: 1024,
   messages: [{ role: "user", content: "Responde solo: ok" }],
 });
-const first = resp.content[0];
-if (first.type === "text") console.log(first.text, resp.stop_reason);
+const texto = resp.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+console.log(texto, resp.stop_reason);
 ```
 
 ```text
@@ -100,7 +107,7 @@ if (first.type === "text") console.log(first.text, resp.stop_reason);
 ok end_turn
 ```
 
-Si ves un error de autenticación, la variable de entorno no está llegando al proceso. Si ves un error de modelo no encontrado, cambia `MODEL` por uno vigente según la documentación oficial.
+Se filtran los bloques `text` en lugar de leer `resp.content[0]`: en los modelos 5.x el razonamiento es adaptativo y la respuesta puede empezar por un bloque `thinking` (vacío por defecto). Si ves un error de autenticación, la variable de entorno no está llegando al proceso. Si ves un error de modelo no encontrado, cambia `MODEL` por uno vigente según la documentación oficial. Un `TypeError` por `temperature` significa que copiaste código anterior a la versión `2026-10-21`.
 
 ## Conceptos que se dan por sabidos
 
@@ -131,6 +138,8 @@ Puedes enlazar a una sección concreta con su título, por ejemplo [[docs/fundam
 ## Ver también
 
 - [[docs/fundamentos/02-tu-primera-llamada]]: anatomía de una petición y su respuesta.
+- [[docs/fundamentos/05-versiones-de-api-y-sdks]]: qué cambió en la versión `2026-10-21` y cómo migrar código antiguo.
+- [[docs/frameworks/01-elegir-framework]]: cuándo usar el SDK a mano y cuándo un framework.
 - [[roadmap/00-fundamentos/index]]: el mismo terreno, enseñado paso a paso.
 - [[paginas/empieza-aqui]]: rutas según tu punto de partida.
 - [[glosario/index]]: todos los términos.

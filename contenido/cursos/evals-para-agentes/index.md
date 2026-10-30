@@ -2,12 +2,13 @@
 titulo: Evals para agentes
 descripcion: Monográfico para evaluar agentes de verdad, con resultado, trayectoria y coste, datasets que reflejan el uso real, graders bien calibrados y evals integradas en el trabajo diario.
 creado: 2026-10-07
+actualizado: 2026-10-29
 orden: 3
 nivel: intermedio
 horas: 5
 objetivo: Diseñar y mantener un sistema de evaluación para agentes que mida resultado, trayectoria, eficiencia y seguridad, y usarlo para decidir cada cambio.
 requiere: ["[[roadmap/40-primer-agente/index]]", "[[roadmap/80-evals/index]]"]
-relacionados: ["[[glosario/evals]]", "[[disciplinas/evals]]", "[[docs/evals/01-disenar-evals]]", "[[recetas/evals-de-regresion-en-ci]]"]
+relacionados: ["[[glosario/evals]]", "[[disciplinas/evals]]", "[[docs/evals/01-disenar-evals]]", "[[recetas/evals-de-regresion-en-ci]]", "[[biblioteca/demystifying-evals]]"]
 tags: [evals, agentes, calidad]
 ---
 
@@ -29,14 +30,16 @@ Para quien ya tiene un [[glosario/agente|agente]] funcionando (aunque sea peque�
 
 ## Temario
 
-1. [[cursos/evals-para-agentes/01-que-medir]]. Resultado, [[glosario/trayectoria|trayectoria]], eficiencia y seguridad. Comprobar el estado final del entorno en lugar del texto, y medir la consistencia entre ejecuciones con pass@k y pass^k.
-2. [[cursos/evals-para-agentes/02-datasets-de-evaluacion]]. De dónde salen las tareas, cómo se describen (entrada, entorno, criterio de éxito), cuántas hacen falta, cómo se versionan y cómo evitar que el dataset se quede viejo.
-3. [[cursos/evals-para-agentes/03-graders]]. Cuándo usar código, cuándo un [[glosario/modelo-juez|modelo juez]] y cuándo una persona; rúbricas, sesgos conocidos y calibración contra etiquetas humanas.
-4. [[cursos/evals-para-agentes/04-evals-en-el-dia-a-dia]]. Un ejecutor con concurrencia y comparación con la línea base, umbrales de regresión, qué ejecutar en cada PR y qué cada noche, y el ciclo que convierte fallos de producción en casos nuevos.
+1. [[cursos/evals-para-agentes/01-que-medir]]. Resultado, [[glosario/trayectoria|trayectoria]], eficiencia y seguridad. Comprobar el estado final del entorno en lugar del texto, y medir la consistencia entre ejecuciones con pass@k y pass^k, con su origen y cuándo una diferencia es ruido.
+2. [[cursos/evals-para-agentes/02-datasets-de-evaluacion]]. De dónde salen las tareas, cómo se describen (entrada, entorno, criterio de éxito), cuántas hacen falta, cómo encontrarlas con análisis de errores, cómo se versionan y cómo evitar que el dataset se quede viejo.
+3. [[cursos/evals-para-agentes/03-graders]]. Cuándo usar código, cuándo un [[glosario/modelo-juez|modelo juez]] y cuándo una persona; rúbricas, la opción «desconocido», sesgos conocidos, validación contra etiquetas humanas con TPR y TNR, y cuándo una eval de capacidad pasa a ser de regresión.
+4. [[cursos/evals-para-agentes/04-evals-en-el-dia-a-dia]]. Un ejecutor con concurrencia y comparación con la línea base, umbrales de regresión, qué ejecutar en cada PR y qué cada noche, el ciclo que convierte fallos de producción en casos nuevos y las herramientas abiertas (promptfoo, DeepEval, Inspect AI) que pueden sustituir al ejecutor propio.
 
 ## Qué construyes
 
 Un banco de evaluación para un agente tuyo con al menos 25 tareas, cada una con su entorno reproducible y su criterio de éxito; graders de los tres tipos; un ejecutor que lanza varias pruebas por tarea, calcula métricas de resultado, trayectoria y coste, y compara contra la última versión aprobada. Al final, lo enganchas a tu CI.
 
+El curso se apoya en la guía de evals de agentes de Anthropic ([[biblioteca/demystifying-evals]]) y en la práctica de análisis de errores de Hamel Husain y Shreya Shankar. Si evalúas un RAG, completa con [[cursos/rag-a-fondo/10-evaluar-un-rag]]; si te preguntas qué valen los benchmarks públicos, lee [[docs/evals/03-benchmarks-publicos]].
+
 > [!consejo] Empieza pequeño y real
-> Veinte tareas sacadas de uso real valen más que doscientas inventadas. El curso te enseña a crecer desde ahí sin perder la señal.
+> Veinte tareas sacadas de fallos reales valen más que doscientas inventadas; Anthropic recomienda empezar con 20 a 50. El curso te enseña a crecer desde ahí sin perder la señal.

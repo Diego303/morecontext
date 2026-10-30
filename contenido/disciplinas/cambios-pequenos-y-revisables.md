@@ -2,6 +2,7 @@
 titulo: Cambios pequeños y revisables
 descripcion: Trabajar con agentes en cambios acotados, con un propósito por cambio y pruebas incluidas, para que una persona pueda revisarlos de verdad y revertirlos si hace falta.
 creado: 2026-10-20
+actualizado: 2026-10-29
 orden: 12
 tipo: forma-de-trabajar
 tags: [forma-de-trabajar, agentes-de-codigo, revision]
@@ -34,6 +35,8 @@ Y te dan señales tempranas. Diez cambios pequeños te dicen pronto si el agente
 - **Divide antes de empezar.** Con la [[disciplinas/spec-primero|spec]] delante, pide al agente que proponga una secuencia de cambios independientes. Cada uno, un PR.
 - **Separa refactorización de comportamiento.** Primero un PR que mueve o renombra sin cambiar lo que hace (los tests no cambian). Después, otro con el cambio de comportamiento.
 - **Un commit por paso del plan.** Con mensajes que expliquen el porqué. Facilita revisar por partes y bisecar.
+- **Una feature por sesión.** Cada sesión del agente lleva una sola feature de principio a fin. Si mezclas dos, el diff que revisas incluye código de la otra y los tests de una fallan por la mitad sin terminar de la otra. Para varias a la vez, una sesión y un *[[glosario/worktree|worktree]]* por feature ([[disciplinas/trabajo-en-paralelo-con-agentes]]).
+- **Un commit *squash* por feature al integrar.** Los commits intermedios te sirven mientras trabajas; en la rama de integración, cada feature entra como un único commit con un mensaje que explica qué y por qué. En el harness del autor ese mensaje lo redacta el revisor (en Conventional Commits) al dar el `PASS`, y el commit y el *push* los hace la persona, nunca el agente ([[sistemas/harness-sdd-olas]], [[recetas/integrar-features-en-paralelo]]). Revertir una feature es revertir un commit.
 - **Pide al agente la descripción del PR** con una estructura fija: propósito, cambios por archivo, cómo se verificó (con la salida de los tests), riesgos.
 - **Pon límites al agente.** «No toques archivos fuera de `facturacion/`», «no cambies dependencias». Si necesita salirse, que lo pida.
 - **Revisa con un segundo contexto.** Un subagente revisor que solo ve el diff y la spec ([[disciplinas/orquestador-y-subagentes]]) encuentra cosas distintas que el autor. No sustituye a tu revisión.
@@ -63,6 +66,7 @@ Lo que no se ha hecho y lo que conviene mirar con lupa.
 - En la revisión escribes «LGTM» sin haber leído todo.
 - Un PR arregla un bug, renombra un módulo y actualiza dependencias.
 - Cuando algo falla, nadie sabe qué parte del cambio fue.
+- Una sesión del agente arrastra dos o tres features a medias.
 - El agente borra o relaja tests para que pasen, y no lo ves hasta producción.
 
 ## Cómo empezar mañana
@@ -77,3 +81,4 @@ Lo que no se ha hecho y lo que conviene mirar con lupa.
 - [[cursos/agentes-de-codigo/04-revisar-y-confiar]]
 - [[sistemas/agente-de-codigo]]
 - [[disciplinas/pair-programming-con-agentes]]
+- [[disciplinas/verificar-antes-de-dar-por-hecho]]

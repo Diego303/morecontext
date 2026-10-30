@@ -2,6 +2,7 @@
 titulo: Modelo juez
 descripcion: Usar un LLM para puntuar las salidas de otro sistema con una rúbrica, cuando el criterio no se puede comprobar con código.
 creado: 2026-09-10
+actualizado: 2026-10-29
 categoria: evals
 ingles: LLM-as-a-judge
 aliases: [LLM-as-a-judge, LLM como juez, juez LLM]
@@ -13,7 +14,7 @@ Un modelo juez es un LLM al que le pasas una salida, el contexto y una rúbrica,
 
 ## En la práctica
 
-Los sesgos documentados incluyen preferir la respuesta que aparece primero, preferir respuestas más largas y favorecer textos de su propio modelo. Para reducirlos: una rúbrica concreta con criterios binarios o escalas cortas, pedir el razonamiento antes del veredicto, devolver el resultado como [[glosario/salida-estructurada]] y, al comparar dos salidas, alternar su orden. Antes de fiarte, compara sus notas con las de una persona en una muestra.
+Los sesgos documentados incluyen preferir la respuesta que aparece primero, preferir respuestas más largas y favorecer textos de su propio modelo. Para reducirlos: una rúbrica concreta con criterios binarios o escalas cortas, pedir el razonamiento antes del veredicto, devolver el resultado como [[glosario/salida-estructurada]] y, al comparar dos salidas, alternar su orden. Con Claude ya no hay `temperature` que fijar: para estabilizarlo, fija el ID del modelo, el esfuerzo y el esquema de salida, y usa varias muestras con voto. Antes de fiarte, compara sus notas con las de una persona en una muestra. Un juez local más débil que el modelo evaluado tiende a inflar las notas.
 
 ## No confundir con
 
@@ -25,3 +26,5 @@ Los sesgos documentados incluyen preferir la respuesta que aparece primero, pref
 - [[roadmap/80-evals/03-codigo-o-modelo-juez]]
 - [[recetas/modelo-juez-con-rubrica]]
 - [[cursos/evals-para-agentes/03-graders]]
+- [[recetas/validar-un-modelo-juez]]
+- [[biblioteca/llm-as-a-judge]]

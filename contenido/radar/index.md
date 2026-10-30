@@ -2,6 +2,7 @@
 titulo: Radar
 descripcion: "Lo que cambia cómo construyes con modelos y agentes, explicado en tres partes: qué es, qué cambia en la práctica y qué hacer. Sin rumores."
 creado: 2026-07-02
+actualizado: 2026-10-29
 orden: 10
 tags: [radar]
 relacionados: ["[[boletin/index]]", "[[blog/index]]", "[[docs/index]]"]
@@ -29,13 +30,9 @@ Si existe una fuente, va al final. Cada entrada se clasifica en una categoría: 
 
 ## Entradas recientes
 
-- [[radar/2026-10-20-inyeccion-por-herramientas]]
-- [[radar/2026-10-06-evals-continuas-en-ci]]
-- [[radar/2026-09-22-contexto-largo-no-sustituye-recuperacion]]
-- [[radar/2026-09-08-mcp-forma-estandar]]
-- [[radar/2026-08-25-razonamiento-adaptativo]]
+Todas las entradas están en el listado de abajo, de la más reciente a la más antigua y agrupadas por mes. Puedes filtrarlas por categoría.
 
 Las entradas más destacadas de cada quincena llegan también en el [[boletin/index|boletín]].
 
 > [!nota] Las entradas envejecen
-> Una entrada describe la situación en su fecha. Si algo cambia después, se actualiza la entrada y se indica la fecha de actualización.
+> Una entrada describe la situación en su fecha y su texto no se reescribe. Si un dato queda superado, la entrada lleva al final una nota «Actualización» con el dato vigente, la fecha y un enlace a la página o a la entrada nueva que lo cubre.

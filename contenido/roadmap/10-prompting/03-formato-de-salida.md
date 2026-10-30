@@ -2,6 +2,7 @@
 titulo: "Formato de salida: pedir JSON y validarlo"
 descripcion: "Cómo pedir al modelo una salida en JSON, validarla con un esquema en tu código, reintentar con el error y usar salidas estructuradas garantizadas por la API."
 creado: 2026-09-15
+actualizado: 2026-10-29
 orden: 3
 minutos: 45
 tipo: practica
@@ -82,7 +83,7 @@ Ejemplo de salida:
 </ticket>"""
 
 def pedir(messages: list) -> str:
-    resp = client.messages.create(model=MODEL, max_tokens=300, messages=messages)
+    resp = client.messages.create(model=MODEL, max_tokens=1024, messages=messages)  # el límite incluye el razonamiento
     if resp.stop_reason == "max_tokens":
         raise RuntimeError("JSON cortado por max_tokens")
     return "".join(b.text for b in resp.content if b.type == "text")
@@ -131,10 +132,12 @@ ESQUEMA = {
 
 resp = client.messages.create(
     model=MODEL,
-    max_tokens=300,
+    max_tokens=1024,
     messages=[{"role": "user", "content": "Clasifica este ticket: Me habéis cobrado dos veces octubre."}],
     output_config={"format": {"type": "json_schema", "schema": ESQUEMA}},
 )
+if resp.stop_reason != "end_turn":                 # max_tokens o refusal: el JSON puede no estar completo
+    raise RuntimeError(f"Respuesta incompleta: {resp.stop_reason}")
 texto = "".join(b.text for b in resp.content if b.type == "text")
 ticket = Ticket.model_validate_json(texto)  # sigue validando
 ```
@@ -154,7 +157,7 @@ const Ticket = z.object({
 
 const resp = await client.messages.create({
   model: MODEL,
-  max_tokens: 300,
+  max_tokens: 1024,
   messages: [{ role: "user", content: "Clasifica este ticket: Me habéis cobrado dos veces octubre." }],
   output_config: {
     format: {
@@ -172,6 +175,7 @@ const resp = await client.messages.create({
     },
   },
 });
+if (resp.stop_reason !== "end_turn") throw new Error(`Respuesta incompleta: ${resp.stop_reason}`);
 const texto = resp.content.map((b) => (b.type === "text" ? b.text : "")).join("");
 const ticket = Ticket.parse(JSON.parse(texto)); // sigue validando
 console.log(ticket);
@@ -182,14 +186,46 @@ En Python, el SDK te ahorra escribir el esquema a mano: `client.messages.parse(.
 ```python title="parse.py"
 resp = client.messages.parse(
     model=MODEL,
-    max_tokens=300,
+    max_tokens=1024,
     messages=[{"role": "user", "content": "Clasifica este ticket: Me habéis cobrado dos veces octubre."}],
     output_format=Ticket,
 )
 ticket = resp.parsed_output
 ```
 
-Tiene limitaciones que conviene conocer: no admite esquemas recursivos ni restricciones numéricas o de longitud (mínimos, máximos, longitud de cadena), y `additionalProperties` debe ser `false`. Comprueba en la [documentación oficial](https://platform.claude.com/docs) qué modelos la soportan.
+Está disponible en todos los modelos actuales de Claude, con limitaciones que conviene conocer: no admite esquemas recursivos ni restricciones numéricas o de longitud (mínimos, máximos, longitud de cadena; `minItems` solo admite 0 y 1), `additionalProperties` debe ser `false` y no se combina con las citas. Los detalles vigentes están en la [documentación oficial](https://platform.claude.com/docs).
+
+Hay otros dos caminos para conseguir lo mismo, y conviene distinguirlos. Una herramienta con `"strict": True` garantiza que los **argumentos** de esa herramienta cumplen su esquema (lo verás en [[roadmap/20-herramientas/02-definir-herramientas]]). Forzar al modelo a llamar a una herramienta con `tool_choice` para obtener JSON era un truco habitual, pero los modelos actuales (`claude-sonnet-5-5`, `claude-opus-5-5`) lo rechazan con un error 400: para un resultado estructurado, usa `output_config.format`.
+
+### Con LangChain o con un modelo local
+
+Los frameworks abiertos exponen la misma idea con una sola llamada, `with_structured_output`, que recibe el modelo Pydantic y devuelve el objeto validado:
+
+```python tab="LangChain" title="estructurada_langchain.py"
+from langchain.chat_models import init_chat_model
+from esquema import Ticket
+
+MODEL = "anthropic:claude-sonnet-5-5"
+llm = init_chat_model(MODEL, max_tokens=1024)
+
+clasificador = llm.with_structured_output(Ticket, method="json_schema")  # usa output_config.format por debajo
+ticket = clasificador.invoke("Clasifica este ticket: Me habéis cobrado dos veces octubre.")
+print(ticket)  # Ticket(categoria='facturacion', ...)
+```
+
+```python tab="Ollama" title="estructurada_local.py"
+from langchain_ollama import ChatOllama
+from esquema import Ticket
+
+MODEL = "qwen3.6:27b"
+llm = ChatOllama(model=MODEL, num_ctx=32768)
+
+clasificador = llm.with_structured_output(Ticket)  # envía el JSON Schema en el campo "format" de Ollama
+ticket = clasificador.invoke("Clasifica este ticket: Me habéis cobrado dos veces octubre.")
+print(ticket)
+```
+
+Con `method="json_schema"`, LangChain traduce el modelo Pydantic al mismo `output_config.format` que escribiste a mano; sin ese argumento, recurre a una llamada a herramienta que en `claude-sonnet-5-5` no puede forzar (avisa con un `UserWarning` y falla si el modelo no llama a la herramienta), así que pásalo siempre. En Ollama, el esquema restringe la generación del modelo local ([[glosario/decodificacion-restringida]]), y la calidad del contenido depende mucho del modelo que elijas. En los dos casos, las reglas de negocio de la capa 3 siguen siendo cosa tuya.
 
 > [!aviso] Garantizar el formato no garantiza el contenido
 > Un JSON perfectamente válido puede tener la categoría equivocada o un resumen inventado. Las salidas estructuradas resuelven el parseo; la corrección se mide con casos de prueba, como verás en [[roadmap/10-prompting/05-iterar-con-casos-de-prueba]].
@@ -237,3 +273,4 @@ def comprobar(t: Ticket) -> list[str]:
 - [[roadmap/10-prompting/04-prompt-de-sistema]]: dónde poner las reglas fijas del clasificador.
 - [[modelos/03-formato-y-salidas-estructuradas]] y [[docs/prompting/03-salida-estructurada]] como referencia.
 - [[sistemas/extraccion-documental]]: extracción a JSON a escala, con revisión humana.
+- [[problemas/json-invalido-del-modelo]]: qué revisar cuando el JSON no valida.

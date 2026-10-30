@@ -2,6 +2,7 @@
 titulo: "Recuperar bien: híbrida, reranking y recuperación contextual"
 descripcion: Fusión de rankings con RRF, reranking con un modelo, filtros por metadatos y recuperación contextual con prompt caching para que el fragmento correcto llegue al contexto.
 creado: 2026-09-19
+actualizado: 2026-10-29
 orden: 3
 minutos: 60
 tipo: practica
@@ -11,7 +12,7 @@ objetivos:
   - Aplicar recuperación contextual a un índice usando prompt caching para abaratar el proceso.
   - Decidir qué técnica añadir según el tipo de fallo observado.
 requiere: ["[[cursos/rag-a-fondo/02-indexar-bien]]", "[[roadmap/30-contexto-y-rag/03-busqueda-hibrida]]", "[[roadmap/30-contexto-y-rag/04-reranking]]"]
-relacionados: ["[[glosario/recuperacion-contextual]]", "[[glosario/busqueda-hibrida]]", "[[glosario/reranking]]", "[[recetas/busqueda-hibrida-con-bm25]]", "[[docs/contexto/02-prompt-caching]]"]
+relacionados: ["[[glosario/recuperacion-contextual]]", "[[glosario/busqueda-hibrida]]", "[[glosario/reranking]]", "[[recetas/busqueda-hibrida-con-bm25]]", "[[docs/contexto/02-prompt-caching]]", "[[recetas/fusionar-rankings-con-rrf]]"]
 tags: [rag, recuperacion, reranking, bm25]
 ---
 
@@ -38,7 +39,7 @@ flowchart LR
 
 ## Fusión con RRF
 
-[[glosario/bm25|BM25]] encuentra coincidencias exactas (códigos, nombres propios, siglas); los [[glosario/embeddings|embeddings]] encuentran paráfrasis. Sus puntuaciones no son comparables, así que no las sumes. **Reciprocal Rank Fusion** combina posiciones en lugar de puntuaciones: cada documento suma `1 / (k + posición)` en cada lista donde aparece. Con `k = 60`, un valor habitual, ningún ranking domina por tener puntuaciones en otra escala.
+[[glosario/bm25|BM25]] encuentra coincidencias exactas (códigos, nombres propios, siglas); los [[glosario/embeddings|embeddings]] encuentran paráfrasis. Sus puntuaciones no son comparables, así que no las sumes. **Reciprocal Rank Fusion** combina posiciones en lugar de puntuaciones: cada documento suma `1 / (k + posición)` en cada lista donde aparece. Con `k = 60`, un valor habitual, ningún ranking domina por tener puntuaciones en otra escala. La receta [[recetas/fusionar-rankings-con-rrf]] lo trata paso a paso, y [[glosario/rrf]] lo resume.
 
 ```python title="fusion.py"
 from collections import defaultdict
@@ -56,11 +57,13 @@ def recuperar(indice, consulta: str, filtros: dict | None = None) -> list[str]:
     return rrf([lexico, vector])
 ```
 
-Los **filtros por metadatos** se aplican dentro de cada búsqueda, no después: si filtras tras cortar en 50, puedes quedarte sin ningún candidato válido. Aquí es donde rentan los metadatos de la [[cursos/rag-a-fondo/02-indexar-bien|lección anterior]] (`version`, `idioma`, `acl`).
+Los **filtros por metadatos** se aplican dentro de cada búsqueda, no después: si filtras tras cortar en 50, puedes quedarte sin ningún candidato válido. Aquí es donde rentan los metadatos de la [[cursos/rag-a-fondo/02-indexar-bien|lección anterior]] (`version`, `idioma`, `acl`). Cómo se comporta un filtro dentro de un índice aproximado (HNSW) y por qué puede devolver menos resultados de los pedidos lo ves en [[cursos/rag-a-fondo/04-bases-vectoriales-por-dentro]].
+
+No tienes que escribir la fusión a mano si tu base la trae: pgvector la hace en SQL y Qdrant combina denso y *sparse* con RRF en una sola consulta ([[recetas/busqueda-hibrida-con-qdrant]]). Merece la pena escribirla una vez para saber qué hace.
 
 ## Reranking con modelo
 
-Un reranker lee la consulta y cada candidato juntos, así que juzga relevancia con más finura que la similitud entre vectores calculados por separado. Puedes usar un modelo especializado (un *cross-encoder*) o un LLM. La versión con LLM es fácil de montar y de ajustar con instrucciones; su coste crece con el número de candidatos, por eso solo se aplica a la lista fusionada.
+Un reranker lee la consulta y cada candidato juntos, así que juzga relevancia con más finura que la similitud entre vectores calculados por separado. Puedes usar un modelo especializado (un [[glosario/cross-encoder|cross-encoder]], hay varios abiertos: ver [[docs/modelos-abiertos/04-embeddings-y-rerankers]]) o un LLM. La versión con LLM es fácil de montar y de ajustar con instrucciones; su coste crece con el número de candidatos, por eso solo se aplica a la lista fusionada.
 
 ```python title="rerank.py"
 import json
@@ -108,7 +111,7 @@ El esquema garantiza la forma del JSON ([[glosario/salida-estructurada]]), pero 
 
 ## Recuperación contextual
 
-Muchos fragmentos no dicen de qué hablan. «Los ingresos crecieron un 3 % respecto al trimestre anterior» no menciona empresa ni trimestre; ninguna búsqueda lo asociará a «ingresos de ACME en el T2». Anthropic publicó en septiembre de 2024 el método [*Contextual Retrieval*](https://www.anthropic.com/news/contextual-retrieval): antes de indexar, un modelo escribe para cada fragmento una o dos frases que lo sitúan dentro de su documento, y ese contexto se antepone al fragmento **tanto en el índice vectorial como en el BM25**. El artículo informa de reducciones claras en los fallos de recuperación, sobre todo al combinarlo con reranking; consulta allí sus cifras y su configuración.
+Muchos fragmentos no dicen de qué hablan. «Los ingresos crecieron un 3 % respecto al trimestre anterior» no menciona empresa ni trimestre; ninguna búsqueda lo asociará a «ingresos de ACME en el T2». Anthropic publicó el 19 de septiembre de 2024 el método [*Contextual Retrieval*](https://www.anthropic.com/news/contextual-retrieval) (la página se titula hoy *Contextual retrieval in AI systems*): antes de indexar, un modelo escribe para cada fragmento una o dos frases que lo sitúan dentro de su documento, y ese contexto se antepone al fragmento **tanto en el índice vectorial como en el BM25**. En sus pruebas, medidas como fallos de recuperación en el top 20 (1 − recall@20), los fallos bajaron un 35 % con embeddings contextuales, un 49 % al añadir BM25 contextual y un 67 % al sumar reranking. Son sus datos y su configuración: mide en los tuyos.
 
 La objeción obvia es el coste: hay que enviar el documento entero una vez por fragmento. Con [[glosario/prompt-caching|prompt caching]] el documento se cachea en la primera llamada y las siguientes lo leen de caché, que es mucho más barato y rápido.
 
@@ -140,7 +143,7 @@ def contextualizar(documento: str, fragmentos: list[str]) -> list[str]:
 Puntos prácticos:
 
 - El bloque cacheado va **primero** y es idéntico en todas las llamadas del mismo documento; lo variable va después. Si cambias un carácter del documento, se invalida la caché.
-- Procesa los fragmentos de un documento seguidos: la caché tiene un TTL corto por defecto (se renueva al usarse). Hay un mínimo de tokens para cachear que depende del modelo; documentos muy cortos no se cachean, pero tampoco cuestan mucho.
+- Procesa los fragmentos de un documento seguidos: la caché tiene un TTL corto por defecto (se renueva al usarse). Hay un mínimo de tokens para cachear (512 en los modelos actuales); documentos más cortos no se cachean, pero tampoco cuestan mucho.
 - Comprueba `usage.cache_read_input_tokens` para confirmar que la caché funciona. Si siempre es 0, algo en el prefijo cambia.
 - Para documentos que no caben en la ventana, usa la sección o el capítulo como «documento».
 - Guarda el contexto generado como campo aparte: para citar al usuario muestra el fragmento original, no el contexto inventado por el modelo.
@@ -152,10 +155,11 @@ Puntos prácticos:
 | Fallan consultas con códigos, siglas o nombres exactos | añadir BM25 y fusión |
 | El fragmento correcto aparece en el top 50 pero no en el top 5 | reranking |
 | El fragmento correcto no aparece en el top 50 aunque contiene la respuesta | recuperación contextual |
-| Las preguntas de seguimiento («¿y para empresas?») fallan | reescribir la consulta con el historial antes de buscar |
+| Las preguntas de seguimiento («¿y para empresas?») fallan | [[glosario/reescritura-de-consulta|reescribir la consulta]] con el historial antes de buscar ([[cursos/rag-a-fondo/05-tecnicas-avanzadas-de-recuperacion|lección 5]]) |
+| Preguntas que mezclan varios temas o necesitan dos saltos | descomposición o multi-query (lección 5) |
 | Aparecen resultados de versiones o idiomas equivocados | filtros por metadatos |
 
-No añadas todo a la vez. Cada técnica tiene coste y latencia; mide con el banco de la [[cursos/rag-a-fondo/04-evaluar-un-rag|lección 4]] y quédate con lo que mueve la aguja en tus datos.
+No añadas todo a la vez. Cada técnica tiene coste y latencia; mide con el banco de la [[cursos/rag-a-fondo/10-evaluar-un-rag|lección 10]] y quédate con lo que mueve la aguja en tus datos.
 
 ## Errores frecuentes
 
@@ -184,7 +188,7 @@ No añadas todo a la vez. Cada técnica tiene coste y latencia; mide con el banc
 
 ## Para seguir
 
-- [[cursos/rag-a-fondo/04-evaluar-un-rag]]
+- [[cursos/rag-a-fondo/04-bases-vectoriales-por-dentro]]
+- [[cursos/rag-a-fondo/05-tecnicas-avanzadas-de-recuperacion]]
+- [[recetas/fusionar-rankings-con-rrf]]
 - [[recetas/busqueda-hibrida-con-bm25]]
-- [[docs/contexto/02-prompt-caching]]
-- [[glosario/recuperacion-contextual]]

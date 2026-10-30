@@ -2,6 +2,7 @@
 titulo: Por qué MoreContext
 descripcion: El texto de lanzamiento de MoreContext, qué hueco intenta cubrir, para quién está pensada la web y qué no va a ser nunca.
 creado: 2026-07-01
+actualizado: 2026-10-29
 estado: revision
 tipo: ensayo
 tags: [morecontext, lanzamiento]
@@ -35,6 +36,9 @@ La web está organizada como un segundo cerebro, con muchas piezas pequeñas enl
 - El [[radar/index|Radar]], que recoge solo lo que cambia cómo construyes, y este blog.
 
 Los ejemplos de código usan la API de Mensajes de Anthropic como implementación de referencia, porque hace falta elegir una para que el código sea ejecutable. Los conceptos están explicados para que sirvan con cualquier proveedor.
+
+> [!nota] Actualización (oct. 2026)
+> Desde octubre, después del código con el SDK de Anthropic muchas páginas enseñan el mismo caso con piezas abiertas: el curso [[cursos/langchain-y-langgraph/index]], [[cursos/agentes-con-modelos-abiertos/index|agentes con modelos abiertos]] y la referencia [[docs/frameworks/index]]. También hay secciones nuevas: [[plantillas/index|plantillas]], [[herramientas/index|herramientas]], [[biblioteca/index|biblioteca]], [[problemas/index|problemas frecuentes]] y una [[cursos/ruta-en-video/index|ruta en vídeo]] para quien prefiere aprender así.
 
 ## A quién sirve
 

@@ -2,6 +2,7 @@
 titulo: Condiciones de parada y presupuesto
 descripcion: Pon límites de pasos, tokens, max_tokens y tiempo a tu agente, pide aprobación antes de acciones delicadas y decide qué devolver cuando se agota el presupuesto.
 creado: 2026-09-22
+actualizado: 2026-10-29
 orden: 3
 minutos: 45
 tipo: practica
@@ -151,11 +152,28 @@ Fíjate en que el agente **devuelve un estado en lugar de lanzar excepciones**. 
 
 ## Qué hacer con max_tokens
 
-`max_tokens` es un límite duro por llamada. Si se alcanza, el `stop_reason` es `"max_tokens"` y la respuesta está cortada. Si lo último era un bloque `tool_use`, sus argumentos pueden estar incompletos: **no lo ejecutes**. Las opciones razonables son repetir la llamada con un `max_tokens` mayor o parar con error. Si usas razonamiento, recuerda que el [[glosario/esfuerzo|esfuerzo]] es orientativo y `max_tokens` es lo que de verdad limita la salida.
+`max_tokens` es un límite duro por llamada. Si se alcanza, el `stop_reason` es `"max_tokens"` y la respuesta está cortada. Si lo último era un bloque `tool_use`, sus argumentos pueden estar incompletos: **no lo ejecutes**. Las opciones razonables son repetir la llamada con un `max_tokens` mayor o parar con error. Si usas razonamiento, recuerda que el [[glosario/esfuerzo|esfuerzo]] (`output_config={"effort": …}`) y el [[glosario/presupuesto-de-tarea|presupuesto de tarea]] (`output_config.task_budget`, en beta) son orientativos: `max_tokens` es lo que de verdad limita la salida.
+
+Hay otro final parecido: `model_context_window_exceeded`. Este límite lo pone el modelo, no tú: el historial ya no cabe en la ventana de contexto. Trátalo como un presupuesto agotado (devuelve `incompleto` con lo que tengas) y, si pasa a menudo, recorta las salidas de las herramientas o [[glosario/compactacion|compacta]] el historial.
 
 ## Cerrar con un resumen
 
 Cuando el presupuesto se agota, a veces quieres que el modelo resuma lo que encontró. Puedes hacer una última llamada con `tool_choice={"type": "none"}` y un mensaje pidiendo el resumen. Antes, asegúrate de que el último mensaje del asistente no tiene `tool_use` sin responder: si lo tiene, añade sus `tool_result` (por ejemplo, con `is_error: true` y «Presupuesto agotado, no se ha ejecutado») y el texto de la petición de resumen **después** de ellos, en el mismo mensaje.
+
+## El mismo freno en cada framework
+
+Si mañana usas un framework, los límites existen con otro nombre. Conviene saber cuáles, porque **no todos vienen puestos por defecto**:
+
+| Dónde | Límite de pasos o llamadas | Qué pasa al agotarlo |
+|---|---|---|
+| Tu bucle con el SDK | `max_pasos`, `Presupuesto` | Lo que tú decidas (aquí, estado `incompleto`) |
+| [[herramientas/claude-agent-sdk|Claude Agent SDK]] | `max_turns` y `max_budget_usd` en `ClaudeAgentOptions` | Un `ResultMessage` con `subtype` `error_max_turns` o `error_max_budget_usd` (y `ResultError`) |
+| [[herramientas/langchain|LangChain]] | `ModelCallLimitMiddleware(run_limit=…)`, `ToolCallLimitMiddleware` | Termina o lanza excepción, según `exit_behavior` |
+| [[herramientas/langgraph|LangGraph]] | `config={"recursion_limit": N}` | `GraphRecursionError`. El valor por defecto es tan alto que no frena nada: ponlo tú |
+| [[herramientas/openai-agents-sdk|OpenAI Agents SDK]] | `max_turns` en `Runner.run` | `MaxTurnsExceeded` |
+| [[herramientas/pydantic-ai|Pydantic AI]] | `UsageLimits(request_limit=…, total_tokens_limit=…)` | `UsageLimitExceeded` |
+
+Ninguno sustituye a la aprobación humana en código ni a la detección de repeticiones: esas las sigues escribiendo tú (o con el middleware de aprobación de cada framework, que verás en [[roadmap/100-produccion/05-humano-en-el-bucle]]).
 
 ## Errores frecuentes
 
@@ -163,6 +181,7 @@ Cuando el presupuesto se agota, a veces quieres que el modelo resuma lo que enco
 - Lanzar una excepción al agotar el presupuesto y perder todo lo que el agente encontró.
 - Dejar un `tool_use` sin `tool_result` cuando el humano rechaza la acción.
 - Poner límites tan bajos que el agente nunca termina tareas normales. Ajusta con datos de ejecuciones reales.
+- Fiarte del límite por defecto de un framework. Si tu agente no para, empieza por [[problemas/el-agente-no-para]]; si repite la misma llamada, por [[problemas/el-agente-repite-la-misma-herramienta]].
 
 ## Ejercicio
 

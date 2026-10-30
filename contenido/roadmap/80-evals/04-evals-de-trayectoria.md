@@ -2,6 +2,7 @@
 titulo: "Evals de trayectoria: cómo llegó, no solo qué dijo"
 descripcion: Registra la trayectoria de un agente y evalúa qué herramientas llamó, en qué orden, con qué argumentos y en cuántos pasos.
 creado: 2026-10-08
+actualizado: 2026-10-29
 orden: 4
 minutos: 35
 tipo: practica
@@ -74,6 +75,8 @@ def ejecutar_agente(pregunta: str, tools: list, ejecutar, system: str, max_pasos
         t.tokens += resp.usage.input_tokens + resp.usage.output_tokens
         t.stop_reason = resp.stop_reason
         mensajes.append({"role": "assistant", "content": resp.content})
+        if resp.stop_reason == "pause_turn":
+            continue                                   # herramienta del servidor: reenviar
         if resp.stop_reason != "tool_use":
             t.respuesta = "".join(b.text for b in resp.content if b.type == "text")
             return t
@@ -173,6 +176,29 @@ La última fila es a menudo la mejor. Si el agente tiene que crear una incidenci
 
 Algunas preguntas sobre el camino no se pueden escribir como regla: ¿las búsquedas tenían sentido para la pregunta?, ¿el agente reaccionó bien a un error de herramienta? Para eso puedes pasar la trayectoria resumida (nombres, argumentos y si hubo error) a un [[glosario/modelo-juez]] con una rúbrica binaria, como en [[roadmap/80-evals/03-codigo-o-modelo-juez]]. Úsalo con moderación: las reglas por código cubren la mayoría de los casos y no necesitan calibración.
 
+## Trayectorias con un framework y sin API
+
+Si tu agente está hecho con LangChain o LangGraph, la trayectoria ya está en la lista de mensajes que devuelve: cada `AIMessage` lleva sus `tool_calls` (nombre y argumentos) y cada `ToolMessage` su `status` (`"error"` si falló). Convertirla a `Trayectoria` son pocas líneas, y los mismos evaluadores sirven:
+
+```python title="trayectoria_langchain.py"
+from agente_instrumentado import Llamada, Trayectoria
+
+def desde_mensajes(mensajes: list) -> Trayectoria:
+    t = Trayectoria()
+    errores = {m.tool_call_id: m.status == "error" for m in mensajes if m.type == "tool"}
+    for m in mensajes:
+        if m.type == "ai":
+            t.pasos += 1
+            t.llamadas += [Llamada(c["name"], c["args"], errores.get(c["id"], False)) for c in m.tool_calls]
+    t.respuesta = mensajes[-1].text
+    t.stop_reason = "end_turn" if not mensajes[-1].tool_calls else "max_pasos"
+    return t
+```
+
+Con un modelo simulado que devuelve llamadas guionizadas (`GenericFakeChatModel` y `AIMessage(tool_calls=[…])`) puedes probar **tus evaluadores y tu código de herramientas** en CI sin gastar ni un token. No mide al modelo, mide que la tubería que rodea al modelo hace lo que crees. Lo tienes en [[recetas/probar-agentes-sin-api]].
+
+Un último matiz: un agente que acierta una vez de tres no es fiable. Para los casos importantes, ejecuta cada uno varias veces y exige que pase en todas; es la métrica [[glosario/pass-k|pass^k]] que verás con detalle en [[cursos/evals-para-agentes/01-que-medir]].
+
 ## Errores frecuentes
 
 - Evaluar solo la respuesta final de un agente con herramientas.
@@ -204,3 +230,4 @@ Algunas preguntas sobre el camino no se pueden escribir como regla: ¿las búsqu
 - [[roadmap/80-evals/05-regresiones-en-ci]]
 - [[cursos/evals-para-agentes/03-graders]]
 - [[blog/2026-07-15-como-leer-una-traza]]
+- [[recetas/probar-agentes-sin-api]]

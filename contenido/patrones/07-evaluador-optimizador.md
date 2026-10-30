@@ -2,6 +2,7 @@
 titulo: Evaluador-optimizador
 descripcion: Un modelo genera, otro evalúa con criterios explícitos y devuelve feedback, y el bucle se repite hasta aprobar o agotar los intentos.
 creado: 2026-08-05
+actualizado: 2026-10-29
 tags: [patrones, workflows, evals, calidad]
 aliases: [Evaluator-optimizer, Generador-crítico]
 orden: 7
@@ -114,6 +115,76 @@ El evaluador recibe también los datos de origen: así puede detectar que la fic
 
 > [!aviso] Pon siempre un tope de vueltas
 > Sin `max_vueltas`, un evaluador exigente y un generador que no sabe arreglar el fallo pueden girar indefinidamente. Decide qué pasa al agotar los intentos: entregar la mejor versión, marcarla o escalar a una persona.
+
+## Con LangGraph
+
+En LangGraph (MIT) el bucle es un ciclo: `generar → evaluar` y una arista condicional que vuelve a `generar` o termina. El tope de vueltas vive en el estado. Necesitas `pip install langgraph langchain langchain-anthropic`.
+
+```python title="evaluador_langgraph.py"
+from typing import TypedDict
+
+from langchain.chat_models import init_chat_model
+from langgraph.graph import END, START, StateGraph
+from pydantic import BaseModel
+
+MODEL = "anthropic:claude-sonnet-5-5"
+MAX_VUELTAS = 3
+RUBRICA = """1. Menciona material y medidas.
+2. No usa superlativos sin un dato que los respalde.
+3. Tono cercano y frases cortas."""
+
+
+class Veredicto(BaseModel):
+    aprobado: bool
+    feedback: str
+
+
+class Estado(TypedDict, total=False):
+    datos: str
+    ficha: str
+    feedback: str
+    aprobado: bool
+    vueltas: int
+
+
+def construir(modelo=None):
+    llm = modelo or init_chat_model(MODEL, max_tokens=1024)
+    juez = llm.with_structured_output(Veredicto, method="json_schema")
+
+    def generar(state: Estado):
+        previo = f"\n<feedback>\n{state['feedback']}\n</feedback>\nCorrige todo lo señalado." if state.get("feedback") else ""
+        r = llm.invoke(f"Escribes fichas de producto. Criterios:\n{RUBRICA}\n<datos>\n{state['datos']}\n</datos>{previo}")
+        return {"ficha": r.text, "vueltas": state.get("vueltas", 0) + 1}
+
+    def evaluar(state: Estado):
+        if len(state["ficha"].split()) > 80:                      # comprobación barata en código
+            return {"aprobado": False, "feedback": "Supera las 80 palabras. Acorta sin perder material ni medidas."}
+        v = juez.invoke(f"Evalúa la ficha contra estos criterios:\n{RUBRICA}\nAprueba solo si cumple todos.\n"
+                        f"<datos>\n{state['datos']}\n</datos>\n<ficha>\n{state['ficha']}\n</ficha>")
+        return {"aprobado": v.aprobado, "feedback": v.feedback}
+
+    def seguir(state: Estado):                                    # la arista de vuelta, con tope
+        if state["aprobado"] or state["vueltas"] >= MAX_VUELTAS:
+            return END
+        return "generar"
+
+    g = StateGraph(Estado)
+    g.add_node("generar", generar)
+    g.add_node("evaluar", evaluar)
+    g.add_edge(START, "generar")
+    g.add_edge("generar", "evaluar")
+    g.add_conditional_edges("evaluar", seguir, ["generar", END])
+    return g.compile()
+
+
+if __name__ == "__main__":
+    out = construir().invoke({"datos": "Bolso de piel, 30 × 20 cm, asa de 60 cm."})
+    print(out["ficha"], "| aprobado:", out["aprobado"], "| vueltas:", out["vueltas"])
+```
+
+El juez usa `with_structured_output(..., method="json_schema")`, así que el veredicto llega validado por Pydantic. Si quieres que una persona apruebe en lugar del juez cuando se agotan las vueltas, añade un nodo con `interrupt()` como en [[patrones/08-agente-autonomo]].
+
+**Qué esconde el framework**: el bucle y el registro de cada vuelta en el estado (con un *checkpointer*, puedes ver la historia con `get_state_history`). El criterio, la rúbrica y el tope siguen siendo tuyos: sin `MAX_VUELTAS`, el ciclo solo pararía al llegar al `recursion_limit`.
 
 ## Coste y latencia
 

@@ -1,7 +1,8 @@
 ---
 titulo: "Graders: código, modelo y humano"
-descripcion: Cuándo calificar con código, con un modelo juez o con una persona, cómo escribir rúbricas, qué sesgos tienen los jueces y cómo calibrarlos contra etiquetas humanas.
+descripcion: Cuándo calificar con código, con un modelo juez o con una persona, cómo escribir rúbricas, qué sesgos tienen los jueces y cómo validarlos contra etiquetas humanas con TPR y TNR.
 creado: 2026-10-12
+actualizado: 2026-10-29
 orden: 3
 minutos: 60
 tipo: practica
@@ -9,9 +10,9 @@ objetivos:
   - Elegir el tipo de grader adecuado para cada criterio de una tarea.
   - Implementar graders de código sobre el estado final y la trayectoria.
   - Implementar un modelo juez con rúbrica y salida estructurada, y una comparación por pares que controle el sesgo de posición.
-  - Calibrar un modelo juez midiendo su acuerdo con etiquetas humanas.
+  - Validar un modelo juez contra etiquetas humanas con TPR, TNR y kappa, y graduar evals de capacidad a regresión.
 requiere: ["[[cursos/evals-para-agentes/02-datasets-de-evaluacion]]", "[[roadmap/80-evals/03-codigo-o-modelo-juez]]"]
-relacionados: ["[[glosario/modelo-juez]]", "[[docs/evals/02-modelo-como-juez]]", "[[recetas/modelo-juez-con-rubrica]]", "[[patrones/07-evaluador-optimizador]]"]
+relacionados: ["[[glosario/modelo-juez]]", "[[docs/evals/02-modelo-como-juez]]", "[[recetas/modelo-juez-con-rubrica]]", "[[recetas/validar-un-modelo-juez]]", "[[patrones/07-evaluador-optimizador]]"]
 tags: [evals, graders, modelo-juez]
 ---
 
@@ -80,7 +81,8 @@ Para lo que no es una regla, un [[glosario/modelo-juez|modelo juez]]. Tres decis
 
 1. **Rúbrica concreta.** Criterios separados, cada uno con qué significa cumplirlo. «¿Es buena la respuesta?» produce ruido; «¿Explica al cliente el plazo del reembolso?» produce señal.
 2. **Razonamiento antes del veredicto.** Pide la justificación antes de la nota en la estructura de salida.
-3. **Escalas cortas.** Binario o de 3 niveles. Escalas de 1 a 10 dan una falsa precisión que los jueces no sostienen.
+3. **Escalas cortas.** Mejor binario: si quieres matices, usa varias comprobaciones binarias en lugar de una escala. Escalas de 1 a 10 dan una falsa precisión que los jueces no sostienen.
+4. **Una salida para «no lo sé».** Si la información no basta para decidir, el juez debe poder decirlo (`desconocido`) en lugar de adivinar. Esos casos van a revisión humana y no cuentan como aprobado ni como suspenso. Es una recomendación explícita de la guía de evals de Anthropic.
 
 ```python title="juez.py"
 import json
@@ -93,12 +95,14 @@ RUBRICA = """Evalúa la respuesta final del agente de soporte según estos crite
 - plazo: informa al cliente de cuándo recibirá el dinero.
 - tono: es cordial y no culpa al cliente.
 - sin_promesas: no promete nada que las herramientas no hayan confirmado.
-Para cada criterio, razona en una o dos frases y luego decide si se cumple."""
+Para cada criterio, razona en una o dos frases y luego decide: cumple, no_cumple o desconocido
+si la información que tienes no basta para saberlo."""
 
 def esquema_rubrica(criterios: list[str]) -> dict:
     item = {"type": "object",
-            "properties": {"razonamiento": {"type": "string"}, "cumple": {"type": "boolean"}},
-            "required": ["razonamiento", "cumple"], "additionalProperties": False}
+            "properties": {"razonamiento": {"type": "string"},
+                           "veredicto": {"type": "string", "enum": ["cumple", "no_cumple", "desconocido"]}},
+            "required": ["razonamiento", "veredicto"], "additionalProperties": False}
     return {"type": "object", "properties": {c: item for c in criterios},
             "required": criterios, "additionalProperties": False}
 
@@ -142,29 +146,43 @@ Si muchos casos salen como empate, el juez no distingue las dos versiones en ese
 
 Las personas cumplen dos papeles. El primero, **revisar una muestra** de ejecuciones con regularidad, sobre todo las que el juez marca como fallo y las de categorías nuevas. Así descubres criterios que no estaban en la rúbrica.
 
-El segundo, **calibrar al juez**. Etiqueta tú (o dos personas del equipo) 30 a 50 ejecuciones con la misma rúbrica, sin ver la nota del juez. Luego mide el acuerdo por criterio:
+El segundo, **validar al juez**. Etiqueta tú (o dos personas del equipo) 30 a 50 ejecuciones con la misma rúbrica, sin ver la nota del juez, con casos que pasan y casos que fallan en proporción parecida. Luego mide por criterio:
 
 ```python title="calibrar.py"
-def acuerdo(humano: list[bool], juez: list[bool]) -> dict:
-    n = len(humano)
-    coinciden = sum(h == j for h, j in zip(humano, juez)) / n
-    p_h, p_j = sum(humano) / n, sum(juez) / n
-    azar = p_h * p_j + (1 - p_h) * (1 - p_j)       # acuerdo esperado por azar
+def acuerdo(humano: list[bool], juez: list[str]) -> dict:
+    """humano: True si cumple. juez: 'cumple' | 'no_cumple' | 'desconocido'."""
+    pares = [(h, j == "cumple") for h, j in zip(humano, juez) if j != "desconocido"]
+    n = len(pares)
+    vp = sum(h and j for h, j in pares)              # ambos dicen que cumple
+    vn = sum(not h and not j for h, j in pares)      # ambos dicen que no
+    pos = sum(h for h, _ in pares)
+    tpr = vp / pos if pos else float("nan")          # de lo que cumple, cuánto aprueba el juez
+    tnr = vn / (n - pos) if n - pos else float("nan")  # de lo que no cumple, cuánto suspende
+    coinciden = (vp + vn) / n
+    p_h, p_j = pos / n, sum(j for _, j in pares) / n
+    azar = p_h * p_j + (1 - p_h) * (1 - p_j)         # acuerdo esperado por azar
     kappa = (coinciden - azar) / (1 - azar) if azar < 1 else 1.0
-    falsos_ok = sum(j and not h for h, j in zip(humano, juez))
-    return {"acuerdo": round(coinciden, 2), "kappa": round(kappa, 2), "juez_aprueba_y_humano_no": falsos_ok}
+    return {"tpr": round(tpr, 2), "tnr": round(tnr, 2), "acuerdo": round(coinciden, 2),
+            "kappa": round(kappa, 2), "desconocidos": len(juez) - n}
 ```
 
-El *kappa* de Cohen corrige el acuerdo que saldría por azar: si casi todo cumple, un juez que siempre dice «cumple» tiene mucho acuerdo bruto y kappa cercano a cero. Mira también **en qué dirección** se equivoca: un juez que aprueba lo que una persona suspende es más peligroso que uno demasiado estricto. Cuando el acuerdo es bajo, lee los desacuerdos: casi siempre revelan un criterio ambiguo en la rúbrica, y lo que cambias es la rúbrica, no el modelo.
+La **tasa de verdaderos positivos** (TPR) dice qué parte de lo que de verdad cumple aprueba el juez; la de **verdaderos negativos** (TNR), qué parte de lo que no cumple suspende. Míralas por separado, como recomiendan Hamel Husain y Shreya Shankar en su [*AI Evals FAQ*](https://hamel.dev/blog/posts/evals-faq/): si casi todo cumple, un juez que siempre dice «cumple» tiene mucho acuerdo bruto, TPR de 1 y TNR de 0. El *kappa* de Cohen resume lo mismo en un número que corrige el acuerdo por azar. Un juez con TNR baja, que aprueba lo que una persona suspende, es más peligroso que uno demasiado estricto. Cuando las cifras son bajas, lee los desacuerdos: casi siempre revelan un criterio ambiguo en la rúbrica, y lo que cambias es la rúbrica, no el modelo. Si ajustas la rúbrica mirando estos casos, valida después con otros distintos, o medirás tu propio ajuste. La receta [[recetas/validar-un-modelo-juez]] desarrolla el método con partición en desarrollo y prueba.
+
+Un efecto que conviene esperar: al leer salidas reales, tus propios criterios cambian (*criteria drift*, descrito por Shankar et al., 2024, [*Who Validates the Validators?*](https://arxiv.org/abs/2404.12272)). Es normal; versiona la rúbrica como versionas el dataset.
 
 > [!consejo] Mide también el acuerdo entre personas
 > Si dos personas del equipo no coinciden en un criterio, ningún juez lo hará mejor. Arregla primero la definición.
+
+## De capacidad a regresión
+
+No todas las evals cumplen la misma función. Una **eval de capacidad** mide algo que el agente aún hace mal: empieza con tasas bajas y es la colina que quieres subir. Una **eval de regresión** mide algo que ya hace bien y debe seguir pasando cerca del 100 %. Cuando una tarea de capacidad se estabiliza arriba durante varias versiones, **gradúala** a regresión: pasa al conjunto que bloquea cambios en CI (lo montas en la [[cursos/evals-para-agentes/04-evals-en-el-dia-a-dia|lección 4]]) y deja sitio en el de capacidad a tareas más difíciles. Etiqueta cada tarea con su tipo para que el informe los reporte por separado: mezclar las dos medias esconde tanto los avances como los retrocesos.
 
 ## Errores frecuentes
 
 - **Usar un juez para lo que el código mide mejor** (formato, si se llamó a una herramienta).
 - **Rúbricas con un solo criterio global.** Mezclan cosas distintas y no dicen qué falló.
-- **No calibrar.** Un juez sin calibrar es una opinión con forma de número.
+- **No validar.** Un juez sin TPR y TNR medidos es una opinión con forma de número.
+- **Obligar al juez a decidir siempre.** Sin la opción `desconocido`, adivina en los casos sin información.
 - **Cambiar el modelo juez sin recalibrar.** Las notas de jueces distintos no son comparables.
 
 ## Ejercicio
@@ -172,7 +190,7 @@ El *kappa* de Cohen corrige el acuerdo que saldría por azar: si casi todo cumpl
 > [!ejercicio] Tres graders y una calibración
 > Para el dataset de la lección 2, implementa los graders de código de todas las comprobaciones usadas, un juez con una rúbrica de tres criterios y etiqueta a mano 30 ejecuciones con esa rúbrica.
 >
-> Está bien si cada tarea tiene un veredicto de código, si el juez produce JSON válido en todas las ejecuciones y si tienes acuerdo y kappa por criterio, con una nota sobre el criterio de menor acuerdo y el cambio de rúbrica que propones.
+> Está bien si cada tarea tiene un veredicto de código, si el juez produce JSON válido en todas las ejecuciones y si tienes TPR, TNR y kappa por criterio, con una nota sobre el criterio de menor acuerdo y el cambio de rúbrica que propones.
 
 > [!ejercicio]- Pistas
 > Si el kappa de un criterio es bajo, ordena los desacuerdos por tipo. Es frecuente que el juez y la persona entiendan cosas distintas por la misma palabra («tono cordial»); añade a la rúbrica un ejemplo de lo que cumple y otro de lo que no.
@@ -183,10 +201,12 @@ El *kappa* de Cohen corrige el acuerdo que saldría por azar: si casi todo cumpl
 - Los graders de código comprueban estado final y restricciones de trayectoria.
 - Un juez fiable tiene rúbrica concreta, razona antes de decidir y usa escalas cortas.
 - En comparaciones por pares, intercambia el orden para controlar el sesgo de posición.
-- Calibra al juez contra etiquetas humanas con acuerdo y kappa, y corrige la rúbrica.
+- Valida al juez contra etiquetas humanas con TPR, TNR y kappa, dale la opción `desconocido` y corrige la rúbrica.
+- Gradúa las evals de capacidad que se estabilizan a evals de regresión.
 
 ## Para seguir
 
 - [[cursos/evals-para-agentes/04-evals-en-el-dia-a-dia]]
+- [[recetas/validar-un-modelo-juez]]
 - [[recetas/modelo-juez-con-rubrica]]
 - [[docs/evals/02-modelo-como-juez]]

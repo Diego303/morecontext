@@ -2,6 +2,7 @@
 titulo: MCP se asienta como forma estándar de conectar herramientas
 descripcion: El Model Context Protocol se ha convertido en la manera habitual de exponer herramientas y datos a aplicaciones de IA sin integraciones a medida.
 creado: 2026-09-08
+actualizado: 2026-10-29
 categoria: herramientas
 tags: [mcp, herramientas, integraciones]
 fuente:
@@ -26,3 +27,6 @@ relacionados: ["[[glosario/mcp]]", "[[docs/herramientas/02-mcp]]", "[[cursos/mcp
 2. Empieza por uno de solo lectura con la receta [[recetas/servidor-mcp-de-solo-lectura]].
 3. Antes de conectar servidores ajenos, revisa permisos y origen: [[cursos/mcp-de-cero-a-servidor/04-seguridad-y-despliegue]].
 4. Diseña cada herramienta con el criterio de [[disciplinas/diseno-de-herramientas]].
+
+> [!nota] Actualización (oct. 2026)
+> Esta entrada no recogía la revisión `2026-07-28` de la especificación, publicada semanas antes: MCP pasa a ser **sin estado**. Ya no hay saludo `initialize` ni sesiones de protocolo, cada petición lleva su versión y capacidades en `_meta`, el servidor anuncia lo que ofrece con `server/discover`, y Roots, Sampling, Logging y HTTP+SSE quedan deprecados. Los SDK actuales son `mcp` 2.x en Python y `@modelcontextprotocol/server` y `/client` en TypeScript. El proyecto está además en la Agentic AI Foundation (Linux Foundation), junto a A2A, AGENTS.md y Agent Skills. Detalle en [[docs/estandares/01-mcp-2026-07-28]] y en [[radar/2026-10-25-mcp-sin-estado]].

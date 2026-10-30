@@ -2,6 +2,7 @@
 titulo: Checklist antes de producción
 descripcion: Lista accionable para revisar un prompt o un agente antes de desplegarlo, desde las instrucciones y el contexto hasta evals, costes, seguridad y trazas.
 creado: 2026-10-16
+actualizado: 2026-10-29
 orden: 9
 tags: [produccion, checklist, prompting, modelos]
 relacionados: ["[[modelos/08-antipatrones]]", "[[roadmap/100-produccion/06-despliegue]]", "[[docs/produccion/index]]", "[[docs/seguridad/index]]"]
@@ -44,10 +45,12 @@ Referencia: [[modelos/03-formato-y-salidas-estructuradas]].
 
 ## 4. Llamada a la API
 
-- [ ] El nombre del modelo está en una constante o en configuración, no repartido por el código.
-- [ ] `max_tokens` deja margen, incluido el razonamiento si está activado.
-- [ ] Se maneja cada `stop_reason`: `end_turn`, `tool_use`, `max_tokens`, `stop_sequence`, `pause_turn` y `refusal`. Uno desconocido lanza error.
-- [ ] Si hay herramientas: un `tool_result` por cada `tool_use`, errores devueltos con `is_error`.
+- [ ] El nombre del modelo está en una constante o en configuración, no repartido por el código, y es un ID concreto (`claude-sonnet-5-5`), revisado contra el calendario de retiradas.
+- [ ] El código usa el SDK y la versión de API actuales; no envía `temperature`, `top_p`, `top_k` ni `budget_tokens` a Claude ([[docs/fundamentos/05-versiones-de-api-y-sdks]]).
+- [ ] `max_tokens` deja margen, incluido el razonamiento, que en los modelos actuales está activo por defecto.
+- [ ] Se maneja cada `stop_reason`: `end_turn`, `tool_use`, `max_tokens`, `stop_sequence`, `pause_turn`, `refusal` y `model_context_window_exceeded`. Uno desconocido lanza error ([[docs/fundamentos/06-motivos-de-parada-y-rechazos]]).
+- [ ] Si hay herramientas: un `tool_result` por cada `tool_use`, errores devueltos con `is_error`, y sin `tool_choice` forzado (400 en Opus 5.5, Sonnet 5.5 y Fable 5.1).
+- [ ] Si usas un framework: `max_tokens` explícito, límite de pasos explícito (`recursion_limit` o un *middleware* de límite) y los errores de herramienta vuelven al modelo en lugar de romper el agente ([[docs/frameworks/04-langchain]]).
 - [ ] Hay reintentos con *backoff* para 429, 529 y errores 5xx, y no se reintentan los 4xx.
 - [ ] `effort` y razonamiento están ajustados a la dificultad, no al máximo por defecto.
 
@@ -65,7 +68,7 @@ Referencias: [[docs/evals/01-disenar-evals]], [[modelos/05-elegir-modelo-por-tar
 
 ## 6. Agentes
 
-- [ ] Hay límite de pasos, de tokens por tarea y de tiempo.
+- [ ] Hay límite de pasos, de tokens por tarea y de tiempo ([[problemas/el-agente-no-para]]).
 - [ ] Al saltar un límite, el usuario recibe lo conseguido y sabe que quedó a medias.
 - [ ] Las acciones con impacto pasan por aprobación humana con los argumentos exactos.
 - [ ] Se ha valorado si un workflow fijo bastaba.
@@ -87,7 +90,7 @@ Referencias: [[docs/seguridad/01-prompt-injection]], [[docs/seguridad/02-permiso
 - [ ] Sabes cuánto cuesta una tarea típica y una de las caras.
 - [ ] El *prompt caching* está activo donde hay prefijos repetidos y lo confirmas en `usage`.
 - [ ] Las interfaces con personas usan streaming.
-- [ ] Cada llamada y cada herramienta quedan registradas con `trace_id`, `usage`, `stop_reason` y latencia.
+- [ ] Cada llamada y cada herramienta quedan registradas con `trace_id`, `usage`, `stop_reason` y latencia, idealmente con las convenciones GenAI de OpenTelemetry ([[docs/produccion/04-opentelemetry-genai]]).
 - [ ] Los logs respetan la política de datos personales.
 - [ ] Hay alertas para picos de errores, de coste y de latencia.
 
@@ -115,3 +118,4 @@ Para un prototipo interno o un script que usas tú solo, basta con los puntos 3 
 - [[roadmap/100-produccion/06-despliegue]]: el despliegue paso a paso.
 - [[modelos/08-antipatrones]]: los errores que esta lista intenta atrapar.
 - [[disciplinas/cambios-pequenos-y-revisables]]: cómo revisar cambios de prompt.
+- [[plantillas/index]]: plantillas de prompts, specs y checklists listas para copiar.

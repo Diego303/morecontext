@@ -2,6 +2,7 @@
 titulo: UX de agentes
 descripcion: Diseñar la experiencia de un producto con agentes para que el usuario sepa qué hace, cuánto falta, qué va a pasar antes de que pase y cómo deshacerlo.
 creado: 2026-09-08
+actualizado: 2026-10-29
 orden: 6
 tipo: disciplina
 tags: [ux, producto, agentes]
@@ -40,13 +41,13 @@ La fiabilidad percibida depende tanto de la interfaz como del modelo. Un agente 
 
 - Empieza a mostrar algo en menos de un segundo. Con [[glosario/streaming|streaming]] el texto aparece mientras se genera ([[recetas/streaming-de-respuestas]]).
 - En tareas largas, enseña un plan con casillas que se van marcando. Si el agente replanifica, que se vea.
-- Permite parar en cualquier momento, y que parar sea seguro: el agente termina el paso en curso y deja el estado consistente.
+- Permite parar en cualquier momento, y que parar sea seguro: el agente termina el paso en curso y deja el estado consistente. Si el estado vive en un *[[glosario/checkpointer|checkpointer]]*, parar también puede significar reanudar mañana donde lo dejó ([[recetas/reanudar-un-agente-tras-un-reinicio]]).
 
 ### Confirmaciones
 
 - Pide confirmación antes de lo irreversible o lo que afecta a terceros: pagar, enviar, borrar, publicar. Ver [[disciplinas/humano-en-el-bucle]].
 - Muestra **exactamente** lo que va a pasar: destinatario, importe, texto del correo. «¿Confirmas la acción?» no informa de nada.
-- No pidas confirmación para todo. Si cada lectura requiere un clic, el usuario aprueba sin mirar y la confirmación deja de proteger.
+- No pidas confirmación para todo. Si cada lectura requiere un clic, el usuario aprueba sin mirar y la confirmación deja de proteger. Anthropic midió que sus usuarios aprobaban en torno al 93 % de las peticiones de permiso de Claude Code y respondió con un *sandbox* que reduce cuántas hacen falta ([*How we contain Claude across products*](https://www.anthropic.com/engineering/how-we-contain-claude), mayo de 2026): menos preguntas, mejor elegidas.
 
 ### Deshacer
 
@@ -57,7 +58,7 @@ La fiabilidad percibida depende tanto de la interfaz como del modelo. Un agente 
 ### Expectativas
 
 - Di qué sabe hacer el agente y qué no, con ejemplos, en el primer contacto.
-- Cuando no sabe o no puede, que lo diga y proponga una salida («No tengo acceso a facturas anteriores a 2024. ¿Te paso con contabilidad?»).
+- Cuando no sabe o no puede, que lo diga y proponga una salida («No tengo acceso a facturas anteriores a 2024. ¿Te paso con contabilidad?»). Lo mismo cuando el modelo rechaza una petición (`stop_reason: "refusal"`): enséñalo como un final explicado, no como un error genérico ([[recetas/fallback-ante-rechazos]]).
 - No disfraces la incertidumbre. Si una extracción tiene campos dudosos, márcalos para revisión en lugar de rellenarlos con confianza.
 
 ```mermaid
@@ -95,3 +96,4 @@ flowchart LR
 - [[sistemas/soporte-con-aprobacion-humana]]
 - [[docs/agentes/03-humano-en-el-bucle]]
 - [[docs/produccion/03-latencia]]
+- [[sistemas/agente-de-voz]]: la UX cuando no hay pantalla.

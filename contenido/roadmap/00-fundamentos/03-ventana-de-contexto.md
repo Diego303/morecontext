@@ -2,6 +2,7 @@
 titulo: "La ventana de contexto y qué cabe en ella"
 descripcion: "Qué ocupa la ventana de contexto en cada petición, por qué la API no recuerda nada entre llamadas y qué hacer cuando una conversación deja de caber."
 creado: 2026-09-04
+actualizado: 2026-10-29
 orden: 3
 minutos: 30
 tipo: teoria
@@ -20,7 +21,13 @@ Al terminar esta lección entenderás por qué el modelo «olvida» lo que le di
 
 La [[glosario/ventana-de-contexto|ventana de contexto]] es la cantidad máxima de [[glosario/token|tokens]] que el modelo puede manejar en una sola petición, sumando lo que le envías y lo que genera. Todo lo que el modelo «sabe» sobre tu tarea en ese momento tiene que estar dentro de esa ventana. Lo que no está, no existe para él.
 
-El tamaño exacto depende del modelo y cambia entre versiones, así que consúltalo en la [documentación oficial](https://platform.claude.com/docs) en vez de memorizarlo. Lo que no cambia es el principio: es finita y cada token que pones dentro tiene un coste.
+El tamaño depende del modelo y cambia entre versiones. En octubre de 2026, los modelos actuales de Claude tienen una ventana de un millón de tokens y generan como mucho 128 000 por respuesta; los modelos abiertos que ejecutas en local suelen trabajar con mucho menos, porque la ventana la limita también tu memoria. Comprueba la cifra en la [documentación oficial](https://platform.claude.com/docs) del modelo que uses. Lo que no cambia es el principio: es finita y cada token que pones dentro tiene un coste.
+
+### Contexto no es memoria
+
+Conviene separar dos ideas desde ya. El **contexto** es la información que el modelo tiene delante en esta petición. La **memoria** es cualquier mecanismo que guarda información para recuperarla más tarde, y ese mecanismo vive fuera del modelo.
+
+Si le dices «mi color favorito es el verde» y luego preguntas «¿cuál es mi color favorito?», contesta «verde» porque la frase sigue en el contexto. No ha aprendido nada: sus [[glosario/parametros|parámetros]] no cambian por usarlo. En cuanto la frase sale del contexto, el dato desaparece para él. La memoria entre sesiones la construirás tú en [[roadmap/30-contexto-y-rag/06-memoria-entre-sesiones]].
 
 ## Qué ocupa la ventana
 
@@ -40,7 +47,13 @@ flowchart TB
 - **Mensajes**: todos los turnos de la conversación que envías, incluidos documentos pegados, resultados de herramientas e imágenes.
 - **Salida**: lo que el modelo genera. Reservas espacio para ella con [[glosario/max-tokens|max_tokens]].
 
-Si la entrada más la salida reservada superan la ventana, la API rechaza la petición con un error. Si la entrada cabe pero la respuesta llega a `max_tokens`, se corta y la respuesta trae `stop_reason: "max_tokens"`.
+Qué pasa cuando no cabe depende de qué se pase:
+
+- Si **la entrada sola** supera la ventana, la API rechaza la petición con un error.
+- Si la entrada cabe pero **entrada más salida** llegan al límite de la ventana, la generación se corta y la respuesta trae `stop_reason: "model_context_window_exceeded"`.
+- Si la respuesta llega a `max_tokens`, se corta con `stop_reason: "max_tokens"`.
+
+En los dos últimos casos recibes una respuesta incompleta con código 200: compruébalo siempre en tu código. Los motivos de parada están todos en [[docs/fundamentos/06-motivos-de-parada-y-rechazos]].
 
 ## La API no tiene memoria
 
@@ -96,7 +109,16 @@ while (true) {
 rl.close();
 ```
 
-Si lo ejecutas, verás que `input_tokens` sube con cada turno. Prueba a vaciar `historial` antes de cada llamada: el modelo dejará de saber cómo te llamas aunque se lo hayas dicho hace un mensaje.
+Si lo ejecutas, verás que `input_tokens` sube con cada turno. Lo que viaja en la tercera llamada es esto:
+
+```text
+# salida de ejemplo
+[user 1, assistant 1, user 2, assistant 2, user 3]   ← todo, cada vez, y todo cuenta como entrada
+```
+
+Prueba a vaciar `historial` antes de cada llamada: el modelo dejará de saber cómo te llamas aunque se lo hayas dicho hace un mensaje.
+
+Lo mismo le pasa a una aplicación de chat cuando la conversación es enorme. Si en el primer mensaje dijiste «mi proyecto usa Python» y quinientos mensajes después preguntas «¿qué lenguaje usa mi proyecto?», la respuesta depende de si ese primer mensaje sigue dentro de lo que la aplicación envía. Si lo ha recortado o resumido sin conservar el dato, el modelo no tiene forma de saberlo.
 
 Los mensajes alternan `user` y `assistant`, y el primero es de `user`. Los detalles de roles y bloques están en [[docs/fundamentos/03-api-de-mensajes]].
 
@@ -106,7 +128,7 @@ Que algo quepa no significa que convenga meterlo. Cada token extra tiene tres co
 
 1. **Dinero**: pagas cada token de entrada en cada llamada.
 2. **Latencia**: el modelo tarda más en procesar entradas largas antes de empezar a responder.
-3. **Atención**: con mucho texto irrelevante, el modelo puede pasar por alto lo importante. El estudio [Lost in the Middle](https://arxiv.org/abs/2307.03172) (Liu et al., 2023) observó que los modelos de entonces aprovechaban peor la información situada en mitad de contextos largos que la del principio o el final.
+3. **Atención**: con mucho texto irrelevante, el modelo puede pasar por alto lo importante. El estudio [Lost in the Middle](https://arxiv.org/abs/2307.03172) (Liu et al., 2023) observó que los modelos de entonces aprovechaban peor la información situada en mitad de contextos largos que la del principio o el final, y la medición de [Chroma sobre *context rot*](https://www.trychroma.com/research/context-rot) (2025) vio que el rendimiento baja al crecer la entrada aunque la tarea no cambie. Una ventana de un millón de tokens no garantiza respuestas mejores: depende de qué metas y de cómo lo ordenes.
 
 Por eso conviene cambiar la pregunta «¿cuánto cabe?» por «¿qué necesita el modelo para esta tarea concreta?». A esa forma de pensar se le llama [[disciplinas/context-engineering|context engineering]], y tiene curso propio en [[cursos/context-engineering/index]].
 
@@ -131,7 +153,7 @@ Al recortar, respeta la estructura: la lista debe seguir empezando por un mensaj
 
 - Creer que el modelo recuerda la conversación y enviar solo el último mensaje.
 - Llenar el contexto «por si acaso» con documentos enteros cuando bastaba un fragmento.
-- Olvidar que `max_tokens` también ocupa ventana y fijar un valor que no cabe junto a una entrada larga.
+- Olvidar que la salida también ocupa ventana y no comprobar `stop_reason` cuando la entrada es muy larga.
 - Recortar el historial por el principio y dejar un mensaje de `assistant` como primero de la lista.
 
 ## Ejercicio
@@ -157,3 +179,4 @@ Al recortar, respeta la estructura: la lista debe seguir empezando por un mensaj
 - [[roadmap/00-fundamentos/04-primera-llamada-api]]: la llamada paso a paso.
 - [[docs/contexto/01-ventana-de-contexto]] como referencia.
 - [[modelos/02-ingenieria-de-contexto]]: qué meter, en qué orden y con qué etiquetas.
+- [[glosario/context-rot]]: por qué el rendimiento cae con contextos muy largos aunque quepan.

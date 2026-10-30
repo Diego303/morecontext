@@ -2,6 +2,7 @@
 titulo: Similitud coseno
 descripcion: Medida de lo parecidos que son dos vectores según el ángulo entre ellos; la más usada para comparar embeddings.
 creado: 2026-08-03
+actualizado: 2026-10-29
 categoria: contexto
 ingles: cosine similarity
 aliases: [cosine similarity, similitud del coseno, distancia coseno]
@@ -20,7 +21,7 @@ def coseno(a: list[float], b: list[float]) -> float:
     return punto / (math.sqrt(sum(x * x for x in a)) * math.sqrt(sum(y * y for y in b)))
 ```
 
-Si los vectores están normalizados a longitud 1, la similitud coseno coincide con el producto escalar, que es más barato de calcular; muchos proveedores ya devuelven embeddings normalizados. Los valores absolutos dependen del modelo de embeddings: un 0,8 no significa lo mismo en todos. No fijes umbrales a ciegas, ajústalos con tus datos.
+Si los vectores están normalizados a longitud 1, la similitud coseno coincide con el producto escalar, que es más barato de calcular; muchos proveedores ya devuelven embeddings normalizados. Los valores absolutos dependen del modelo de embeddings: un 0,8 no significa lo mismo en todos. No fijes umbrales a ciegas, ajústalos con tus datos. En una base vectorial no lo calculas tú: en pgvector, por ejemplo, el operador `<=>` ordena por distancia coseno, y un índice [[glosario/hnsw|HNSW]] evita compararlo con todos los vectores.
 
 ## No confundir con
 
@@ -31,3 +32,4 @@ Si los vectores están normalizados a longitud 1, la similitud coseno coincide c
 - [[glosario/embeddings]]
 - [[glosario/vector-store]]
 - [[roadmap/30-contexto-y-rag/01-embeddings]]
+- [[cursos/rag-a-fondo/04-bases-vectoriales-por-dentro]]

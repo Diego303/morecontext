@@ -2,12 +2,13 @@
 titulo: "Embeddings: texto convertido en vectores"
 descripcion: Qué es un embedding, cómo se comparan dos vectores con similitud coseno y cómo montar una búsqueda semántica mínima sin atarte a un proveedor.
 creado: 2026-08-19
+actualizado: 2026-10-29
 orden: 1
 minutos: 40
 tipo: practica
 objetivos:
   - Explicar qué representa un embedding y por qué textos parecidos dan vectores cercanos.
-  - Implementar la similitud coseno en Python y en TypeScript.
+  - Implementar la similitud coseno en Python y en TypeScript, y elegir entre coseno, producto escalar y distancia euclídea.
   - Construir una búsqueda semántica top-k sobre una lista de textos con una función embed() abstracta.
   - Identificar consultas en las que la búsqueda por vectores falla.
 requiere: ["[[roadmap/00-fundamentos/04-primera-llamada-api]]"]
@@ -21,7 +22,13 @@ Al terminar esta lección sabrás convertir textos en vectores, compararlos y de
 
 Un [[glosario/embeddings|embedding]] es una lista de números (un vector) que representa el significado de un texto. Lo produce un modelo entrenado para que textos con significado parecido den vectores que apuntan en direcciones parecidas. «¿Cómo cambio mi contraseña?» y «Quiero restablecer la clave de acceso» no comparten casi palabras, pero sus vectores quedan cerca.
 
-Los vectores tienen cientos o miles de dimensiones. No interpretas cada número por separado: solo te interesa **qué cerca están dos vectores entre sí**. Esa cercanía se mide casi siempre con la [[glosario/similitud-coseno|similitud coseno]].
+### Vector y espacio vectorial
+
+Un vector es solo una lista ordenada de números, como `[0.21, -0.18, 0.44, 0.08]`. Si tiene 1024 números, se dice que tiene 1024 dimensiones, y cada texto se convierte en un punto de un espacio de 1024 dimensiones. Imagina un plano con solo dos: «cómo pedir vacaciones» y «cómo solicitar días libres» quedan cerca, y «cómo instalar Linux» queda lejos. Con miles de dimensiones pasa lo mismo, aunque no lo puedas dibujar.
+
+Los vectores de verdad tienen cientos o miles de dimensiones, y **ninguna significa nada por sí sola**: no hay una dimensión «vacaciones» ni otra «trabajo». El significado está repartido entre todas, aprendido durante el entrenamiento del modelo. Por eso no interpretas cada número por separado: solo te interesa **qué cerca están dos vectores entre sí**. Esa cercanía se mide casi siempre con la [[glosario/similitud-coseno|similitud coseno]].
+
+Un detalle que evita confusiones: el modelo de *embeddings* es un modelo distinto del [[glosario/llm|LLM]] que responde. El primero convierte texto en vectores y no escribe nada; el segundo recibe los fragmentos encontrados y redacta la respuesta. En un RAG trabajan los dos.
 
 El flujo de una búsqueda semántica tiene dos fases:
 
@@ -36,20 +43,42 @@ La indexación se hace una vez (o cuando cambian los documentos). La consulta se
 
 ## La función embed()
 
-Anthropic no ofrece un modelo de embeddings propio, y hay muchos proveedores (comerciales y de código abierto). Para que tu código no dependa de uno, escóndelo detrás de una función:
+Anthropic no ofrece un modelo de embeddings propio, y hay muchos proveedores (comerciales y de pesos abiertos). Para que tu código no dependa de uno, escóndelo detrás de una función. La pestaña «Ollama» la implementa con un modelo abierto que se ejecuta en tu máquina, sin cuenta ni coste por llamada:
 
-```python title="embed.py"
+```python tab="Python" title="embed.py"
 def embed(textos: list[str]) -> list[list[float]]:
     """Devuelve un vector por cada texto, en el mismo orden."""
     # usa el proveedor de embeddings que prefieras
     raise NotImplementedError
 ```
 
+```python tab="Ollama" title="embed.py"
+# ollama pull qwen3-embedding:0.6b   ·   pip install ollama
+import ollama
+
+EMBED_MODEL = "qwen3-embedding:0.6b"   # modelo abierto de embeddings; guarda este nombre junto al índice
+
+def embed(textos: list[str]) -> list[list[float]]:
+    """Devuelve un vector por cada texto, en el mismo orden."""
+    return ollama.embed(model=EMBED_MODEL, input=textos).embeddings  # admite lotes
+```
+
+Modelos de *embeddings* abiertos que puedes descargar con [[herramientas/ollama|Ollama]] en octubre de 2026 (comprueba la licencia en la ficha de cada modelo antes de usarlo en un producto):
+
+| Modelo | Tamaño | Notas |
+|---|---|---|
+| `qwen3-embedding` | 0.6B, 4B y 8B | Multilingüe (más de 100 idiomas), contexto largo y dimensión de salida configurable. |
+| `bge-m3` (BAAI) | 567M | Multilingüe, hasta 8192 tokens; genera también vectores *sparse* y multivector. |
+| `embeddinggemma` (Google) | ~300M | Pequeño, pensado para máquinas modestas. |
+| `nomic-embed-text` | 137M | Ligero, sobre todo para inglés. |
+
+Para elegir con datos, el ranking público de referencia es [MTEB](https://huggingface.co/spaces/mteb/leaderboard): filtra por tu idioma y por tareas de recuperación, no por la media global, y confirma luego con tus propias preguntas. Tienes más modelos, y cómo servirlos, en [[docs/modelos-abiertos/04-embeddings-y-rerankers]].
+
 Tres reglas que conviene respetar sea cual sea el proveedor:
 
 - **Usa el mismo modelo para documentos y consultas.** Vectores de modelos distintos no son comparables, aunque tengan la misma dimensión.
 - **Envía por lotes.** Vectorizar textos de uno en uno es lento y suele costar más por las llamadas de red. La mayoría de proveedores aceptan listas.
-- **Guarda qué modelo generó cada índice.** Si cambias de modelo, tienes que volver a vectorizar todo. Algunos proveedores además piden indicar si el texto es una consulta o un documento: consulta su documentación.
+- **Guarda qué modelo generó cada índice.** Si cambias de modelo, tienes que volver a vectorizar todo. Algunos modelos (`qwen3-embedding`, por ejemplo) rinden más si indicas si el texto es una consulta o un documento, con un prefijo o una instrucción: consulta la ficha del modelo.
 
 ## Similitud coseno
 
@@ -88,6 +117,37 @@ export function coseno(a: number[], b: number[]): number {
 ```
 
 Un truco habitual: **normaliza los vectores al guardarlos** (divide cada uno por su longitud). Con vectores de longitud 1, el coseno es simplemente el producto escalar, que es más rápido. Muchos proveedores ya devuelven vectores normalizados; compruébalo calculando la norma de uno.
+
+### Coseno, producto escalar o distancia euclídea
+
+Las bases vectoriales te dejan elegir entre tres medidas. Este ejemplo las compara con vectores de dos dimensiones:
+
+```python title="metricas.py"
+import numpy as np
+
+a = np.array([1.0, 0.0])
+b = np.array([0.8, 0.6])
+c = np.array([4.0, 6.0])
+
+def coseno(x, y): return float(x @ y / (np.linalg.norm(x) * np.linalg.norm(y)))
+def producto(x, y): return float(x @ y)
+def euclidea(x, y): return float(np.linalg.norm(x - y))
+
+print("coseno(a, b)   =", round(coseno(a, b), 3))    # 0.8: el ángulo
+print("producto(a, b) =", round(producto(a, b), 3))  # 0.8: igual, porque a y b miden 1
+print("producto(a, c) =", round(producto(a, c), 3))  # 4.0: c es largo y «gana» sin parecerse más
+print("euclídea(a, c) =", round(euclidea(a, c), 3))  # 6.708: lejos en distancia
+
+# con vectores normalizados, las tres métricas ordenan igual: |x - y|² = 2 - 2·coseno
+u = lambda v: v / np.linalg.norm(v)
+print(round(euclidea(u(a), u(c)) ** 2, 3), round(2 - 2 * coseno(a, c), 3))
+```
+
+- **Coseno**: mira solo el ángulo. Dos textos con el mismo tema puntúan alto aunque uno sea más largo. Va de −1 a 1; más es más parecido.
+- **Producto escalar**: mezcla ángulo y longitud. Con vectores normalizados es idéntico al coseno; sin normalizar, un vector largo puede ganar sin parecerse más (el caso de `c`).
+- **Distancia euclídea**: la distancia en línea recta entre los puntos; menos es más parecido. Con vectores normalizados ordena igual que el coseno (la última línea lo comprueba).
+
+La regla práctica: **usa la métrica que recomienda la ficha del modelo de *embeddings*** y configura el índice con ella. Si los vectores están normalizados, las tres te darán el mismo orden y el producto escalar es la más barata. Lo que no debes hacer es elegirla al azar con vectores sin normalizar.
 
 ## Una búsqueda semántica mínima
 
@@ -128,7 +188,7 @@ for puntos, texto in indice.buscar("no me acuerdo de la clave para entrar"):
 
 Fíjate en dos cosas. Primero, la búsqueda acierta aunque la consulta no repita las palabras del texto. Segundo, **los valores absolutos dependen del modelo**: con uno, 0,7 es muy alto; con otro, todo cae entre 0,75 y 0,9. No fijes umbrales copiados de otro sitio; míralos con tus datos.
 
-Cuando pases de decenas de miles de vectores, o necesites filtrar por metadatos, usarás un [[glosario/vector-store|vector store]]: una base de datos que guarda vectores y busca vecinos cercanos de forma aproximada y rápida. La idea es la misma.
+Cuando pases de decenas de miles de vectores, o necesites filtrar por metadatos, usarás un [[glosario/vector-store|vector store]]: una base de datos que guarda vectores y busca vecinos cercanos de forma aproximada ([[glosario/ann|ANN]]) y rápida, como [[herramientas/pgvector|pgvector]] o [[herramientas/qdrant|Qdrant]]. La idea es la misma.
 
 ## Dónde fallan los embeddings
 
@@ -172,3 +232,4 @@ Los embeddings capturan el tema general. Eso los hace buenos para paráfrasis y 
 - [[glosario/similitud-coseno]]
 - [[docs/contexto/03-rag]]
 - [[cursos/rag-a-fondo/01-anatomia-de-un-rag]]
+- [[cursos/rag-a-fondo/04-bases-vectoriales-por-dentro]]: cómo buscan vecinos cercanos las bases vectoriales sin comparar contra todo.

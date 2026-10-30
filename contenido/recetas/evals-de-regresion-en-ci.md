@@ -2,6 +2,7 @@
 titulo: Evals de regresión en CI
 descripcion: Ejecuta tus evals en cada pull request con GitHub Actions, publica el resumen en el job y bloquea el merge si el acierto baja del umbral.
 creado: 2026-09-10
+actualizado: 2026-10-29
 nivel: intermedio
 minutos: 40
 tema: evals
@@ -19,7 +20,7 @@ Esta receta protege el clasificador de tickets de [[recetas/clasificar-y-enrutar
 ## Ingredientes
 
 - Un repositorio en GitHub con tu función (aquí, `clasificar.py` en la raíz).
-- `requirements.txt` con al menos `anthropic`.
+- `requirements.txt` con al menos `anthropic>=2`.
 - Un secreto `ANTHROPIC_API_KEY` en *Settings → Secrets and variables → Actions*.
 - Un [[glosario/conjunto-de-evaluacion|conjunto de evaluación]], aunque sea pequeño. Empieza con 20 casos reales.
 
@@ -180,6 +181,8 @@ jobs:
 - **Repeticiones para casos inestables.** `--repeticiones 3` ejecuta cada caso tres veces y mide la tasa de acierto. Más fiable, más caro.
 - **Grader con modelo.** Para salidas abiertas, sustituye la comparación exacta por un [[glosario/modelo-juez|modelo juez]] con rúbrica ([[recetas/modelo-juez-con-rubrica]]).
 - **Suite rápida y suite completa.** Una suite corta en cada PR y la completa cada noche con `on: schedule`.
+- **Con promptfoo.** Si prefieres declarar los casos en YAML y comparar varios prompts o modelos (también locales) sin escribir el ejecutor, [[recetas/evals-con-promptfoo]] hace lo mismo con una herramienta MIT que se integra en CI.
+- **Tests sin API.** Las evals miden el modelo; la lógica de tu bucle (qué hace con un `max_tokens`, un error de herramienta o un `refusal`) se prueba mejor con un modelo simulado, gratis y determinista, en cada commit ([[recetas/probar-agentes-sin-api]]).
 - **Coste.** Activa [[glosario/prompt-caching|prompt caching]] en el prompt de sistema: en una suite, todas las llamadas comparten prefijo ([[recetas/recortar-costes-con-prompt-caching]]).
 
 ## Errores típicos
@@ -188,5 +191,6 @@ jobs:
 - **Umbral del 100 %.** Con salidas no deterministas, algún caso fallará de vez en cuando y el equipo aprenderá a ignorar el job rojo. Pon un umbral realista y sube cuando la suite sea estable.
 - **Un caso que falla por error de red cuenta igual que un fallo real.** El SDK ya reintenta errores transitorios ([[recetas/reintentos-y-limites-de-tasa]]); si aun así falla, aparece con su `error` en el informe para distinguirlo.
 - **Demasiada concurrencia.** Con 50 hilos chocarás con el límite de tasa. Empieza con 4.
+- **No fijar lo que cambia el comportamiento.** En la API de Claude ya no hay `temperature` que fijar (se eliminó en la versión `2026-10-21`). Lo que tienes que fijar y versionar con el prompt es el ID del modelo, el esfuerzo (`output_config.effort`) y el esquema de salida. Si cambias cualquiera, la nota de la rama principal deja de ser comparable.
 - **Casos que nadie actualiza.** Cada bug de producción debe acabar como caso nuevo en `casos.jsonl`.
 - **Mirar solo el número global.** Revisa la tabla por etiqueta: una regresión en `seguridad` importa más que una en `envios`.

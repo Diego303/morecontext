@@ -2,6 +2,7 @@
 titulo: Asistente sobre tu base de datos con MCP
 descripcion: Arquitectura de un servidor MCP de solo lectura sobre una base de datos que permite hacer preguntas en lenguaje natural con límites de filas, tiempo y tablas visibles.
 creado: 2026-10-07
+actualizado: 2026-10-29
 tags: [sistemas, mcp, sql, datos, seguridad]
 orden: 6
 complejidad: 2
@@ -9,14 +10,14 @@ tiempo: "2–3 días"
 stack: [Python, SDK de MCP (MCPServer), SQLite o PostgreSQL, cliente compatible con MCP]
 componentes: [Cliente MCP, Servidor MCP de datos, Capa de permisos de la base de datos, Validador de consultas, Límites de ejecución, Registro de consultas]
 patrones: ["[[patrones/02-llamada-aumentada]]", "[[patrones/08-agente-autonomo]]"]
-relacionados: ["[[glosario/mcp]]", "[[glosario/servidor-mcp]]", "[[recetas/servidor-mcp-de-solo-lectura]]", "[[cursos/mcp-de-cero-a-servidor/index]]", "[[docs/herramientas/02-mcp]]"]
+relacionados: ["[[glosario/mcp]]", "[[glosario/servidor-mcp]]", "[[recetas/servidor-mcp-de-solo-lectura]]", "[[cursos/mcp-de-cero-a-servidor/index]]", "[[docs/herramientas/02-mcp]]", "[[docs/estandares/01-mcp-2026-07-28]]"]
 ---
 
 ## Qué problema resuelve
 
 Las personas de negocio tienen preguntas que la base de datos sabe responder: cuántos pedidos hubo la semana pasada por región, qué clientes no compran desde junio. Para obtenerlas piden un informe a alguien que sabe SQL y esperan. Dar acceso directo no es opción: no saben SQL, y una consulta mal escrita puede tumbar la base o exponer datos que no deberían ver.
 
-Este sistema pone un modelo entre la pregunta y la base. El modelo explora el esquema, escribe la consulta, la ejecuta y explica el resultado, a través de un **[[glosario/servidor-mcp|servidor MCP]] de solo lectura** que impone los límites. El [[glosario/mcp|Model Context Protocol]] es un estándar abierto ([especificación](https://modelcontextprotocol.io)) para conectar aplicaciones de IA con herramientas y datos. Escribes el servidor una vez y lo usa cualquier *host* compatible: una aplicación de escritorio, tu propio agente o un IDE.
+Este sistema pone un modelo entre la pregunta y la base. El modelo explora el esquema, escribe la consulta, la ejecuta y explica el resultado, a través de un **[[glosario/servidor-mcp|servidor MCP]] de solo lectura** que impone los límites. El [[glosario/mcp|Model Context Protocol]] es un estándar abierto ([especificación](https://modelcontextprotocol.io)), hoy en la Agentic AI Foundation de la Linux Foundation, para conectar aplicaciones de IA con herramientas y datos. Escribes el servidor una vez y lo usa cualquier *host* compatible: una aplicación de escritorio, tu propio agente o un IDE.
 
 ## Arquitectura
 
@@ -44,7 +45,7 @@ flowchart LR
 
 ## Flujo paso a paso
 
-1. **Arranque**. El *host* lanza el servidor (por `stdio` en local) o se conecta a él (por *Streamable HTTP* en remoto) y obtiene la lista de herramientas.
+1. **Arranque**. El *host* lanza el servidor (por `stdio` en local) o se conecta a él (por *Streamable HTTP* en remoto) y obtiene la lista de herramientas. Desde la revisión `2026-07-28` el protocolo no tiene estado: no hay saludo `initialize` ni sesión, y cada petición lleva su versión ([[docs/estandares/01-mcp-2026-07-28]]).
 2. **Pregunta**. La persona escribe «¿Qué tres productos vendieron más en septiembre?».
 3. **Exploración**. El modelo llama a `listar_tablas` y `describir_tabla` para conocer columnas y tipos. Las descripciones de columnas ayudan mucho: `fecha_pedido` es obvia, `est_2` no.
 4. **Consulta**. El modelo escribe el SQL y llama a `consultar`.
@@ -145,10 +146,10 @@ if __name__ == "__main__":
     mcp.run()
 ```
 
-El validador por expresiones regulares es deliberadamente simple y **no es la barrera de seguridad**: la conexión en modo lectura y `query_only` lo son. Su papel es devolver errores útiles al modelo antes de llegar a la base; por eso lanza `ToolError`, la excepción cuyo mensaje llega al cliente (con cualquier otra, el cliente recibe un error genérico). Si necesitas un análisis más fino, usa un *parser* de SQL. La receta [[recetas/servidor-mcp-de-solo-lectura]] lo monta desde cero y la lección [[cursos/mcp-de-cero-a-servidor/03-tu-primer-servidor]] explica cada pieza del SDK.
+El validador por expresiones regulares es deliberadamente simple y **no es la barrera de seguridad**: la conexión en modo lectura y `query_only` lo son. Su papel es devolver errores útiles al modelo antes de llegar a la base; por eso lanza `ToolError`, la excepción cuyo mensaje llega al cliente con el prefijo `Error executing tool consultar: ` (con cualquier otra, el cliente solo recibe «Error executing tool consultar», sin el motivo). Lo comprobé llamando al servidor en proceso con `mcp.Client`: un `SELECT` agregado devuelve filas, y una tabla fuera de la lista, un `DELETE` o dos sentencias vuelven como error con su motivo. Si necesitas un análisis más fino, usa un *parser* de SQL. La receta [[recetas/servidor-mcp-de-solo-lectura]] lo monta desde cero y la lección [[cursos/mcp-de-cero-a-servidor/03-tu-primer-servidor]] explica cada pieza del SDK.
 
 > [!peligro] Los datos también pueden atacar
-> Si una columna contiene texto libre (comentarios de clientes, descripciones), puede incluir instrucciones dirigidas al modelo. Con solo lectura el daño se limita a respuestas engañosas, pero si el mismo *host* tiene otras herramientas con efectos, una inyección podría encadenarse. Separa los asistentes de datos de los que actúan. Lee [[radar/2026-10-20-inyeccion-por-herramientas]].
+> Si una columna contiene texto libre (comentarios de clientes, descripciones), puede incluir instrucciones dirigidas al modelo. Con solo lectura el daño se limita a respuestas engañosas, pero si el mismo *host* tiene otras herramientas con efectos, una inyección podría encadenarse. Separa los asistentes de datos de los que actúan: datos privados, texto no confiable y una vía de salida juntos son la [[glosario/trifecta-letal|trifecta letal]]. Lee [[radar/2026-10-20-inyeccion-por-herramientas]] y [[docs/seguridad/03-patrones-contra-inyeccion]].
 
 ## Cómo evaluarlo
 
@@ -177,10 +178,57 @@ El validador por expresiones regulares es deliberadamente simple y **no es la ba
 - **Con gráficos**: el *host* convierte el resultado en una gráfica; el servidor solo devuelve datos.
 - **Dentro de un agente mayor**: el mismo servidor sirve como herramienta de un agente de informes o del [[sistemas/investigacion-multiagente|sistema de investigación]] sobre datos internos.
 
+### Con open source: el mismo servidor desde LangChain y un modelo local
+
+El servidor no cambia: MCP es justo eso. Lo que cambia es el cliente. Con `langchain.mcp.MCPAdapter` (beta, compatible con el SDK `mcp` 2.x) las tres herramientas se convierten en herramientas de LangChain y un `create_agent` con un modelo local las usa sin que los datos salgan de tu máquina.
+
+```python title="asistente_datos_langchain.py"
+import asyncio
+import warnings
+from pathlib import Path
+
+from langchain.agents import create_agent
+from langchain.agents.middleware import ModelCallLimitMiddleware
+from langchain_core._api import LangChainBetaWarning
+from langchain_ollama import ChatOllama
+
+warnings.filterwarnings("ignore", category=LangChainBetaWarning)   # langchain.mcp está en beta
+from langchain.mcp import MCPAdapter  # noqa: E402
+
+SERVIDOR = Path("servidor_datos.py")      # Path => stdio; un str solo se acepta si es una URL http(s)
+llm = ChatOllama(model="qwen3.6:27b", num_ctx=32768, reasoning=False)   # o init_chat_model("anthropic:…", max_tokens=…)
+
+SYSTEM = ("Respondes preguntas sobre ventas consultando la base de datos con las herramientas. "
+          "Explora las vistas antes de escribir SQL, agrega en la consulta y muestra siempre el SQL usado.")
+
+async def preguntar(pregunta: str, modelo=llm) -> str:
+    async with MCPAdapter(SERVIDOR) as mcp:
+        tools = await mcp.list_tools()                     # listar_tablas, describir_tabla, consultar
+        agente = create_agent(modelo, tools, system_prompt=SYSTEM,
+                              middleware=[ModelCallLimitMiddleware(run_limit=8, exit_behavior="end")])
+        out = await agente.ainvoke({"messages": [("user", pregunta)]})   # herramientas async: ainvoke
+        return out["messages"][-1].text
+
+if __name__ == "__main__":
+    print(asyncio.run(preguntar("¿Qué región vendió más?")))
+```
+
+Lo probé con un modelo simulado y el servidor real lanzado por `stdio` sobre una base SQLite de prueba: el `ToolError` llega al modelo como `ToolMessage` con `status="error"` y el motivo, y el agente reintenta con una vista permitida.
+
+| Qué | Con un *host* o el SDK de Claude | Con LangChain y Ollama |
+|---|---|---|
+| Cliente MCP | El del *host*, o el SDK `mcp` y tu bucle | `MCPAdapter(Path(...))` para `stdio` o `MCPAdapter("https://…")` para remoto |
+| Errores del servidor | `tool_result` con `is_error` | `ToolMessage(status="error")`, sin middleware extra |
+| Llamadas por pregunta | Tu `max_pasos` | `ModelCallLimitMiddleware(run_limit=…)` |
+| Calidad del SQL | La del modelo de Claude que elijas | Muy dependiente del modelo local: tu batería de preguntas con resultado conocido decide |
+| Contexto | 1M de tokens | `num_ctx`: si es pequeño, Ollama recorta en silencio las descripciones y el esquema |
+
+No mezcles en el mismo entorno `langchain-mcp-adapters` con el SDK `mcp` 2.x: el primero exige `mcp<2`. Los detalles están en [[recetas/herramientas-mcp-en-un-agente-langchain]] y [[cursos/langchain-y-langgraph/10-mcp-en-langchain]]; si el servidor no aparece en el cliente, [[problemas/servidor-mcp-no-aparece]].
+
 ## Por dónde empezar
 
 1. Entiende qué resuelve MCP en [[cursos/mcp-de-cero-a-servidor/01-que-resuelve-mcp]] y conecta un servidor existente con [[roadmap/20-herramientas/05-mcp-conectar-un-servidor]].
 2. Crea dos o tres vistas limpias sobre tu base y un usuario de solo lectura.
 3. Copia el servidor de arriba, apúntalo a una copia de tus datos y pruébalo desde un *host* compatible.
 4. Escribe veinte preguntas reales con su resultado esperado y mide antes de abrirlo a nadie.
-5. Lee [[cursos/mcp-de-cero-a-servidor/04-seguridad-y-despliegue]] antes de pasarlo a remoto.
+5. Lee [[cursos/mcp-de-cero-a-servidor/04-seguridad-y-despliegue]] y [[docs/seguridad/04-mcp-y-skills-de-terceros]] antes de pasarlo a remoto.

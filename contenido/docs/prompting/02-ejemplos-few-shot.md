@@ -2,6 +2,7 @@
 titulo: Ejemplos few-shot
 descripcion: Cómo incluir ejemplos de entrada y salida en el prompt, cuántos poner, dónde colocarlos y cómo evitar que el modelo los copie.
 creado: 2026-07-23
+actualizado: 2026-10-29
 orden: 2
 nivel: inicial
 tags: [prompting, few-shot, ejemplos]
@@ -85,7 +86,8 @@ CATEGORIAS = {"envio", "devolucion", "pago", "otro"}
 def clasificar(ticket: str) -> str:
     resp = client.messages.create(
         model=MODEL,
-        max_tokens=10,
+        max_tokens=256,  # deja margen: el razonamiento adaptativo también gasta salida
+        output_config={"effort": "low"},  # tarea simple: poco razonamiento
         system=SISTEMA,
         messages=[{"role": "user", "content": f"<ticket>{ticket}</ticket>"}],
     )
@@ -117,7 +119,8 @@ const CATEGORIAS = new Set(["envio", "devolucion", "pago", "otro"]);
 async function clasificar(ticket: string): Promise<string> {
   const resp = await client.messages.create({
     model: MODEL,
-    max_tokens: 10,
+    max_tokens: 256,
+    output_config: { effort: "low" },
     system: SISTEMA,
     messages: [{ role: "user", content: `<ticket>${ticket}</ticket>` }],
   });
@@ -136,6 +139,8 @@ console.log(await clasificar("Quiero cambiar la dirección de entrega de mi pedi
 # salida de ejemplo
 envio
 ```
+
+Dos detalles del código. `max_tokens` no es 10 aunque la respuesta sea una palabra: en los modelos 5.x el razonamiento es adaptativo y consume tokens de salida, así que un límite tan bajo puede cortar la respuesta antes del texto (`stop_reason: "max_tokens"`). Y `effort: "low"` pide poco razonamiento para una tarea que no lo necesita (en Sonnet 5.5 el valor por defecto es `high`). Si la etiqueta debe ser una de una lista cerrada sí o sí, combina los ejemplos con un esquema `enum` en [[docs/prompting/03-salida-estructurada|salida estructurada]].
 
 El cuarto ejemplo es un caso frontera: menciona «devolución» pero el problema es de pago. Ese tipo de ejemplo es el que más mejora la precisión. La receta [[recetas/clasificar-y-enrutar-tickets]] lleva esto a un enrutador completo.
 
@@ -159,6 +164,7 @@ mensajes = [
 - **Ejemplos desequilibrados.** Sesgan hacia la clase mayoritaria. Cuenta las etiquetas.
 - **Ejemplos sin delimitar.** Si el modelo no distingue dónde acaba un ejemplo y empieza la tarea real, mezcla. Usa etiquetas.
 - **Ejemplos que contradicen las instrucciones.** El modelo suele seguir al ejemplo. Revísalos cada vez que cambies una regla.
+- **`max_tokens` mínimo para respuestas cortas.** Con razonamiento adaptativo, la respuesta puede quedarse vacía. Deja margen y baja el `effort`.
 - **No medir.** Añadir ejemplos «por si acaso» sin un [[glosario/conjunto-de-evaluacion|conjunto de evaluación]] es ir a ciegas: [[roadmap/10-prompting/05-iterar-con-casos-de-prueba]].
 
 ## Ver también

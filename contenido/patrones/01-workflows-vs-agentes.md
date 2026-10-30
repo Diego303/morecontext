@@ -2,6 +2,7 @@
 titulo: Workflows frente a agentes
 descripcion: La diferencia entre un workflow y un agente, la escalera de complejidad que los une y por qué casi siempre conviene empezar por el peldaño más bajo.
 creado: 2026-07-08
+actualizado: 2026-10-29
 tags: [patrones, agentes, workflows, arquitectura]
 aliases: [Workflow vs agente, Agentes frente a workflows]
 orden: 1
@@ -46,6 +47,7 @@ Piensa en los diseños como peldaños. Cada uno añade capacidad y también cost
 | 2. Workflow | Tu código, varias llamadas | Clasificar y responder tickets | [[patrones/03-encadenado]], [[patrones/04-enrutado]], [[patrones/05-paralelizacion]] |
 | 3. Workflow dinámico | Un modelo reparte, tu código ejecuta | Cambios en varios archivos | [[patrones/06-orquestador-trabajadores]], [[patrones/07-evaluador-optimizador]] |
 | 4. Agente | El modelo, en bucle | Resolver una incidencia de código | [[patrones/08-agente-autonomo]] |
+| 5. Agente de larga duración | Varios agentes y un arnés, durante horas | Construir una aplicación por funcionalidades | [[patrones/10-inicializador-y-agente-de-trabajo]], [[patrones/11-planificador-generador-evaluador]] |
 
 La recomendación central del artículo es buscar **la solución más simple posible** y solo añadir complejidad cuando se demuestra necesaria. Los sistemas agénticos suelen cambiar latencia y coste por mejor rendimiento en la tarea. Ese intercambio tiene que compensar, y solo lo sabes midiendo con [[glosario/evals|evals]].
 
@@ -106,6 +108,8 @@ El agente completo, con manejo de errores y de cada `stop_reason`, está en [[pa
 
 El artículo recomienda empezar usando la API del modelo directamente: muchos patrones caben en pocas líneas. Los frameworks ayudan con la fontanería, pero añaden capas que ocultan los *prompts* y las respuestas, y eso complica depurar. Si usas uno, asegúrate de entender qué hace por debajo. Leer tus propias [[glosario/trayectoria|trayectorias]] es la mejor defensa; tienes cómo en [[roadmap/40-primer-agente/06-depurar-con-trazas]].
 
+La distinción se ve muy clara en LangGraph, un framework open source (MIT) que modela el sistema como un [[glosario/grafo-de-estado|grafo]]: en un workflow las aristas las fijas tú; en un agente, una arista condicional manda de vuelta al modelo mientras pida herramientas. Por eso cada patrón de esta sección, del 3 al 8, trae su versión con LangGraph después del código a mano. Para decidir si te compensa un framework, lee [[docs/frameworks/01-elegir-framework]].
+
 ## Coste y latencia
 
 Cada peldaño suele multiplicar las llamadas al modelo. Un workflow tiene un coste por ejecución acotado y predecible porque sabes cuántas llamadas hace. Un agente tiene un coste variable que depende de cuántas vueltas dé, así que necesita [[roadmap/40-primer-agente/03-condiciones-de-parada|condiciones de parada y presupuesto]].
@@ -116,3 +120,4 @@ Cada peldaño suele multiplicar las llamadas al modelo. Un workflow tiene un cos
 - [[patrones/09-elegir-patron]]: árbol de decisión para elegir peldaño y patrón.
 - [[patrones/08-agente-autonomo]]: el último peldaño, con sus salvaguardas.
 - [[roadmap/60-multiagente/01-cuando-no-usar-multiagente]]: la misma prudencia aplicada a varios agentes.
+- [[patrones/10-inicializador-y-agente-de-trabajo]]: el peldaño siguiente, cuando el trabajo dura más que una ventana de contexto.

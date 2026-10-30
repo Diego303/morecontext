@@ -2,6 +2,7 @@
 titulo: Responder con citas verificables
 descripcion: Pasa los fragmentos numerados en etiquetas XML, pide respuestas con citas literales y compruébalas en código antes de enseñárselas al usuario.
 creado: 2026-09-02
+actualizado: 2026-10-29
 orden: 5
 minutos: 50
 tipo: practica
@@ -121,7 +122,7 @@ def responder(pregunta: str, fragmentos: list[dict]) -> dict:
     return json.loads(next(b.text for b in resp.content if b.type == "text"))
 ```
 
-Algunos proveedores ofrecen además citas nativas en su API, con el texto citado devuelto en bloques aparte. Consulta la [documentación de la API de Claude](https://platform.claude.com/docs) si quieres usarlas; la verificación de esta lección sirve igual.
+La API de Claude ofrece además citas nativas: si pasas los fragmentos como bloques de documento o de resultado de búsqueda con las citas activadas, la respuesta trae el texto citado en bloques aparte, con su posición exacta. Tienen una limitación que importa aquí: **no se pueden combinar con las salidas estructuradas** de `output_config.format`, así que elige una de las dos vías. Los detalles están en la [documentación de la API de Claude](https://platform.claude.com/docs); la verificación de esta lección sirve igual en ambos casos, y es la única opción con modelos abiertos o con otros proveedores.
 
 ## El verificador
 
@@ -187,7 +188,7 @@ export function verificar(salida: Salida, fragmentos: { texto: string }[], minCh
 El mínimo de caracteres evita citas trampa como «30 días», que aparecen en medio corpus y no prueban nada.
 
 > [!aviso] Lo que el verificador no comprueba
-> Que el literal exista no significa que respalde la afirmación. El modelo puede citar «El plazo de devolución es de 30 días» para afirmar que el plazo es de 15. Para eso necesitas un segundo control: un [[glosario/modelo-juez|modelo juez]] que lea cada afirmación con su cita y diga si la cita la sostiene. Empieza por el verificador literal, que es gratis, y añade el juez cuando tengas un [[glosario/conjunto-de-evaluacion|conjunto de evaluación]] para medirlo.
+> Que el literal exista no significa que respalde la afirmación (lo que se llama [[glosario/fidelidad|fidelidad]]). El modelo puede citar «El plazo de devolución es de 30 días» para afirmar que el plazo es de 15. Para eso necesitas un segundo control: un [[glosario/modelo-juez|modelo juez]] que lea cada afirmación con su cita y diga si la cita la sostiene. Empieza por el verificador literal, que es gratis, y añade el juez cuando tengas un [[glosario/conjunto-de-evaluacion|conjunto de evaluación]] para medirlo.
 
 ## Qué hacer cuando falla
 
@@ -228,5 +229,6 @@ Registra cada fallo. Un aumento de citas rotas suele indicar que la recuperació
 
 - [[roadmap/30-contexto-y-rag/06-memoria-entre-sesiones]]
 - [[sistemas/rag-con-citas]]
-- [[cursos/rag-a-fondo/04-evaluar-un-rag]]
+- [[cursos/rag-a-fondo/10-evaluar-un-rag]]
 - [[recetas/modelo-juez-con-rubrica]]
+- [[problemas/el-rag-encuentra-pero-responde-mal]]: qué revisar cuando los fragmentos son buenos y la respuesta no.

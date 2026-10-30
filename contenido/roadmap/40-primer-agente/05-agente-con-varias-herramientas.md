@@ -2,6 +2,7 @@
 titulo: Un agente con varias herramientas
 descripcion: Diseña y describe un conjunto de herramientas para que el agente elija la correcta, devuelva salidas útiles y se recupere de errores, y prueba esa elección con casos.
 creado: 2026-10-01
+actualizado: 2026-10-29
 orden: 5
 minutos: 50
 tipo: practica
@@ -21,7 +22,7 @@ Al terminar esta lección sabrás montar un agente con cuatro herramientas que n
 
 Con una herramienta, el modelo solo decide si la usa. Con cuatro, además decide **cuál**, y ahí aparecen los fallos típicos: usa `buscar_ayuda` para algo que estaba en `ver_pedidos`, inventa un parámetro o llama tres veces a la herramienta equivocada. Casi siempre la causa está en el diseño de las herramientas, no en el modelo.
 
-La regla de [*Writing effective tools for agents*](https://www.anthropic.com/engineering/writing-tools-for-agents) (Anthropic, 2025) se resume así: **diseña las herramientas pensando en quien las va a usar**, un modelo que solo ve el nombre, la descripción y el esquema. Si un compañero nuevo no sabría qué herramienta usar leyendo solo eso, el modelo tampoco.
+La regla de [*Writing effective tools for agents*](https://www.anthropic.com/engineering/writing-tools-for-agents) (Anthropic, 11 sept. 2025) se resume así: **diseña las herramientas pensando en quien las va a usar**, un modelo que solo ve el nombre, la descripción y el esquema. Si un compañero nuevo no sabría qué herramienta usar leyendo solo eso, el modelo tampoco.
 
 ```mermaid
 flowchart LR
@@ -133,7 +134,7 @@ TOOLS = [
 ]
 ```
 
-Si tienes muchas herramientas de dominios distintos, un prefijo común ayuda a agruparlas: `pedidos_ver`, `pedidos_cancelar`, `ayuda_buscar`.
+Si tienes muchas herramientas de dominios distintos, un prefijo común ayuda a agruparlas: `pedidos_ver`, `pedidos_cancelar`, `ayuda_buscar`. Y si pasan de unas decenas, no las cargues todas en cada llamada: la [[glosario/carga-diferida-de-herramientas|carga diferida]] (`defer_loading: true` con la herramienta de búsqueda de herramientas) deja que el modelo encuentre la que necesita. Lo tienes paso a paso en [[recetas/carga-diferida-de-herramientas]].
 
 ## Salidas que ayudan al modelo
 
@@ -198,6 +199,86 @@ print(f"{aciertos}/{len(CASOS)}")
 ```
 
 Cuando un caso falle, **cambia primero la descripción**, no el prompt de sistema. Es el lugar donde el modelo mira al elegir. Esto es una versión mínima de las evals que verás en [[roadmap/80-evals/02-conjunto-de-prueba]].
+
+## Las mismas herramientas con LangChain
+
+Con [[herramientas/langchain|LangChain]] no escribes el JSON Schema: lo genera a partir de la firma y del *docstring* de cada función. Los tipos hacen de esquema (`Literal` se convierte en `enum`) y, con `parse_docstring=True`, la sección `Args:` da la descripción de cada parámetro. Las implementaciones son las de `despacho.py`:
+
+```python tab="LangChain" title="agente_langchain.py"
+from typing import Literal
+
+from langchain.agents import create_agent
+from langchain.agents.middleware import HumanInTheLoopMiddleware, ToolErrorMiddleware
+from langchain.chat_models import init_chat_model
+from langchain.tools import tool
+from langgraph.checkpoint.memory import InMemorySaver
+
+from despacho import ejecutar
+
+MODEL = "anthropic:claude-sonnet-5-5"
+Estado = Literal["pendiente", "enviado", "entregado", "devuelto"]
+
+@tool(parse_docstring=True)
+def buscar_cliente(email: str | None = None, telefono: str | None = None) -> str:
+    """Busca un cliente por email o por teléfono y devuelve su id, nombre y fecha de alta.
+    Úsala siempre antes de ver_pedidos o abrir_incidencia. Si no hay coincidencia, devuelve un error.
+
+    Args:
+        email: Email exacto, por ejemplo ana@example.com.
+        telefono: Teléfono con prefijo, por ejemplo +34600111222.
+    """
+    return ejecutar("buscar_cliente", {"email": email, "telefono": telefono})
+
+@tool(parse_docstring=True)
+def ver_pedidos(cliente_id: str, estado: Estado | None = None) -> str:
+    """Lista los pedidos de un cliente ya identificado, del más reciente al más antiguo, con id,
+    estado, fecha y total. Requiere el id de cliente de buscar_cliente; no acepta emails.
+    Devuelve como máximo 10 pedidos.
+
+    Args:
+        cliente_id: Id con formato C-1234.
+        estado: Opcional, filtra por estado.
+    """
+    return ejecutar("ver_pedidos", {"cliente_id": cliente_id, "estado": estado})
+
+@tool(parse_docstring=True)
+def buscar_ayuda(consulta: str) -> str:
+    """Busca en el centro de ayuda y devuelve hasta 3 fragmentos con su título. Úsala para
+    políticas generales (devoluciones, plazos de envío, pagos). No contiene datos de clientes ni pedidos.
+
+    Args:
+        consulta: Pregunta en lenguaje natural.
+    """
+    return ejecutar("buscar_ayuda", {"consulta": consulta})
+
+@tool(parse_docstring=True)
+def abrir_incidencia(cliente_id: str, tipo: Literal["perdido", "cobro_duplicado", "danado", "otro"],
+                     resumen: str, pedido_id: str | None = None) -> str:
+    """Abre una incidencia para el equipo humano. Úsala solo si el problema no se resuelve con
+    información (pedido perdido, cobro duplicado, producto dañado). Requiere aprobación del usuario.
+
+    Args:
+        cliente_id: Id del cliente.
+        tipo: Tipo de incidencia.
+        resumen: Una o dos frases para el equipo.
+        pedido_id: Id con formato P-1234.
+    """
+    return ejecutar("abrir_incidencia", {"cliente_id": cliente_id, "tipo": tipo,
+                                         "resumen": resumen, "pedido_id": pedido_id})
+
+agente = create_agent(
+    model=init_chat_model(MODEL, max_tokens=2048),
+    tools=[buscar_cliente, ver_pedidos, buscar_ayuda, abrir_incidencia],
+    system_prompt="Eres el asistente de soporte de una tienda online. Usa las herramientas; no inventes datos.",
+    middleware=[
+        ToolErrorMiddleware(on_error=lambda exc, request: f"Error: {exc}"),   # errores que enseñan
+        HumanInTheLoopMiddleware(interrupt_on={"abrir_incidencia": True}),    # pausa antes de escribir
+    ],
+    checkpointer=InMemorySaver(),          # la pausa necesita guardar el estado
+)
+```
+
+Mira el esquema que genera con `print(ver_pedidos.tool_call_schema.model_json_schema())` antes de fiarte: es lo que verá el modelo. La aprobación funciona con una pausa (`interrupt`) que se reanuda con `Command(resume=…)` y el mismo `thread_id`; la verás en [[roadmap/100-produccion/05-humano-en-el-bucle]] y a fondo en [[cursos/langchain-y-langgraph/04-middleware]]. Lo que no cambia es el trabajo de diseño: si las descripciones son malas, el framework genera un esquema perfecto de unas herramientas mal descritas.
 
 ## Errores frecuentes
 

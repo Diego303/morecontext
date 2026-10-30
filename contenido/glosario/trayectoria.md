@@ -2,6 +2,7 @@
 titulo: Trayectoria
 descripcion: Secuencia completa de pasos de un agente en una tarea, con sus llamadas a herramientas, resultados y respuestas intermedias.
 creado: 2026-09-12
+actualizado: 2026-10-29
 categoria: evals
 ingles: trajectory
 aliases: [trajectory, traza del agente, recorrido del agente]
@@ -13,7 +14,7 @@ La trayectoria de un [[glosario/agente]] es el registro ordenado de todo lo que 
 
 ## En la práctica
 
-Evaluar la trayectoria responde preguntas que la respuesta final oculta: ¿usó la herramienta correcta?, ¿repitió búsquedas?, ¿intentó una acción prohibida?, ¿cuántos pasos y tokens gastó? Combina comprobaciones con código (herramientas obligatorias o vetadas, número máximo de pasos) con un [[glosario/modelo-juez]] para criterios como «buscó antes de afirmar». Para tener trayectorias que evaluar necesitas [[glosario/observabilidad]]: guarda cada paso con su entrada, su salida y su `usage`.
+Evaluar la trayectoria responde preguntas que la respuesta final oculta: ¿usó la herramienta correcta?, ¿repitió búsquedas?, ¿intentó una acción prohibida?, ¿cuántos pasos y tokens gastó? Combina comprobaciones con código (herramientas obligatorias o vetadas, número máximo de pasos) con un [[glosario/modelo-juez]] para criterios como «buscó antes de afirmar». Para tener trayectorias que evaluar necesitas [[glosario/observabilidad]]: guarda cada paso con su entrada, su salida y su `usage`, idealmente con las [[glosario/convenciones-genai-otel]]. Leer un centenar de trayectorias y clasificar sus fallos ([[glosario/analisis-de-errores]]) es el mejor punto de partida para decidir qué medir. En LangGraph, `get_state_history` te devuelve cada paso de un hilo.
 
 ## No confundir con
 
@@ -25,3 +26,4 @@ Evaluar la trayectoria responde preguntas que la respuesta final oculta: ¿usó 
 - [[roadmap/40-primer-agente/06-depurar-con-trazas]]
 - [[cursos/evals-para-agentes/01-que-medir]]
 - [[blog/2026-07-15-como-leer-una-traza]]
+- [[recetas/analisis-de-errores-de-trazas]]

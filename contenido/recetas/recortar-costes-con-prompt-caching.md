@@ -2,6 +2,7 @@
 titulo: Recortar costes con prompt caching
 descripcion: Cachea la parte fija de tus peticiones (sistema, herramientas, documentos) con cache_control y comprueba con usage cuántos tokens se leen de caché.
 creado: 2026-09-17
+actualizado: 2026-10-29
 nivel: inicial
 minutos: 15
 tema: produccion
@@ -19,15 +20,15 @@ Con [[glosario/prompt-caching|prompt caching]] la API guarda ese prefijo común.
 ## Ingredientes
 
 - Python 3.10 o superior.
-- `pip install anthropic`
+- `pip install "anthropic>=2"` (SDK 2.x).
 - La variable de entorno `ANTHROPIC_API_KEY`.
-- Un texto largo y estable para el contexto (`manual.md`). Tiene que superar el mínimo de tokens cacheables, que depende del modelo; consúltalo en la [documentación oficial](https://platform.claude.com/docs).
+- Un texto largo y estable para el contexto (`manual.md`). Tiene que superar el mínimo de tokens cacheables: 512 en los modelos actuales (oct. 2026), más en algunos anteriores. Compruébalo en la [documentación oficial](https://platform.claude.com/docs).
 
 ## Pasos
 
 1. **Ordena la petición: lo fijo delante, lo variable detrás.** El caché funciona por prefijo en este orden: `tools` → `system` → `messages`. Si cambias algo, se invalida esa parte y todo lo posterior. Un detalle tan pequeño como meter la fecha y hora al principio del sistema rompe el caché en cada llamada.
 
-2. **Marca el final del prefijo con `cache_control`.** Se pone en el último bloque que quieres cachear. Puedes poner hasta 4 puntos de corte.
+2. **Marca el final del prefijo con `cache_control`.** Se pone en el último bloque que quieres cachear. Puedes poner hasta 4 puntos de corte por petición; si además usas la caché automática (ver Variaciones), ocupa uno de los cuatro.
 
 3. **Mide con `usage`.** Cada respuesta trae tres contadores de entrada:
    - `cache_creation_input_tokens`: tokens escritos en caché en esta llamada (cuestan algo más que la entrada normal);
@@ -54,7 +55,7 @@ SISTEMA = [
 def preguntar(pregunta: str) -> str:
     resp = client.messages.create(
         model=MODEL,
-        max_tokens=512,
+        max_tokens=1024,
         system=SISTEMA,
         messages=[{"role": "user", "content": pregunta}],
     )
@@ -103,6 +104,29 @@ entrada total   5223 | escritos en caché      0 | leídos de caché   5210 (100
 - **Conversaciones largas.** Pon `cache_control` también en el último bloque del último mensaje de usuario. En cada turno se lee de caché toda la conversación anterior y solo se paga entero el turno nuevo.
 - **Herramientas.** Si tienes muchas definiciones, pon `cache_control` en la última herramienta de la lista. Van primero en el prefijo, así que se aprovechan en todas las llamadas.
 - **TTL de una hora.** El tiempo de vida por defecto es de 5 minutos y se renueva con cada uso. Si tus llamadas están más espaciadas, usa `{"type": "ephemeral", "ttl": "1h"}`. Escribir con TTL largo cuesta más: compensa solo si se reutiliza.
+- **Con LangChain.** En un agente de `create_agent`, `AnthropicPromptCachingMiddleware` (de `langchain-anthropic`) añade `cache_control` por ti: en el bloque `system` y en el nivel superior de la petición (caché automática). Pasa siempre `max_tokens`: sin él, `ChatAnthropic` pide el máximo del modelo. Los contadores llegan en `usage_metadata` de cada `AIMessage`.
+
+```python title="cache_langchain.py"
+from pathlib import Path
+
+from langchain.agents import create_agent
+from langchain_anthropic import ChatAnthropic
+from langchain_anthropic.middleware import AnthropicPromptCachingMiddleware
+
+MODEL = "claude-sonnet-5-5"
+MANUAL = Path("manual.md").read_text(encoding="utf-8")
+
+agente = create_agent(
+    ChatAnthropic(model=MODEL, max_tokens=1024),
+    tools=[],
+    system_prompt=f"Eres el asistente de soporte de Acme. Responde solo con el manual.\n<manual>\n{MANUAL}\n</manual>",
+    middleware=[AnthropicPromptCachingMiddleware(ttl="5m")],  # marca el prefijo con cache_control
+)
+
+r = agente.invoke({"messages": [("user", "¿Cómo reseteo el router?")]})
+print(r["messages"][-1].usage_metadata)
+```
+
 - **Procesos por lotes.** En evals y procesos que repiten el mismo prompt con entradas distintas, todas las llamadas comparten prefijo ([[recetas/evals-de-regresion-en-ci]]).
 
 ## Errores típicos
@@ -112,4 +136,5 @@ entrada total   5223 | escritos en caché      0 | leídos de caché   5210 (100
 - **Medir el ahorro sin mirar `usage`.** Confiar en que «debería estar cacheando» no basta. Si `cache_read_input_tokens` es 0, no lo está.
 - **Llamadas demasiado espaciadas.** Con más de 5 minutos entre llamadas y TTL por defecto, cada una escribe en caché y ninguna lee: pagas más que sin caché.
 - **Cambiar herramientas sobre la marcha.** Añadir o quitar una herramienta invalida todo el caché, porque van primero en el prefijo.
+- **Adivinar por qué falla.** La API puede decirte qué rompió la caché respecto a una petición anterior (`diagnostics`, GA): lo explica [[recetas/diagnosticar-fallos-de-cache]], y las causas habituales están en [[problemas/la-cache-no-se-aprovecha]].
 - **Copiar multiplicadores de precio en el código.** Cambian. Léelos de la documentación cuando calcules costes ([[docs/produccion/02-costes-y-limites]]).

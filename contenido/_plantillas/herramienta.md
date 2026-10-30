@@ -1,17 +1,34 @@
 ---
 titulo: "{{title}}"
-descripcion: Una frase de 20 a 220 caracteres con qué hace la herramienta.
+descripcion: Una frase de 20 a 220 caracteres que diga qué es y para qué sirve.
 creado: {{date:YYYY-MM-DD}}
 estado: borrador
-url: https://ejemplo.com
-categoria: framework
-licencia: MIT
 tags: [herramientas]
 relacionados: []
+categoria: framework
+licencia: MIT
+open_source: true
+lenguajes: [Python]
+url: https://ejemplo.org
+repositorio: https://github.com/organizacion/proyecto
+version: "0.0.0"
+revisado: {{date:YYYY-MM-DD}}
 ---
 
-## Qué hace
+Qué es, en dos frases.
 
-## Cuándo usarla y cuándo no
+## Para qué sirve
+
+## Cuándo usarla
+
+## Cuándo no
+
+## Ejemplo mínimo
 
 ## Alternativas
+
+- Wikilinks a otras fichas de herramientas.
+
+## Enlaces
+
+- Documentación oficial y repositorio.

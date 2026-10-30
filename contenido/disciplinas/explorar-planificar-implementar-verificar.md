@@ -2,10 +2,11 @@
 titulo: Explorar, planificar, implementar, verificar
 descripcion: Un ciclo de cuatro fases para trabajar con agentes de código que evita la prisa por escribir y deja cada cambio comprobado antes de darlo por bueno.
 creado: 2026-10-13
+actualizado: 2026-10-29
 orden: 11
 tipo: forma-de-trabajar
 tags: [forma-de-trabajar, agentes-de-codigo, planificacion]
-relacionados: ["[[cursos/agentes-de-codigo/03-explorar-planificar-implementar-verificar]]", "[[disciplinas/spec-primero]]", "[[roadmap/40-primer-agente/04-planificar-antes-de-actuar]]", "[[sistemas/agente-de-codigo]]"]
+relacionados: ["[[cursos/agentes-de-codigo/03-explorar-planificar-implementar-verificar]]", "[[disciplinas/spec-primero]]", "[[roadmap/40-primer-agente/04-planificar-antes-de-actuar]]", "[[sistemas/agente-de-codigo]]", "[[cursos/harness-engineering/05-agentes-y-orquestador]]"]
 ---
 
 Explorar, planificar, implementar, verificar es un ciclo para cualquier tarea no trivial con un agente de código. Primero el agente entiende el terreno, luego propone un plan que tú apruebas, después lo ejecuta y al final demuestra que funciona. Cada fase tiene una salida concreta y no se pasa a la siguiente sin ella.
@@ -45,11 +46,25 @@ Separar las fases cambia dónde se detectan los errores. Un malentendido en la e
 - **Ajusta el esfuerzo de razonamiento a la fase.** La planificación es donde más rinde dejar pensar al modelo. Ver [[modelos/04-dejar-pensar-al-modelo]].
 - **Implementa por pasos del plan.** Un paso, su verificación, siguiente paso. Si el plan tiene seis pasos, no hace falta revisar los seis de golpe.
 - **Escribe primero el test que falla** cuando arreglas un bug. Verificar es ver ese test pasar de rojo a verde.
-- **Verificar es ejecutar.** Tests, tipos, linter y, si aplica, el comando que reproduce el caso real. Pide que el agente te pegue la salida.
+- **Verificar es ejecutar.** Tests, tipos, linter y, si aplica, el comando que reproduce el caso real. Pide que el agente te pegue la salida, de un comando lanzado después del último cambio ([[disciplinas/verificar-antes-de-dar-por-hecho]]).
 - **Vuelve a planificar si la realidad no encaja.** Si en la implementación aparece algo que el plan no preveía, para y actualiza el plan antes de seguir.
 
 > [!consejo] Para tareas pequeñas, comprime
 > Un cambio de una línea no necesita cuatro fases formales. El ciclo rinde en tareas de más de unos minutos, en código que no conoces o cuando el error sería caro.
+
+## Así lo hace un harness real
+
+En el harness SDD del autor ([[sistemas/harness-sdd-claude-code]]) cada fase es un subagente distinto con contexto limpio, y la salida de cada uno es un archivo que el siguiente lee:
+
+| Fase | Subagente | Sale | Lo que no puede hacer |
+|---|---|---|---|
+| Explorar | **explorer** | `context.md`: cómo funciona hoy, con archivo y línea | Proponer soluciones ni editar código |
+| Planificar | **designer** | La spec: propuesta, requisitos, diseño, tareas y `acceptance.yaml` | Implementar |
+| Puerta humana | Tú | Apruebas o pides cambios; la spec queda congelada | Aprobar con un «vale» suelto |
+| Implementar | **builder** | El código y un registro de lo hecho, siguiendo `tasks.md` | Rediseñar: si la spec no se puede cumplir, para y lo dice |
+| Verificar | **reviewer** | Un veredicto (`PASS`, `FAIL_REPAIRABLE`, `FAIL_NONREPAIRABLE` o `BLOCKED_TOOLING`) con la evidencia | Arreglar código |
+
+Dos reglas cambian mucho el resultado. El revisor no comparte contexto con quien escribió el código, así que no da por buenas las mismas suposiciones. Y el ciclo de vuelta de «verificar» a «implementar» está acotado: si el fallo es reparable dentro de lo aprobado, el constructor tiene **una** reparación; si vuelve a fallar o el problema es de diseño, decide una persona. Un orquestador encadena las fases con una máquina de estados y no escribe código. Lo cuenta paso a paso [[cursos/harness-engineering/05-agentes-y-orquestador]].
 
 ## Señales de que lo haces mal
 
@@ -80,3 +95,4 @@ Repite el tercero por cada paso del plan. Después, revisa el diff completo ante
 - [[cursos/agentes-de-codigo/01-como-trabaja-un-agente-de-codigo]]
 - [[disciplinas/pair-programming-con-agentes]]
 - [[cursos/agentes-de-codigo/04-revisar-y-confiar]]
+- [[cursos/harness-engineering/08-veredictos-y-reparacion-acotada]]

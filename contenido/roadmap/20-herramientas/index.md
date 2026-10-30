@@ -2,6 +2,7 @@
 titulo: "Nivel 20 · Uso de herramientas"
 descripcion: "El ciclo tool_use → tool_result, herramientas definidas con JSON Schema, errores con is_error, tool_choice y un servidor MCP propio conectado a tu aplicación."
 creado: 2026-09-22
+actualizado: 2026-10-29
 nivel: 20
 horas: 5
 objetivo: "Dar al modelo herramientas que ejecuta tu código, completar el ciclo de petición y resultado sin errores de protocolo y exponerlas como un servidor MCP reutilizable."
@@ -31,8 +32,10 @@ Al terminar sabrás implementar el ciclo completo de [[glosario/tool-use|tool us
 1. [[roadmap/20-herramientas/01-ciclo-tool-use]]. El protocolo: el modelo pide, tu código ejecuta, le devuelves el resultado. Con un bucle completo en Python y TypeScript.
 2. [[roadmap/20-herramientas/02-definir-herramientas]]. Nombres, descripciones y JSON Schema: lo que decide si el modelo elige bien la herramienta y le pasa bien los argumentos.
 3. [[roadmap/20-herramientas/03-errores-e-is-error]]. Qué hacer cuando la herramienta falla, cuándo marcar `is_error` y cómo evitar bucles infinitos.
-4. [[roadmap/20-herramientas/04-tool-choice]]. Dejar decidir al modelo, obligarle a usar una herramienta concreta o prohibírselo, y cuándo conviene cada opción.
-5. [[roadmap/20-herramientas/05-mcp-conectar-un-servidor]]. Escribir un servidor MCP con MCPServer, probarlo y conectarlo a tu aplicación.
+4. [[roadmap/20-herramientas/04-tool-choice]]. Dejar decidir al modelo, prohibirle las herramientas o limitar las llamadas en paralelo, por qué los modelos actuales no admiten forzar una herramienta y qué hacer en su lugar.
+5. [[roadmap/20-herramientas/05-mcp-conectar-un-servidor]]. Escribir un servidor MCP con MCPServer, probarlo y conectarlo a tu aplicación, a mano o desde LangChain.
+
+Cada lección enseña primero el mecanismo con el SDK y después cómo lo hace [[herramientas/langchain|LangChain]] (`bind_tools`, `@tool`, `ToolMessage`), para que reconozcas el mismo protocolo debajo del framework.
 
 ## El proyecto del nivel
 
@@ -52,4 +55,4 @@ Está terminado si cumple todo esto:
 
 ## Después de este nivel
 
-Sigue con [[roadmap/30-contexto-y-rag/index]] para darle al modelo acceso a tus documentos, o salta a [[roadmap/40-primer-agente/index]] si quieres convertir este bucle en un agente. Como referencia rápida tienes [[docs/herramientas/01-uso-de-herramientas]] y [[docs/herramientas/02-mcp]].
+Sigue con [[roadmap/30-contexto-y-rag/index]] para darle al modelo acceso a tus documentos, o salta a [[roadmap/40-primer-agente/index]] si quieres convertir este bucle en un agente. Como referencia rápida tienes [[docs/herramientas/01-uso-de-herramientas]] y [[docs/herramientas/02-mcp]]. Si la API te devuelve un 400 con el ciclo, empieza por [[problemas/tool-result-sin-tool-use]]; si el modelo es local y no llama a las herramientas, por [[problemas/modelo-local-no-llama-herramientas]].

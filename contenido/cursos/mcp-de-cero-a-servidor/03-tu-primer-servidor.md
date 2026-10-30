@@ -1,7 +1,8 @@
 ---
 titulo: Tu primer servidor MCP
-descripcion: Un servidor de notas con MCPServer en Python y su equivalente en TypeScript, con tools, resources y prompts, descripciones claras, errores útiles y pruebas con el Inspector.
+descripcion: Un servidor de notas con MCPServer en Python y su equivalente con el SDK v2 de TypeScript, con tools, resources y prompts, errores útiles y pruebas en proceso, con el Inspector y desde LangChain.
 creado: 2026-10-02
+actualizado: 2026-10-29
 orden: 3
 minutos: 60
 tipo: practica
@@ -9,9 +10,9 @@ objetivos:
   - Implementar un servidor MCP con MCPServer que expone dos tools, un resource y un prompt.
   - Escribir descripciones y esquemas de herramientas que un modelo usa correctamente.
   - Devolver errores accionables y proteger el acceso a archivos frente a rutas maliciosas.
-  - Probar el servidor con el Inspector y con un cliente propio.
+  - Probar el servidor en proceso con `mcp.Client`, con el Inspector y desde un agente.
 requiere: ["[[cursos/mcp-de-cero-a-servidor/02-usar-servidores-existentes]]", "[[roadmap/20-herramientas/02-definir-herramientas]]"]
-relacionados: ["[[glosario/servidor-mcp]]", "[[recetas/servidor-mcp-de-solo-lectura]]", "[[disciplinas/diseno-de-herramientas]]", "[[docs/herramientas/02-mcp]]"]
+relacionados: ["[[glosario/servidor-mcp]]", "[[recetas/servidor-mcp-de-solo-lectura]]", "[[disciplinas/diseno-de-herramientas]]", "[[docs/herramientas/02-mcp]]", "[[herramientas/mcp-sdks]]"]
 tags: [mcp, python, typescript, servidores]
 ---
 
@@ -19,13 +20,13 @@ Al terminar tendrás un servidor MCP funcionando sobre una carpeta de notas en M
 
 ## La idea
 
-Un servidor MCP es una función de traducción: recibe peticiones del protocolo y las convierte en llamadas a tu sistema. Los SDK se ocupan del protocolo (negociación, listado, serialización), así que tu trabajo se reduce a tres cosas:
+Un servidor MCP es una función de traducción: recibe peticiones del protocolo y las convierte en llamadas a tu sistema. Los SDK se ocupan del protocolo (descubrimiento, `_meta`, listado, serialización), así que tu trabajo se reduce a tres cosas:
 
 1. **Elegir la interfaz**: qué herramientas, con qué nombres y parámetros. Pocas y con un propósito claro funcionan mejor que muchas y genéricas.
 2. **Describirla**: la descripción y el esquema son lo único que el modelo sabe de tu herramienta. Escríbelos para alguien listo que no conoce tu sistema.
 3. **Fallar bien**: un error debe decir qué pasó y qué hacer distinto.
 
-El artículo de Anthropic [*Writing effective tools for agents*](https://www.anthropic.com/engineering/writing-tools-for-agents) desarrolla estos principios; aquí los aplicas.
+El artículo de Anthropic [*Writing effective tools for agents*](https://www.anthropic.com/engineering/writing-tools-for-agents) (11 sept. 2025) desarrolla estos principios; aquí los aplicas.
 
 ```mermaid
 flowchart LR
@@ -40,7 +41,7 @@ flowchart LR
 
 ## El servidor en Python
 
-Instala el SDK con su CLI: `uv add "mcp[cli]"` (o `pip install "mcp[cli]"`), que instala la serie 2.x. Con `MCPServer`, el *docstring* de cada función es la descripción, las anotaciones de tipo generan el `inputSchema` y lo que devuelves se convierte en el contenido del resultado. En la serie 1.x la clase se llamaba `FastMCP`; lo verás en tutoriales antiguos.
+Instala el SDK con su CLI: `uv add "mcp[cli]"` (o `pip install "mcp[cli]"`), que instala la serie 2.x. Con `MCPServer`, el *docstring* de cada función es la descripción, las anotaciones de tipo generan el `inputSchema` y lo que devuelves se convierte en el contenido del resultado. En la serie 1.x la clase se llamaba `FastMCP` (`mcp.server.fastmcp` ya no existe en la 2.x); lo verás en tutoriales antiguos.
 
 ```python tab="Python" title="servidor.py"
 import logging, os, pathlib, sys
@@ -107,8 +108,8 @@ if __name__ == "__main__":
 ```
 
 ```ts tab="TypeScript" title="servidor.ts"
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { McpServer } from "@modelcontextprotocol/server";
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import { z } from "zod";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
@@ -130,10 +131,10 @@ server.registerTool(
     description:
       "Busca texto en las notas y devuelve nombre y extracto de cada coincidencia. " +
       "Úsala antes de leer_nota. Si no hay resultados, prueba con sinónimos.",
-    inputSchema: {
+    inputSchema: z.object({
       consulta: z.string().describe("Palabra o frase a buscar, sin comillas."),
       limite: z.number().int().min(1).max(20).default(5).describe("Máximo de resultados."),
-    },
+    }),
   },
   async ({ consulta, limite }) => {
     const q = consulta.toLowerCase();
@@ -153,7 +154,7 @@ server.registerTool(
   "leer_nota",
   {
     description: "Devuelve el contenido completo de una nota en Markdown. Solo lectura.",
-    inputSchema: { nombre: z.string().describe("Nombre relativo tal como lo devuelve buscar_notas.") },
+    inputSchema: z.object({ nombre: z.string().describe("Nombre relativo tal como lo devuelve buscar_notas.") }),
   },
   async ({ nombre }) => {
     try {
@@ -167,19 +168,19 @@ server.registerTool(
 await server.connect(new StdioServerTransport());   // proyecto ESM ("type": "module")
 ```
 
-La versión en TypeScript usa `@modelcontextprotocol/sdk` y `zod` para los esquemas. La API para registrar herramientas ha cambiado entre versiones del SDK (en versiones antiguas era `server.tool(...)`); si tu versión no reconoce `registerTool`, revisa el README del paquete.
+La versión en TypeScript usa el SDK v2, que se divide en dos paquetes: `@modelcontextprotocol/server` (con el transporte en `@modelcontextprotocol/server/stdio`) y `@modelcontextprotocol/client`. Se instala con `npm install @modelcontextprotocol/server zod`. `registerTool` recibe el nombre, un objeto con `description` e `inputSchema` (un `z.object(...)` de `zod`) y la función. Si ves código que importa de `@modelcontextprotocol/sdk/server/mcp.js`, es la línea v1, que sigue publicándose pero no implementa la revisión `2026-07-28`. Las funciones del SDK v1 y v2 tienen nombres parecidos; comprueba qué paquete usa un ejemplo antes de copiarlo. Este servidor compila con `tsc --strict` contra la versión 2.4 del SDK.
 
 ## Por qué está escrito así
 
 **Descripciones que guían.** `buscar_notas` dice cuándo usarla («antes de leer_nota»), cómo se comporta («no distingue mayúsculas») y qué hacer si falla. `leer_nota` explica el formato exacto del parámetro con un ejemplo. Son las preguntas que el modelo no puede hacerte.
 
-**Errores accionables.** Si `leer_nota` recibe un nombre que no existe, el error dice cómo arreglarlo. En Python lanzas `ToolError` y el SDK lo convierte en un resultado con `isError: true` y tu mensaje como texto (con cualquier otra excepción el texto es genérico y no dice qué hacer); en TypeScript lo devuelves tú. El modelo lee ese texto y normalmente corrige en el siguiente paso.
+**Errores accionables.** Si `leer_nota` recibe un nombre que no existe, el error dice cómo arreglarlo. En Python lanzas `ToolError` y el SDK lo convierte en un resultado con `isError: true` y tu mensaje como texto, con el prefijo `Error executing tool leer_nota: ` (con cualquier otra excepción el texto es genérico y no dice qué hacer); en TypeScript lo devuelves tú. El modelo lee ese texto y normalmente corrige en el siguiente paso.
 
 **Salidas acotadas.** `buscar_notas` devuelve extractos y un límite, no notas enteras. Una herramienta que devuelve 50 000 tokens llena el contexto y degrada todo lo que viene después.
 
 **Ruta segura.** `ruta_segura` resuelve la ruta y comprueba que sigue dentro de la carpeta. Sin eso, `leer_nota("../../.ssh/id_rsa")` funcionaría. Es el error de seguridad más común en servidores de archivos, y el modelo puede llegar a pedirlo sin mala intención si un documento se lo sugiere.
 
-**Registros a `stderr`.** Con `stdio`, `stdout` es el canal del protocolo. Un `print()` suelto rompe la sesión con errores difíciles de rastrear.
+**Registros a `stderr`.** Con `stdio`, `stdout` es el canal del protocolo. Un `print()` suelto rompe la conexión con errores difíciles de rastrear.
 
 > [!consejo] Herramientas de solo lectura primero
 > Empieza con lectura. Cuando añadas escritura, hazlo en herramientas separadas y con nombres que lo dejen claro (`crear_nota`, no `gestionar_nota` con un parámetro `accion`). El host podrá pedir confirmación solo para esas. La receta [[recetas/servidor-mcp-de-solo-lectura]] parte de esta idea.
@@ -203,7 +204,69 @@ SERVIDOR = StdioServerParameters(command="uv", args=["run", "servidor.py"],
                                  env={"NOTAS_DIR": "/home/yo/notas"})
 ```
 
-**Con pruebas unitarias.** Con el decorador de `MCPServer`, las funciones siguen siendo funciones de Python normales: pruébalas con `pytest` llamándolas directamente, incluidos los casos de ruta maliciosa.
+**En proceso, con pytest.** `mcp.Client` acepta la propia instancia del servidor: habla el protocolo completo (descubrimiento, listado, llamada, errores) en memoria, sin subprocesos ni red. Es la forma más rápida de probar lo que de verdad ve el cliente, incluidos los casos de ruta maliciosa. Instala `pytest` y `anyio` (viene con `mcp`):
+
+```python title="test_servidor.py"
+import pytest
+from mcp import Client
+import servidor
+
+@pytest.fixture
+def notas(tmp_path, monkeypatch):
+    (tmp_path / "reuniones").mkdir()
+    (tmp_path / "reuniones" / "lunes.md").write_text("Presupuesto 2027: congelar contrataciones.")
+    monkeypatch.setattr(servidor, "RAIZ", tmp_path.resolve())
+    return tmp_path
+
+@pytest.mark.anyio
+async def test_buscar_y_leer(notas):
+    async with Client(servidor.mcp) as c:
+        nombres = {t.name for t in (await c.list_tools()).tools}
+        assert nombres == {"buscar_notas", "leer_nota"}
+        r = await c.call_tool("buscar_notas", {"consulta": "presupuesto"})
+        assert not r.is_error and "reuniones/lunes.md" in r.content[0].text
+        r = await c.call_tool("leer_nota", {"nombre": "reuniones/lunes.md"})
+        assert "congelar" in r.content[0].text
+
+@pytest.mark.anyio
+async def test_ruta_maliciosa(notas):
+    async with Client(servidor.mcp) as c:
+        r = await c.call_tool("leer_nota", {"nombre": "../../.ssh/id_rsa"})
+        assert r.is_error and "Nombre no válido" in r.content[0].text
+
+@pytest.fixture
+def anyio_backend():
+    return "asyncio"
+```
+
+**Desde un agente con LangChain.** Si tu agente usa LangChain, no necesitas el cliente de la lección 2: `MCPAdapter` (paquete `langchain[mcp]`, en beta y compatible con `mcp` 2.x) lanza el servidor y convierte sus herramientas en herramientas de LangChain para `create_agent`. Un `Path` lanza el servidor por `stdio`; un `str` solo se acepta si es una URL http(s).
+
+```python title="agente_notas_langchain.py"
+import asyncio, warnings
+from pathlib import Path
+from langchain.agents import create_agent
+from langchain.chat_models import init_chat_model
+from langchain_core._api import LangChainBetaWarning
+
+warnings.filterwarnings("ignore", category=LangChainBetaWarning)   # el módulo avisa de que es beta
+from langchain.mcp import MCPAdapter  # noqa: E402
+
+MODEL = "anthropic:claude-sonnet-5-5"
+SERVIDOR = Path(__file__).with_name("servidor.py")
+
+async def main():
+    async with MCPAdapter(SERVIDOR) as mcp:
+        tools = await mcp.list_tools()
+        agente = create_agent(init_chat_model(MODEL, max_tokens=1024), tools,
+                              system_prompt="Responde con lo que encuentres en las notas.")
+        r = await agente.ainvoke({"messages": [("user", "¿Qué se decidió sobre el presupuesto de 2027?")]})
+        return r["messages"][-1].content
+
+if __name__ == "__main__":
+    print(asyncio.run(main()))
+```
+
+El adaptador esconde el cliente y la traducción de esquemas, y convierte un `ToolError` en un `ToolMessage` con `status="error"`, el equivalente a `is_error`. Verás tutoriales con `langchain-mcp-adapters` (`MultiServerMCPClient`): ese paquete exige `mcp<2` y no convive en el mismo entorno con el SDK 2.x. Más detalle en [[cursos/langchain-y-langgraph/10-mcp-en-langchain]].
 
 ```text
 # salida de ejemplo del agente
@@ -232,11 +295,11 @@ Respuesta: En la reunión del lunes se acordó congelar contrataciones hasta mar
 
 ## Resumen
 
-- `MCPServer` genera el esquema de los tipos y la descripción del *docstring*; en TypeScript lo das con `zod`.
+- `MCPServer` genera el esquema de los tipos y la descripción del *docstring*; en TypeScript (SDK v2, `@modelcontextprotocol/server`) lo das con `z.object(...)`.
 - La descripción es tu única forma de explicarle la herramienta al modelo: incluye cuándo usarla y qué hacer si falla.
 - Errores con instrucciones, salidas acotadas y rutas comprobadas.
 - Con `stdio`, los registros van a `stderr`.
-- Prueba con el Inspector, con tu cliente y con pruebas unitarias.
+- Prueba en proceso con `mcp.Client(servidor)`, con el Inspector y desde un agente (tu cliente o `MCPAdapter` en LangChain).
 
 ## Para seguir
 

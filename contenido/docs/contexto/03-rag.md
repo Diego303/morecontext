@@ -2,6 +2,7 @@
 titulo: RAG
 descripcion: Referencia de la generación aumentada por recuperación, con indexación, búsqueda, inyección de fragmentos en el prompt, parámetros clave y fallos típicos.
 creado: 2026-08-21
+actualizado: 2026-10-29
 orden: 3
 nivel: intermedio
 tags: [contexto, rag, embeddings]
@@ -43,7 +44,7 @@ flowchart LR
 | [[glosario/reranking]] | Reordena los candidatos con un modelo más preciso | [[roadmap/30-contexto-y-rag/04-reranking]] |
 | Generación con citas | Responde citando fragmentos y se abstiene si no hay base | [[roadmap/30-contexto-y-rag/05-respuestas-con-citas]] |
 
-Anthropic no ofrece un modelo de embeddings propio: usa el proveedor que prefieras. Mezclar embeddings de modelos distintos en el mismo índice no funciona; si cambias de modelo, reindexa.
+Anthropic no ofrece un modelo de embeddings propio: usa el proveedor que prefieras o un modelo abierto en local (por ejemplo, con Ollama: `ollama.embed(model=…, input=[…]).embeddings`). Las opciones abiertas de embeddings, *rerankers* y bases vectoriales (pgvector, Qdrant, LanceDB…) están en [[docs/modelos-abiertos/04-embeddings-y-rerankers]] y [[docs/modelos-abiertos/05-bases-vectoriales]]. Mezclar embeddings de modelos distintos en el mismo índice no funciona; si cambias de modelo, reindexa.
 
 ## Parámetros que más influyen
 
@@ -160,11 +161,38 @@ Para producción faltan tres cosas: un índice persistente, búsqueda híbrida c
 
 ## RAG como herramienta
 
-En lugar de recuperar siempre antes de llamar al modelo, puedes darle una herramienta `buscar_docs` y dejar que decida cuándo y qué buscar, incluso varias veces con consultas distintas. Es más flexible y más caro; encaja en agentes ([[docs/herramientas/01-uso-de-herramientas]]). El RAG fijo es más predecible y fácil de evaluar.
+En lugar de recuperar siempre antes de llamar al modelo, puedes darle una herramienta `buscar_docs` y dejar que decida cuándo y qué buscar, incluso varias veces con consultas distintas. Es el [[glosario/rag-agentico|RAG agéntico]] (Singh et al., 2025, [*Agentic Retrieval-Augmented Generation: A Survey*](https://arxiv.org/abs/2501.09136)). Es más flexible y más caro; encaja en agentes ([[docs/herramientas/01-uso-de-herramientas]]). El RAG fijo es más predecible y fácil de evaluar.
+
+## RAG o contexto largo
+
+Con ventanas de 1M de tokens, la primera pregunta es si necesitas un RAG. Las comparativas publicadas no dan un ganador fijo:
+
+- Li et al., 2024, [*Retrieval Augmented Generation or Long-Context LLMs?*](https://arxiv.org/abs/2407.16833): con recursos suficientes, el contexto largo gana de media en calidad, pero el RAG es mucho más barato. Proponen enrutar (*Self-Route*): que el modelo decida si le basta lo recuperado o necesita el documento entero.
+- Li et al., ICML 2025, [*LaRA: … No Silver Bullet for LC or RAG Routing*](https://arxiv.org/abs/2502.09977): la elección depende del modelo, de la longitud del contexto, del tipo de tarea y de la calidad de la recuperación.
+
+| Situación | Punto de partida |
+|---|---|
+| Base pequeña y estable (cabe con holgura en la ventana) | Todo en el prompt con [[docs/contexto/02-prompt-caching|caché]] |
+| Base mediana o que cambia | RAG híbrido con recuperación contextual y *reranking* |
+| Preguntas globales sobre todo el corpus («¿qué temas se repiten?») | GraphRAG o LightRAG |
+| Agente que busca según avanza | RAG como herramienta |
+
+Mide las dos opciones con tus preguntas antes de decidir: la latencia y el coste del contexto largo se pagan en cada llamada, y el *context rot* empeora la respuesta al crecer la entrada ([[docs/contexto/01-ventana-de-contexto]]).
+
+## Técnicas de recuperación recientes
+
+| Técnica | Qué cambia | Referencia | Dónde se explica |
+|---|---|---|---|
+| [[glosario/late-chunking|Late chunking]] | Pasa el documento entero por un modelo de embeddings de contexto largo y trocea después, antes de promediar: cada fragmento conserva el contexto del documento | Günther et al. (Jina AI), 2024, [*Late Chunking*](https://arxiv.org/abs/2409.04701) | [[cursos/rag-a-fondo/03-recuperar-bien]] |
+| ColBERT ([[glosario/interaccion-tardia|interacción tardía]]) | Un vector por token y puntuación MaxSim entre consulta y documento: más precisa que un vector por fragmento, con más almacenamiento | Khattab y Zaharia, 2020, [*ColBERT*](https://arxiv.org/abs/2004.12832) | [[cursos/rag-a-fondo/03-recuperar-bien]] |
+| [[glosario/graphrag|GraphRAG]] | Grafo de entidades y resúmenes de comunidades para preguntas que abarcan todo el corpus | Edge et al. (Microsoft), 2024, [*From Local to Global*](https://arxiv.org/abs/2404.16130); variante ligera: Guo et al., 2024, [*LightRAG*](https://arxiv.org/abs/2410.05779) | [[cursos/rag-a-fondo/09-cuando-el-rag-vectorial-no-basta]] |
+| Reescritura, HyDE, multi-query | Transforman la pregunta antes de buscar | Gao et al., 2022, [*HyDE*](https://arxiv.org/abs/2212.10496) | [[cursos/rag-a-fondo/05-tecnicas-avanzadas-de-recuperacion]] |
+
+Ninguna sustituye a lo básico: un corpus limpio ([[cursos/rag-a-fondo/06-el-corpus-manda]]), búsqueda híbrida y una evaluación que separe recuperación y generación. Añade técnicas cuando la evaluación diga qué falla.
 
 ## Errores frecuentes
 
-- **Evaluar solo la respuesta final.** Mide por separado si la recuperación trae el fragmento correcto y si el modelo lo usa bien: [[cursos/rag-a-fondo/04-evaluar-un-rag]].
+- **Evaluar solo la respuesta final.** Mide por separado si la recuperación trae el fragmento correcto y si el modelo lo usa bien: [[cursos/rag-a-fondo/10-evaluar-un-rag]].
 - **Solo búsqueda vectorial.** Falla con códigos, nombres propios y términos exactos. Añade [[glosario/bm25|BM25]].
 - **Fragmentos sin contexto ni metadatos.** El modelo recibe «el plazo es de 30 días» sin saber de qué.
 - **No permitir la abstención.** Si el prompt no dice qué hacer cuando no hay base, el modelo rellena: [[glosario/alucinacion]].
@@ -174,6 +202,8 @@ En lugar de recuperar siempre antes de llamar al modelo, puedes darle una herram
 ## Ver también
 
 - [[cursos/rag-a-fondo/01-anatomia-de-un-rag]]: anatomía completa.
+- [[problemas/el-rag-no-encuentra-el-documento]] y [[problemas/el-rag-encuentra-pero-responde-mal]]: los dos fallos de un RAG, por separado.
+- [[recetas/rag-local-con-pgvector]]: el mismo RAG con piezas abiertas.
 - [[sistemas/rag-con-citas]]: arquitectura con verificación y abstención.
 - [[docs/contexto/01-ventana-de-contexto]]: cuándo basta con meter el documento entero.
 - [[glosario/rag]], [[glosario/grounding]] y [[glosario/embeddings]].

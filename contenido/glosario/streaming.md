@@ -2,6 +2,7 @@
 titulo: Streaming
 descripcion: Recibir la respuesta del modelo por partes a medida que se genera, en lugar de esperar a que termine entera.
 creado: 2026-10-02
+actualizado: 2026-10-29
 categoria: produccion
 aliases: [respuesta en streaming, transmisión incremental, server-sent events]
 tags: [produccion, api]
@@ -19,7 +20,7 @@ with client.messages.stream(model=MODEL, max_tokens=1024, messages=messages) as 
     final = stream.get_final_message()  # respuesta completa, con stop_reason y usage
 ```
 
-No reduce el tiempo total ni el coste, pero mejora mucho la [[glosario/latencia]] percibida en interfaces de chat y voz. También evita cortes por tiempo de espera en respuestas largas. Si usas herramientas, los argumentos de `tool_use` llegan troceados: espera al mensaje final para ejecutarlas.
+No reduce el tiempo total ni el coste, pero mejora mucho la [[glosario/latencia]] percibida en interfaces de chat y voz. También evita cortes por tiempo de espera en respuestas largas. Si usas herramientas, los argumentos de `tool_use` llegan troceados: espera al mensaje final para ejecutarlas. En LangGraph, `stream_mode="messages"` emite los tokens del modelo y `"updates"`, el resultado de cada nodo. En agentes de voz, cada pieza (transcripción, modelo y síntesis) trabaja en streaming para recortar la espera, o se usa un modelo [[glosario/voz-a-voz]].
 
 ## Ver también
 

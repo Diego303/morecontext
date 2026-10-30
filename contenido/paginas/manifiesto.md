@@ -2,6 +2,7 @@
 titulo: Manifiesto
 descripcion: Por qué existe MoreContext, qué principios sigue, qué no vas a encontrar aquí, cómo se financia y cómo corregimos los errores.
 creado: 2026-07-01
+actualizado: 2026-10-29
 tags: [proyecto]
 relacionados: ["[[paginas/sobre]]", "[[paginas/contribuir]]", "[[blog/2026-07-01-por-que-morecontext]]"]
 ---
@@ -20,7 +21,8 @@ Aquí intentamos juntarlo, explicarlo desde la base y enlazarlo. Cada término l
 2. **Útil hoy.** Cada página tiene que servirte para hacer algo: una decisión, un fragmento de código, una comprobación. Si no aporta, sobra.
 3. **De lo simple a lo complejo.** Una llamada bien hecha antes que un agente; un [[glosario/workflow|workflow]] antes que varios agentes. El [[roadmap/index|roadmap]] sigue ese orden, y los [[patrones/index|patrones]] también.
 4. **Código real.** Ejemplos mínimos que se pueden ejecutar, con el manejo de errores que necesitarías de verdad. Las salidas inventadas se marcan como tales.
-5. **Abierto.** El contenido tiene licencia libre y vive en un repositorio público. Puedes leerlo, copiarlo, adaptarlo y corregirlo. Los detalles están en [[paginas/licencia]].
+5. **Primero el mecanismo, después el framework.** Enseñamos el bucle a mano con el SDK de un proveedor y luego cómo se hace con piezas abiertas ([[cursos/langchain-y-langgraph/index|LangChain y LangGraph]], [[cursos/agentes-con-modelos-abiertos/index|modelos de pesos abiertos]]). Así sabes qué te esconde cada capa. Y decimos siempre qué es open source, qué son pesos abiertos y qué es comercial.
+6. **Abierto.** El contenido tiene licencia libre y vive en un repositorio público. Puedes leerlo, copiarlo, adaptarlo y corregirlo. Los detalles están en [[paginas/licencia]].
 
 ## Qué no vas a encontrar
 
@@ -44,6 +46,7 @@ Nos vamos a equivocar. Cuando pase:
 - Los errores técnicos se corrigen cuanto antes y se actualiza la fecha de la página.
 - Si una corrección cambia el sentido de una recomendación, se explica en la propia página qué ha cambiado y por qué.
 - Las páginas antiguas que ya no son válidas se actualizan o se retiran. No se dejan publicadas sin aviso.
+- Las entradas fechadas del [[radar/index|radar]] y del [[blog/index|blog]] no se reescriben: si un dato queda superado, llevan una nota de actualización con el dato vigente y un enlace.
 
 > [!nota] Si algo no funciona
 > Si un ejemplo de código falla con la versión actual de la API, es un error nuestro. Avísanos con la versión del SDK que usas y el mensaje de error.

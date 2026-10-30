@@ -2,6 +2,7 @@
 titulo: Herramientas del lado del servidor
 descripcion: Qué son las herramientas que ejecuta el proveedor de la API, como la búsqueda web, en qué se diferencian de las tuyas y cómo integrarlas en tu bucle.
 creado: 2026-08-07
+actualizado: 2026-10-29
 orden: 3
 nivel: intermedio
 tags: [herramientas, api, busqueda-web]
@@ -35,9 +36,27 @@ flowchart LR
 
 ## Qué tipos hay
 
-El catálogo depende del proveedor y cambia con frecuencia. Las categorías habituales son la búsqueda web, la lectura de páginas web y la ejecución de código en un entorno aislado gestionado por el proveedor.
+El catálogo depende del proveedor y cambia con frecuencia. En la API de Claude, a octubre de 2026, Anthropic define estas herramientas:
 
-Cada herramienta se declara con un **tipo versionado** (un identificador que incluye una fecha o versión) y sus opciones, como un límite de usos por petición o listas de dominios permitidos y bloqueados en la búsqueda web. **No copies esos identificadores de memoria ni de artículos antiguos**: tómalos de la [documentación oficial](https://platform.claude.com/docs), donde también figuran los modelos compatibles y el precio por uso.
+| Herramienta | Dónde se ejecuta | Estado | Para qué |
+|---|---|---|---|
+| Búsqueda web | Servidor | GA | Buscar información pública y reciente, con citas. |
+| *Web fetch* | Servidor | GA | Leer una URL concreta. |
+| Ejecución de código | Servidor | GA | Python en un contenedor aislado sin internet; ficheros de salida vía Files API. |
+| Búsqueda de herramientas | Servidor | GA | Encontrar herramientas diferidas (`defer_loading`). Ver [[docs/herramientas/05-busqueda-y-carga-diferida]]. |
+| Conector MCP (`mcp_toolset`) | Servidor | Beta | Usar un servidor MCP remoto. Ver [[docs/herramientas/07-mcp-desde-la-api]]. |
+| *Advisor* | Servidor | Beta | Un modelo ejecutor consulta a otro más capaz. Ver [[patrones/13-ejecutor-y-asesor]]. |
+| Memoria | **Tu código** | GA | Leer y escribir en un directorio `/memories` que tú guardas. Ver [[docs/contexto/04-memoria]]. |
+| Bash y editor de texto | **Tu código** | GA | Comandos y edición de archivos con un esquema que el modelo ya conoce. |
+| Uso del ordenador y del navegador | **Tu código** | GA | *Toolsets* de cliente. Ver [[docs/herramientas/04-uso-del-ordenador]]. |
+
+Las de las últimas filas las define el proveedor pero **las ejecutas tú**: su ciclo es el de cualquier herramienta de cliente (`tool_use` → `tool_result`).
+
+Cada herramienta se declara con un **tipo versionado** (un identificador que incluye una fecha, como `web_search_20260318`) y sus opciones, como un límite de usos por petición o listas de dominios permitidos y bloqueados en la búsqueda web. **No copies esos identificadores de memoria ni de artículos antiguos**: tómalos de la [documentación oficial](https://platform.claude.com/docs), donde también figuran los modelos compatibles y el precio por uso.
+
+### Filtrado dinámico y `allowed_callers`
+
+Las versiones recientes de búsqueda y *web fetch* (de `_20260209` en adelante) hacen **filtrado dinámico**: el modelo escribe código que filtra los resultados antes de que entren en el contexto, con lo que gasta menos tokens. Por eso su `allowed_callers` por defecto es la ejecución de código, no el modelo directamente. Si quieres la llamada directa clásica, pon `"allowed_callers": ["direct"]`. Ten en cuenta que, con filtrado, no son aptas para retención cero de datos (ZDR). La misma propiedad sirve para tus herramientas: [[docs/herramientas/06-llamada-programatica]].
 
 ## Cómo aparecen en la respuesta
 
@@ -46,20 +65,21 @@ Cuando el modelo usa una herramienta del servidor, `resp.content` incluye, adem�
 - un bloque que representa la **llamada** (con la consulta o el código que el modelo decidió ejecutar);
 - un bloque con el **resultado** (por ejemplo, la lista de páginas encontradas).
 
-Sus `type` son propios de cada herramienta y **no son `tool_use` ni `tool_result`**. En la búsqueda web, el texto final suele llevar **citas** que apuntan a las fuentes usadas, útiles para el [[glosario/grounding|grounding]] y para mostrar enlaces a la persona.
+Sus `type` son propios de cada herramienta (`server_tool_use` para la llamada; `web_search_tool_result`, `web_fetch_tool_result` o `code_execution_tool_result` para el resultado) y **no son `tool_use` ni `tool_result`**. En la búsqueda web, el texto final suele llevar **citas** que apuntan a las fuentes usadas, útiles para el [[glosario/grounding|grounding]] y para mostrar enlaces a la persona.
 
 Dos consecuencias para tu código:
 
 1. **Filtra por `type == "tool_use"`** cuando busques qué ejecutar. Si recorres todos los bloques y ejecutas «lo que parezca una herramienta», acabarás intentando ejecutar algo que ya ejecutó el proveedor.
-2. **Guarda `resp.content` entero** en el historial. Los bloques de llamada y resultado forman parte de la conversación.
+2. **Guarda `resp.content` entero** en el historial. Los bloques de llamada y resultado forman parte de la conversación. Si la búsqueda devuelve `encrypted_content` o `encrypted_index`, reenvíalos sin modificar.
+3. **Un turno puede mezclar las dos clases.** Si el modelo usó la búsqueda web y además pide una herramienta tuya, la respuesta trae los bloques del servidor ya resueltos y un `tool_use` pendiente, con `stop_reason == "tool_use"`. Ejecuta solo el `tool_use`.
 
 ## `pause_turn`
 
-Un turno con varias búsquedas o ejecuciones puede ser largo. La API puede **pausarlo** y devolver `stop_reason == "pause_turn"` con lo hecho hasta ese momento. Para continuar, reenvía la conversación con esa respuesta añadida como mensaje `assistant`, sin añadir nada más. El modelo retoma donde lo dejó.
+Un turno con varias búsquedas o ejecuciones puede ser largo. Cuando el bucle de herramientas del servidor llega a su límite (10 iteraciones por defecto), la API **pausa** el turno y devuelve `stop_reason == "pause_turn"` con lo hecho hasta ese momento. Para continuar, reenvía la conversación con esa respuesta añadida como mensaje `assistant`, sin añadir nada más y **con las mismas `tools`** (si cambias la lista, el turno no se retoma bien). El modelo sigue donde lo dejó.
 
 ## Ejemplo completo
 
-Bucle que mezcla una herramienta del servidor con una de cliente y gestiona `pause_turn`. La definición de la herramienta del servidor se deja como marcador: cópiala de la documentación oficial.
+Bucle que mezcla una herramienta del servidor con una de cliente y gestiona `pause_turn`. El tipo de la búsqueda web es el vigente en octubre de 2026: compruébalo en la documentación oficial antes de copiarlo.
 
 ```python tab="Python" title="busqueda.py"
 import anthropic
@@ -68,8 +88,13 @@ MODEL = "claude-sonnet-5-5"
 MAX_PASOS = 10
 client = anthropic.Anthropic()
 
-# Copia aquí la definición exacta (tipo versionado, nombre y opciones) de la documentación oficial.
-BUSQUEDA_WEB = {"type": "<tipo de la documentación>", "name": "<nombre de la documentación>"}
+# Tipo versionado: compruébalo en la documentación oficial.
+BUSQUEDA_WEB = {
+    "type": "web_search_20260318",
+    "name": "web_search",
+    "max_uses": 3,                    # tope de búsquedas por petición (cada una se cobra)
+    "allowed_callers": ["direct"],    # sin filtrado dinámico con código
+}
 
 GUARDAR_NOTA = {
     "name": "guardar_nota",
@@ -95,7 +120,7 @@ def preguntar(pregunta: str) -> str:
         mensajes.append({"role": "assistant", "content": resp.content})
 
         if resp.stop_reason == "pause_turn":
-            continue  # reenvía tal cual para que el modelo siga
+            continue  # reenvía tal cual, con las mismas tools, para que el modelo siga
 
         if resp.stop_reason == "tool_use":
             resultados = [
@@ -120,8 +145,13 @@ const MODEL = "claude-sonnet-5-5";
 const MAX_PASOS = 10;
 const client = new Anthropic();
 
-// Copia aquí la definición exacta (tipo versionado, nombre y opciones) de la documentación oficial.
-const BUSQUEDA_WEB: any = { type: "<tipo de la documentación>", name: "<nombre de la documentación>" };
+// Tipo versionado: compruébalo en la documentación oficial.
+const BUSQUEDA_WEB: any = {
+  type: "web_search_20260318",
+  name: "web_search",
+  max_uses: 3,
+  allowed_callers: ["direct"],
+};
 
 const GUARDAR_NOTA: Anthropic.Tool = {
   name: "guardar_nota",
@@ -174,10 +204,13 @@ console.log(await preguntar("¿Qué dice la especificación de MCP sobre transpo
 | No quieres mantener la infraestructura (buscador, entorno de ejecución) | Necesitas registrar, filtrar o validar cada llamada |
 | Te sirven las opciones que ofrece el proveedor | Necesitas lógica propia (permisos, cuotas por usuario) |
 | La latencia de una petición más larga es aceptable | Necesitas controlar el tiempo de cada paso |
+| Te vale el contenedor del proveedor (sin red, sin paquetes nuevos) | Necesitas red, dependencias propias o un modelo abierto |
+
+Con un modelo abierto no hay herramientas del servidor: la búsqueda o la ejecución de código las pones tú, como herramienta de cliente o con un servidor MCP (hay servidores abiertos de búsqueda y de *sandbox*). Ver [[docs/modelos-abiertos/09-guardrails-y-sandbox]].
 
 ## Errores frecuentes
 
-- **No tratar `pause_turn`.** Tu bucle lo interpreta como respuesta final y devuelve un texto a medias.
+- **No tratar `pause_turn`.** Tu bucle lo interpreta como respuesta final y devuelve un texto a medias. Y al reenviar, cambiar la lista de `tools`.
 - **Ejecutar bloques que no son `tool_use`.** Filtra siempre por tipo.
 - **Identificadores de versión copiados de un ejemplo antiguo.** La petición falla o usa una versión retirada.
 - **Olvidar el coste por uso.** Una búsqueda por pregunta multiplicada por miles de usuarios se nota. Limita los usos por petición.
@@ -187,5 +220,7 @@ console.log(await preguntar("¿Qué dice la especificación de MCP sobre transpo
 
 - [[docs/herramientas/01-uso-de-herramientas]]: herramientas de cliente.
 - [[docs/herramientas/04-uso-del-ordenador]]: otra herramienta definida por el proveedor, pero ejecutada por ti.
+- [[docs/herramientas/06-llamada-programatica]]: tus herramientas llamadas desde la ejecución de código.
+- [[docs/fundamentos/06-motivos-de-parada-y-rechazos]]: `pause_turn` y el resto de motivos de parada.
 - [[sistemas/investigacion-multiagente]]: búsqueda a escala con subagentes.
 - [[glosario/stop-reason]].

@@ -2,6 +2,7 @@
 titulo: Context engineering
 descripcion: Decidir qué información entra en la ventana de contexto del modelo, en qué orden y en qué forma, en cada paso de una aplicación o un agente.
 creado: 2026-08-04
+actualizado: 2026-10-29
 orden: 1
 tipo: disciplina
 tags: [contexto, agentes, prompting]
@@ -15,7 +16,7 @@ relacionados: ["[[cursos/context-engineering/index]]", "[[modelos/02-ingenieria-
 
 Un modelo no recuerda nada entre llamadas. Todo lo que sabe de tu tarea es lo que le mandas en esa petición. En una llamada suelta eso es un prompt. En un [[glosario/agente|agente]] que da veinte vueltas al [[glosario/bucle-agentico|bucle agéntico]], el contexto crece con cada [[glosario/tool-result|resultado de herramienta]], y alguien tiene que decidir qué se queda, qué se resume y qué se descarta.
 
-Anthropic lo resume así en [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) (2025): el contexto es un recurso finito y hay que buscar el conjunto más pequeño de [[glosario/token|tokens]] con mucha señal que maximice la probabilidad del resultado que quieres.
+Anthropic lo resume así en [Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) (29 sept. 2025): el contexto es un recurso finito y hay que buscar el conjunto más pequeño de [[glosario/token|tokens]] con mucha señal que maximice la probabilidad del resultado que quieres.
 
 Las piezas que gestionas:
 
@@ -30,7 +31,7 @@ Las piezas que gestionas:
 
 ## Por qué importa
 
-Más contexto no significa mejor respuesta. Con contextos largos el modelo atiende peor a la información enterrada en medio: lo documentan Liu et al. en [Lost in the Middle](https://arxiv.org/abs/2307.03172) (2023). Además, cada token cuesta dinero y [[glosario/latencia|latencia]] en cada vuelta del bucle, porque reenvías el historial completo.
+Más contexto no significa mejor respuesta. Con contextos largos el modelo atiende peor a la información enterrada en medio: lo documentan Liu et al. en [Lost in the Middle](https://arxiv.org/abs/2307.03172) (2023). Chroma lo midió en 2025 en 18 modelos y lo llamó [[glosario/context-rot|context rot]]: el rendimiento cae al crecer la entrada incluso en tareas simples, y un solo distractor parecido a la respuesta ya empeora el resultado ([[biblioteca/context-rot]]). Además, cada token cuesta dinero y [[glosario/latencia|latencia]] en cada vuelta del bucle, porque reenvías el historial completo.
 
 Los fallos de contexto se disfrazan de fallos del modelo. El agente «se olvida» de una regla porque quedó a 80 000 tokens de distancia. Llama a la herramienta equivocada porque tiene dos con descripciones casi iguales. Inventa un dato porque el documento correcto no entró en la recuperación. Cambiar de modelo no arregla nada de eso.
 
@@ -39,11 +40,13 @@ Los fallos de contexto se disfrazan de fallos del modelo. El agente «se olvida�
 - **Trata el contexto como un presupuesto.** Mide cuántos tokens ocupa cada pieza con `client.messages.count_tokens(...)` antes de añadir nada. Lo explica [[cursos/context-engineering/01-el-contexto-como-presupuesto]].
 - **Pon lo estable delante y lo variable detrás.** Herramientas y sistema primero, conversación después. Así aprovechas el [[glosario/prompt-caching|prompt caching]], que cachea el prefijo en orden `tools` → `system` → `messages`.
 - **Documentos largos arriba, pregunta al final.** Envuelve cada documento en etiquetas (`<documento id="3">…</documento>`) para que el modelo pueda citarlo. Más detalle en [[modelos/07-documentos-largos]].
-- **Recupera en vez de cargarlo todo.** Si el corpus no cabe holgado, usa [[glosario/rag|RAG]] o deja que el agente busque con herramientas cuando lo necesite.
+- **Recupera en vez de cargarlo todo.** Si el corpus no cabe holgado, usa [[glosario/rag|RAG]] o deja que el agente busque con herramientas cuando lo necesite. Lo que Anthropic llama recuperación *just-in-time*: en el contexto viajan identificadores ligeros (rutas, consultas, URL) y el contenido se lee al usarlo.
+- **Carga las herramientas bajo demanda.** Con muchas herramientas, sus definiciones pueden ocupar más que la tarea. La búsqueda de herramientas con `defer_loading: true` deja en el contexto solo las que el modelo pide ([[glosario/carga-diferida-de-herramientas]], [[recetas/carga-diferida-de-herramientas]]).
 - **Recorta los resultados de herramientas.** Devuelve los campos útiles, pagina las listas y trunca con un aviso («mostrando 20 de 340; usa `pagina=2`»). Ver [[disciplinas/diseno-de-herramientas]].
-- **Compacta cuando el historial crece.** Resume las vueltas antiguas en un estado breve (decisiones, datos confirmados, pendientes) y descarta el detalle. Es la [[glosario/compactacion|compactación]].
+- **Compacta cuando el historial crece.** Resume las vueltas antiguas en un estado breve (decisiones, datos confirmados, pendientes) y descarta el detalle. Es la [[glosario/compactacion|compactación]]. La API de Claude la ofrece también en el servidor, en beta, junto con la limpieza de resultados de herramientas antiguos ([[docs/contexto/05-compactacion-y-limpieza-en-el-servidor]]).
 - **Saca trabajo a [[glosario/subagente|subagentes]].** Una búsqueda que lee cincuenta páginas puede devolver al agente principal un resumen de diez líneas. El ruido se queda en el contexto del subagente.
 - **Guarda notas fuera del contexto.** Un archivo `NOTAS.md` o una herramienta de memoria que el agente lee al empezar sobrevive a la compactación.
+- **Con un modelo local, fija la ventana tú.** Ollama arranca con un contexto por defecto pequeño (`num_ctx`) y recorta la entrada en silencio: el agente pierde el *prompt* de sistema sin dar error. Súbelo de forma explícita y compruébalo con `ollama ps` ([[docs/modelos-abiertos/01-ollama]]).
 
 ```mermaid
 flowchart LR
@@ -59,7 +62,7 @@ flowchart LR
 ## Señales de que lo haces mal
 
 - Pegas «por si acaso» el manual entero en el prompt de sistema.
-- El agente rinde bien en las primeras vueltas y empeora a partir de la décima.
+- El agente rinde bien en las primeras vueltas y empeora a partir de la décima ([[problemas/contexto-saturado-en-sesiones-largas]]).
 - No sabes cuántos tokens ocupa cada parte de tu petición.
 - Una herramienta devuelve JSON de 30 000 tokens y nadie lo ha mirado.
 - Tienes quince herramientas y el modelo confunde dos de ellas a menudo.
@@ -80,4 +83,6 @@ flowchart LR
 
 - [[cursos/context-engineering/index]]: el curso completo.
 - [[cursos/context-engineering/03-compactacion-y-memoria]]
+- [[recetas/canario-de-contexto]]: una señal barata para saber cuándo el contexto está saturado.
+- [[biblioteca/context-engineering-anthropic]]
 - [[blog/2026-09-28-el-contexto-es-un-presupuesto]]

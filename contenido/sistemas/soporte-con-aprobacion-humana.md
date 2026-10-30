@@ -2,6 +2,7 @@
 titulo: Agente de soporte con aprobación humana
 descripcion: Arquitectura de un agente que resuelve tickets consultando pedidos y documentación, y que propone reembolsos o cambios para que una persona los apruebe antes de ejecutarse.
 creado: 2026-09-09
+actualizado: 2026-10-29
 tags: [sistemas, agentes, soporte, humano-en-el-bucle]
 orden: 2
 complejidad: 2
@@ -9,7 +10,7 @@ tiempo: "2–4 días"
 stack: [Python, API de Claude, API de pedidos, base de datos de propuestas, panel interno]
 componentes: [Canal de entrada, Agente con herramientas, Capa de políticas, Cola de aprobación, Ejecutor de acciones, Registro de auditoría]
 patrones: ["[[patrones/08-agente-autonomo]]", "[[patrones/04-enrutado]]", "[[patrones/02-llamada-aumentada]]"]
-relacionados: ["[[glosario/humano-en-el-bucle]]", "[[recetas/aprobacion-humana-antes-de-actuar]]", "[[docs/agentes/03-humano-en-el-bucle]]", "[[disciplinas/humano-en-el-bucle]]"]
+relacionados: ["[[glosario/humano-en-el-bucle]]", "[[recetas/aprobacion-humana-antes-de-actuar]]", "[[docs/agentes/03-humano-en-el-bucle]]", "[[disciplinas/humano-en-el-bucle]]", "[[recetas/aprobacion-humana-con-langgraph]]"]
 ---
 
 ## Qué problema resuelve
@@ -55,7 +56,7 @@ flowchart LR
 
 ## Decisiones de diseño
 
-**Propuesta asíncrona frente a pausa del bucle.** Hay dos formas de meter a la persona. Puedes *pausar* el bucle: guardas la conversación con el `tool_use` pendiente y, cuando llega la aprobación, añades el `tool_result` y continúas. O puedes hacer que la herramienta *cree una propuesta y responda al momento* «pendiente de aprobación». La pausa es más natural si la aprobación llega en segundos (un operador en directo). La propuesta asíncrona es más robusta cuando la aprobación tarda horas: no mantienes conversaciones abiertas y el ejecutor no depende del modelo. Este diseño usa la segunda; la primera está en [[recetas/aprobacion-humana-antes-de-actuar]].
+**Propuesta asíncrona frente a pausa del bucle.** Hay dos formas de meter a la persona. Puedes *pausar* el bucle: guardas la conversación con el `tool_use` pendiente y, cuando llega la aprobación, añades el `tool_result` y continúas. O puedes hacer que la herramienta *cree una propuesta y responda al momento* «pendiente de aprobación». La pausa es más natural si la aprobación llega en segundos (un operador en directo). La propuesta asíncrona es más robusta cuando la aprobación tarda horas: no mantienes conversaciones abiertas y el ejecutor no depende del modelo. Este diseño usa la segunda; la primera está en [[recetas/aprobacion-humana-antes-de-actuar]]. Si guardas la conversación pausada en una base de datos, la pausa también aguanta horas: es lo que hace la variante con LangGraph de más abajo.
 
 **El modelo propone, el código ejecuta.** Ni siquiera tras aprobarse vuelve la acción al modelo para que la ejecute. El ejecutor lee la propuesta aprobada de la base de datos y llama a la API. Así una inyección en el ticket no puede alterar lo que se ejecuta después de que la persona lo vio.
 
@@ -178,7 +179,7 @@ Fíjate en que `cliente_id` y `ticket_id` nunca salen del modelo, que la políti
 
 **Riesgos.**
 
-- **Fatiga de aprobación**: si las personas aprueban sin mirar, la salvaguarda desaparece. Muestra lo relevante, no la traza completa, y mide el tiempo por decisión.
+- **Fatiga de aprobación**: si las personas aprueban sin mirar, la salvaguarda desaparece. Anthropic midió que sus usuarios aprobaban en torno al 93 % de las peticiones de permiso de Claude Code ([*How we contain Claude across products*](https://www.anthropic.com/engineering/how-we-contain-claude), mayo de 2026). Muestra lo relevante, no la traza completa, y mide el tiempo por decisión.
 - **Promesas al cliente**: el agente puede escribir «te devolvemos el dinero» antes de la aprobación. Pruébalo en evals y prohíbelo en el *prompt*.
 - **Fuga de datos**: filtra en las herramientas qué campos del pedido ve el modelo. No necesita la tarjeta completa para decidir un reembolso.
 - **Deriva de política**: si la política cambia y el *prompt* no, el agente propone mal y la capa de políticas lo frena. Mantén una única fuente de verdad para ambos.
@@ -189,6 +190,107 @@ Fíjate en que `cliente_id` y `ticket_id` nunca salen del modelo, que la políti
 - **Aprobación por umbral**: acciones de bajo importe y riesgo se ejecutan solas con auditoría posterior; el resto pasa por la cola.
 - **Herramientas por MCP**: expón pedidos y políticas como [[glosario/servidor-mcp|servidor MCP]] para reutilizarlas en otros asistentes. Ver [[docs/herramientas/02-mcp]].
 - **Canal de voz**: el mismo núcleo detrás de un [[sistemas/agente-de-voz]], con confirmaciones habladas.
+
+### Con LangGraph: la pausa duradera
+
+[[herramientas/langgraph|LangGraph]] (MIT) convierte la otra opción de diseño, pausar el bucle, en algo que aguanta horas. `interrupt()` detiene el grafo antes de ejecutar la herramienta sensible, el *[[glosario/checkpointer|checkpointer]]* guarda el estado en SQLite o Postgres bajo un `thread_id`, y otro proceso lo reanuda con `Command(resume=…)` cuando la persona decide. La identidad sigue fuera del modelo: viaja en el `context` del grafo y las herramientas la leen con `ToolRuntime`, que no aparece en el esquema que ve el modelo.
+
+```python title="soporte_langgraph.py"
+from dataclasses import dataclass
+
+from langchain.chat_models import init_chat_model
+from langchain.messages import SystemMessage, ToolMessage
+from langchain.tools import ToolRuntime, tool
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.graph import END, START, MessagesState, StateGraph
+from langgraph.prebuilt import ToolNode
+from langgraph.types import Command, interrupt
+
+MODEL = "anthropic:claude-sonnet-5-5"     # o ChatOllama(model=…, num_ctx=…) en local
+SENSIBLES = {"reembolsar"}
+
+@dataclass
+class Sesion:                             # lo pone tu código; el modelo no lo ve ni lo elige
+    cliente_id: str
+    ticket_id: str
+
+class PoliticaError(Exception):
+    pass
+
+@tool
+def buscar_pedido(pedido_id: str, runtime: ToolRuntime[Sesion]) -> str:
+    """Devuelve estado, importe pagado y fecha de entrega de un pedido del cliente actual."""
+    pedido = api_pedidos.obtener(pedido_id)
+    if pedido is None or pedido["cliente_id"] != runtime.context.cliente_id:
+        raise PoliticaError("Pedido no encontrado para este cliente.")
+    return resumen_pedido(pedido)
+
+@tool
+def reembolsar(pedido_id: str, importe: float, motivo: str, runtime: ToolRuntime[Sesion]) -> str:
+    """Reembolsa un pedido. Solo se ejecuta tras la aprobación de una persona."""
+    validar_reembolso(runtime.context.cliente_id, {"pedido_id": pedido_id, "importe": importe})
+    api_pagos.reembolsar(pedido_id, importe, idempotency_key=f"{runtime.context.ticket_id}:{pedido_id}")
+    return f"Reembolso de {importe:.2f} € emitido para {pedido_id}."
+
+TOOLS = [buscar_pedido, reembolsar]
+SYSTEM = SystemMessage("Eres el agente de soporte de una tienda. Consulta el pedido antes de proponer "
+                       "un reembolso y no prometas el resultado: lo aprueba una persona.")
+
+def construir(modelo=None, checkpointer=None):
+    llm = (modelo or init_chat_model(MODEL, max_tokens=2048)).bind_tools(TOOLS)
+
+    def llamar_modelo(state: MessagesState):
+        return {"messages": [llm.invoke([SYSTEM, *state["messages"]])]}
+
+    def decidir(state: MessagesState):
+        return "aprobar" if state["messages"][-1].tool_calls else END
+
+    def aprobar(state: MessagesState):
+        llamadas = state["messages"][-1].tool_calls
+        pendientes = [c for c in llamadas if c["name"] in SENSIBLES]
+        if not pendientes:
+            return Command(goto="herramientas")
+        # El grafo se para aquí y el estado queda en el checkpointer, aunque la respuesta tarde horas.
+        decision = interrupt({"pendientes": [{"name": c["name"], "args": c["args"]} for c in pendientes]})
+        if decision["aprobada"]:
+            return Command(goto="herramientas")
+        rechazos = [ToolMessage(content=f"Rechazado por {decision['revisor']}: {decision.get('motivo', '')}",
+                                tool_call_id=c["id"], name=c["name"], status="error") for c in llamadas]
+        return Command(goto="modelo", update={"messages": rechazos})
+
+    g = StateGraph(MessagesState, context_schema=Sesion)
+    g.add_node("modelo", llamar_modelo)
+    g.add_node("aprobar", aprobar, destinations=("herramientas", "modelo"))
+    g.add_node("herramientas", ToolNode(TOOLS, handle_tool_errors=PoliticaError))  # vuelve como error, no rompe
+    g.add_edge(START, "modelo")
+    g.add_conditional_edges("modelo", decidir, ["aprobar", END])
+    g.add_edge("herramientas", "modelo")
+    return g.compile(checkpointer=checkpointer)
+
+if __name__ == "__main__":
+    with SqliteSaver.from_conn_string("soporte.db") as cp:
+        grafo = construir(checkpointer=cp)
+        config = {"configurable": {"thread_id": "ticket-123"}, "recursion_limit": 25}
+        sesion = Sesion(cliente_id="C-4411", ticket_id="ticket-123")
+        out = grafo.invoke({"messages": [("user", "El pedido P-1001 llegó roto, quiero el dinero.")]},
+                           config, context=sesion, version="v2")
+        if out.interrupts:                          # el panel muestra la propuesta y termina el proceso
+            print("Pendiente:", out.interrupts[0].value)
+        # Horas después, en otro proceso, el panel reanuda con la decisión:
+        # grafo.invoke(Command(resume={"aprobada": True, "revisor": "marta"}), config, context=sesion, version="v2")
+```
+
+Lo probé con un modelo simulado de LangChain y SQLite real: el grafo se para con la propuesta, se cierra la conexión, otro proceso abre la misma base y reanuda; un pedido ajeno vuelve al modelo como `ToolMessage` con `status="error"` en lugar de romper la ejecución, y un rechazo llega como error a cada `tool_call` pendiente. Como `aprobar` se vuelve a ejecutar desde el principio al reanudar, el código anterior al `interrupt()` no debe tener efectos.
+
+| Qué | Bucle con el SDK (arriba) | Variante LangGraph |
+|---|---|---|
+| Dónde espera la aprobación | Fila `pendiente` en tu tabla de propuestas | Estado del grafo en el *checkpointer*, con `thread_id` = ticket |
+| Quién ejecuta lo aprobado | Tu ejecutor, fuera del modelo | El `ToolNode` al reanudar; la política se revalida dentro de la herramienta |
+| Errores de política | `tool_result` con `is_error` | `ToolNode(handle_tool_errors=PoliticaError)`; sin eso, la excepción corta el grafo |
+| Límite de pasos | Tu `max_pasos` | `recursion_limit` explícito: el valor por defecto es tan alto que no frena nada |
+| Trazas | Tu registro | [[herramientas/langfuse|Langfuse]] o cualquier backend OpenTelemetry; LangSmith es comercial |
+
+Si tu agente cabe en `create_agent`, `HumanInTheLoopMiddleware(interrupt_on={"reembolsar": …})` hace lo mismo sin escribir el nodo de aprobación ([[recetas/aprobacion-humana-con-langgraph]], [[cursos/langchain-y-langgraph/07-humano-en-el-bucle-con-interrupt]]). En otros *frameworks* la pieza se llama `needs_approval=True` (OpenAI Agents SDK) o `requires_approval=True` (Pydantic AI); la tabla completa está en [[docs/frameworks/02-equivalencias]]. Si el grafo no reanuda, mira [[problemas/langgraph-no-reanuda-tras-interrupt]].
 
 ## Por dónde empezar
 

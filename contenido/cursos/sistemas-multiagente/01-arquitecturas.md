@@ -2,6 +2,7 @@
 titulo: Arquitecturas multiagente
 descripcion: Orquestador y trabajadores, pipeline y evaluador o debate. Qué resuelve cada arquitectura, cuándo falla y cómo elegir la adecuada para tu tarea.
 creado: 2026-09-24
+actualizado: 2026-10-29
 orden: 1
 minutos: 45
 tipo: teoria
@@ -10,7 +11,7 @@ objetivos:
   - Elegir una arquitectura según la forma de la tarea (paralelizable, secuencial, verificable)
   - Implementar el esqueleto de cada arquitectura sobre una misma función de llamada
 requiere: ["[[roadmap/60-multiagente/01-cuando-no-usar-multiagente]]", "[[roadmap/60-multiagente/02-orquestador-y-subagentes]]"]
-relacionados: ["[[patrones/06-orquestador-trabajadores]]", "[[patrones/03-encadenado]]", "[[patrones/07-evaluador-optimizador]]", "[[patrones/09-elegir-patron]]"]
+relacionados: ["[[patrones/06-orquestador-trabajadores]]", "[[patrones/03-encadenado]]", "[[patrones/07-evaluador-optimizador]]", "[[patrones/09-elegir-patron]]", "[[docs/frameworks/05-langgraph]]"]
 tags: [agentes, multiagente, arquitectura]
 ---
 
@@ -38,9 +39,9 @@ flowchart TD
   O --> R[Síntesis]
 ```
 
-Es la arquitectura del sistema de investigación que describe Anthropic en *[How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system)*: un agente líder planifica la investigación y lanza subagentes que buscan en paralelo, cada uno con su propia [[glosario/ventana-de-contexto|ventana de contexto]]. El artículo explica que la ventaja viene de ahí: cada subagente explora una parte con un contexto limpio y devuelve solo lo importante, así que el sistema en conjunto procesa mucha más información de la que cabría en un solo contexto.
+Es la arquitectura del sistema de investigación que describe Anthropic en *[How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system)* (13 jun. 2025): un agente líder planifica la investigación y lanza subagentes que buscan en paralelo, cada uno con su propia [[glosario/ventana-de-contexto|ventana de contexto]]. El artículo explica que la ventaja viene de ahí: cada subagente explora una parte con un contexto limpio y devuelve solo lo importante, así que el sistema en conjunto procesa mucha más información de la que cabría en un solo contexto.
 
-**Encaja** con tareas amplias y paralelizables: investigar un tema desde varios ángulos, revisar muchos documentos, comparar opciones. **Falla** cuando las subtareas dependen mucho unas de otras o necesitan compartir contexto en todo momento. El propio artículo señala que la mayoría de tareas de programación encajan peor que la investigación por este motivo: hay menos trabajo realmente paralelizable y los agentes necesitan coordinarse sobre el mismo código.
+**Encaja** con tareas amplias y paralelizables: investigar un tema desde varios ángulos, revisar muchos documentos, comparar opciones. **Falla** cuando las subtareas dependen mucho unas de otras o necesitan compartir contexto en todo momento. El propio artículo señala que la mayoría de tareas de programación encajan peor que la investigación por este motivo: hay menos trabajo realmente paralelizable y los agentes necesitan coordinarse sobre el mismo código. Cognition llega a la misma conclusión desde los agentes de código: funcionan los subagentes que aportan lectura e inteligencia, no los que escriben en paralelo ([[radar/2026-10-28-multiagente-un-solo-escritor]]).
 
 ## Pipeline
 
@@ -90,17 +91,20 @@ import anthropic
 MODEL = "claude-sonnet-5-5"
 client = anthropic.AsyncAnthropic()
 
-async def llamar(system: str, prompt: str, max_tokens: int = 2048) -> str:
+PLAN = {"type": "object", "properties": {"subtareas": {"type": "array", "items": {"type": "string"}}},
+        "required": ["subtareas"], "additionalProperties": False}
+
+async def llamar(system: str, prompt: str, max_tokens: int = 2048, esquema: dict | None = None) -> str:
+    extra = {"output_config": {"format": {"type": "json_schema", "schema": esquema}}} if esquema else {}
     resp = await client.messages.create(model=MODEL, max_tokens=max_tokens, system=system,
-                                        messages=[{"role": "user", "content": prompt}])
+                                        messages=[{"role": "user", "content": prompt}], **extra)
     if resp.stop_reason not in ("end_turn", "stop_sequence"):
-        raise RuntimeError(f"stop_reason {resp.stop_reason}")
+        raise RuntimeError(f"stop_reason {resp.stop_reason}")  # max_tokens, refusal…
     return "".join(b.text for b in resp.content if b.type == "text")
 
-async def orquestador(pregunta: str) -> str:
-    plan = await llamar("Divide la pregunta en 2-4 subpreguntas independientes. "
-                        'Responde solo con JSON: {"subtareas": ["..."]}', pregunta)
-    subtareas = json.loads(plan)["subtareas"]  # en producción: salida estructurada y validación
+async def orquestador(pregunta: str, max_subtareas: int = 4) -> str:
+    plan = await llamar("Divide la pregunta en 2-4 subpreguntas independientes.", pregunta, esquema=PLAN)
+    subtareas = json.loads(plan)["subtareas"][:max_subtareas]  # el esquema fija la forma; el tope, tu código
     hallazgos = await asyncio.gather(*[
         llamar("Investiga solo esta subpregunta. Devuelve hallazgos con su fuente.", s)
         for s in subtareas])
@@ -130,10 +134,85 @@ if __name__ == "__main__":
     print(asyncio.run(orquestador("¿Qué opciones hay para cachear respuestas de un LLM?")))
 ```
 
-Observa que el evaluador solo ve el borrador y la rúbrica, nunca el razonamiento del generador. Y que cada esqueleto tiene un límite: número de subtareas, validación entre etapas, número de rondas. Sin límites, un sistema multiagente puede gastar sin parar.
+El plan del orquestador llega con [[glosario/salida-estructurada|salida estructurada]] (`output_config.format`): el JSON cumple el esquema y no hay que adivinar si viene envuelto en texto. El número máximo de subtareas lo impone tu código, porque el esquema no admite `maxItems` arbitrarios. Observa también que el evaluador solo ve el borrador y la rúbrica, nunca el razonamiento del generador. Y que cada esqueleto tiene un límite: número de subtareas, validación entre etapas, número de rondas. Sin límites, un sistema multiagente puede gastar sin parar.
 
 > [!consejo] El orquestador también puede ser código
 > Si las subtareas son siempre las mismas, no necesitas un modelo que las decida. Un orquestador escrito en Python es más barato, predecible y fácil de probar. Reserva el orquestador-modelo para cuando la división dependa del contenido.
+
+## Con LangGraph y con el OpenAI Agents SDK
+
+Las tres topologías tienen traducción directa en los frameworks abiertos. Lo que cambia es quién escribe el bucle: en LangGraph declaras nodos y aristas, y el *runtime* se encarga de ejecutar en paralelo, guardar el estado y reanudar.
+
+| Arquitectura | [[herramientas/langgraph\|LangGraph]] | [[herramientas/openai-agents-sdk\|OpenAI Agents SDK]] |
+|---|---|---|
+| Orquestador-trabajadores | Un nodo planificador y `Send("trabajador", {...})` por subtarea; un reductor (`Annotated[list, operator.add]`) junta los resultados ([[recetas/map-reduce-con-send]]) | El orquestador usa a los especialistas como herramientas con `agente.as_tool()` y conserva el control |
+| Pipeline | Aristas fijas `add_edge` entre nodos, con un nodo de validación entre etapas | Llamadas sucesivas a `Runner.run` desde tu código |
+| Evaluador / debate | Un ciclo: el evaluador devuelve `Command(goto=...)` y decide si se vuelve a generar o se termina | Un bucle en tu código, o un `output_guardrail` que rechaza la salida |
+
+Los *handoffs* del Agents SDK son otra cosa: el agente activo cede la conversación a otro (se exponen al modelo como una herramienta `transfer_to_<nombre>`) y ya no vuelve. Sirven para triaje entre especialistas, no para un orquestador que tiene que sintetizar al final ([[docs/frameworks/06-openai-agents-sdk]]).
+
+El evaluador con LangGraph, con el veredicto como salida estructurada y el límite de rondas en el estado:
+
+```python tab="LangGraph" title="evaluador_langgraph.py"
+from typing import Literal, TypedDict
+
+from langchain.chat_models import init_chat_model
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Command
+from pydantic import BaseModel
+
+MODEL = "anthropic:claude-sonnet-5-5"
+MAX_RONDAS = 3
+
+
+class Veredicto(BaseModel):
+    aprobado: bool
+    fallos: list[str]
+
+
+class Estado(TypedDict, total=False):
+    encargo: str
+    rubrica: str
+    borrador: str
+    critica: str
+    rondas: int
+
+
+def construir(modelo=None):
+    llm = modelo or init_chat_model(MODEL, max_tokens=2048)
+    juez = llm.with_structured_output(Veredicto, method="json_schema")  # salidas estructuradas, sin forzar herramientas
+
+    def generar(state: Estado):
+        if state.get("critica"):
+            prompt = (f"Corrige el borrador según la crítica.\n<borrador>{state['borrador']}</borrador>\n"
+                      f"<critica>{state['critica']}</critica>")
+        else:
+            prompt = f"Redacta según el encargo.\n<encargo>{state['encargo']}</encargo>"
+        return {"borrador": llm.invoke(prompt).text, "rondas": state.get("rondas", 0) + 1}
+
+    def evaluar(state: Estado) -> Command[Literal["generar", "__end__"]]:
+        # el juez solo ve la rúbrica y el borrador, no el historial del generador
+        v = juez.invoke(f"Evalúa con esta rúbrica:\n{state['rubrica']}\n<borrador>{state['borrador']}</borrador>")
+        critica = "\n".join(v.fallos)
+        if v.aprobado or state["rondas"] >= MAX_RONDAS:
+            return Command(goto=END, update={"critica": "" if v.aprobado else critica})
+        return Command(goto="generar", update={"critica": critica})
+
+    g = StateGraph(Estado)
+    g.add_node("generar", generar)
+    g.add_node("evaluar", evaluar)
+    g.add_edge(START, "generar")
+    g.add_edge("generar", "evaluar")
+    return g.compile()
+
+
+if __name__ == "__main__":
+    final = construir().invoke({"encargo": "Traduce al inglés: «Pulsa Guardar».",
+                                "rubrica": "Usa el glosario: Guardar = Save."})
+    print(final["borrador"], "| sin aprobar" if final["critica"] else "| aprobado")
+```
+
+`Command` junta en un solo valor la actualización del estado y el siguiente nodo, así que la decisión de seguir o parar vive en el evaluador y no en una función de enrutado aparte. La anotación `Command[Literal[...]]` le dice a LangGraph a qué nodos puede saltar, para dibujar y validar el grafo. Lo que el framework no hace por ti es lo importante: la rúbrica, el límite de rondas y qué ve el juez siguen siendo decisiones tuyas.
 
 ## Errores frecuentes
 
@@ -163,3 +242,4 @@ Observa que el evaluador solo ve el borrador y la rúbrica, nunca el razonamient
 - [[cursos/sistemas-multiagente/02-disenar-subagentes]]
 - [[sistemas/investigacion-multiagente]]
 - [[roadmap/60-multiagente/05-coste-de-multiplicar-agentes]]
+- [[cursos/langchain-y-langgraph/08-multiagente-con-langgraph]]

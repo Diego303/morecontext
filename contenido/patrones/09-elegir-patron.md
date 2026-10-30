@@ -2,6 +2,7 @@
 titulo: Qué patrón elegir
 descripcion: Un árbol de decisión y una tabla comparativa para escoger el patrón más simple que resuelve tu caso, con su coste, su latencia y las señales para cambiar.
 creado: 2026-08-19
+actualizado: 2026-10-29
 tags: [patrones, arquitectura, decision]
 aliases: [Elegir patrón, Árbol de decisión de patrones]
 orden: 9
@@ -36,6 +37,8 @@ Dos preguntas transversales se aplican sobre cualquier hoja:
 
 - **¿Hay un criterio claro de calidad y una crítica mejora el resultado?** Añade un bucle de [[patrones/07-evaluador-optimizador|evaluador-optimizador]] alrededor del paso que falla.
 - **¿Hay aspectos independientes o necesitas más confianza?** Añade [[patrones/05-paralelizacion|paralelización]], por seccionado o por votación.
+- **¿Casi todos los pasos son mecánicos y solo unos pocos piden un modelo grande?** Usa un [[patrones/13-ejecutor-y-asesor|ejecutor y asesor]].
+- **¿El trabajo dura más que una ventana de contexto?** Mira los patrones de larga duración: [[patrones/10-inicializador-y-agente-de-trabajo]], [[patrones/11-planificador-generador-evaluador]] y [[patrones/12-bucle-ralph]].
 
 ## Tabla comparativa
 
@@ -48,6 +51,10 @@ Dos preguntas transversales se aplican sobre cualquier hoja:
 | [[patrones/06-orquestador-trabajadores]] | Un modelo planifica; tu código ejecuta | Alto | Media | Subtareas que dependen de la entrada |
 | [[patrones/07-evaluador-optimizador]] | Tu código, en bucle con tope | Alto | Alta | Calidad con rúbrica clara |
 | [[patrones/08-agente-autonomo]] | El modelo, en bucle | Alto y variable | Alta y variable | Problemas abiertos con *feedback* del entorno |
+| [[patrones/10-inicializador-y-agente-de-trabajo]] | Agentes en sesiones, con estado en archivos | Muy alto | Horas | Tareas de muchas funcionalidades comprobables |
+| [[patrones/11-planificador-generador-evaluador]] | Tres agentes con papeles separados | Muy alto | Horas | Construir algo que se pueda probar como un usuario |
+| [[patrones/12-bucle-ralph]] | El mismo *prompt* en bucle, el plan en disco | Muy alto | Horas | Spec clara con verificador automático fuerte |
+| [[patrones/13-ejecutor-y-asesor]] | Un modelo barato que consulta a uno capaz | Medio | Media | Tareas largas con pocas decisiones difíciles |
 
 Coste y latencia son relativos entre patrones, para la misma tarea y el mismo modelo. Las cifras reales dependen de tus *prompts*, del modelo y del tamaño del contexto: mídelas con [[roadmap/00-fundamentos/05-coste-y-latencia]].
 
@@ -89,7 +96,7 @@ Resultado: enrutado → (encadenado | orquestador-trabajadores), todo sobre llam
 
 ## Esqueleto de código
 
-No hay un esqueleto propio: cada patrón tiene el suyo en su página. Lo que sí conviene es un **arnés común** para comparar diseños con los mismos casos. Así la decisión sale de datos.
+No hay un esqueleto propio: cada patrón tiene el suyo en su página, con el SDK y, del 3 al 8, también con LangGraph. Elegir patrón y elegir framework son decisiones distintas: cualquier patrón se escribe con el SDK a mano, y un framework solo compensa cuando te ahorra fontanería que de verdad necesitas (persistencia, pausas largas, paralelismo); lo discute [[docs/frameworks/01-elegir-framework]]. Lo que sí conviene es un **arnés común** para comparar diseños con los mismos casos. Así la decisión sale de datos.
 
 ```python title="comparar_disenos.py"
 import time
@@ -116,3 +123,4 @@ Añade el coste sumando `resp.usage` en cada sistema. Tienes evaluadores listos 
 - [[patrones/02-llamada-aumentada]]: el punto de partida de casi cualquier rama.
 - [[patrones/08-agente-autonomo]]: la hoja a la que conviene llegar solo cuando las demás no sirven.
 - [[sistemas/index]]: sistemas completos donde verás estas combinaciones aplicadas.
+- [[sistemas/agente-de-larga-duracion]]: los patrones de larga duración montados en un sistema.

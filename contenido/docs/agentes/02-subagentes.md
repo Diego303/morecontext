@@ -2,6 +2,7 @@
 titulo: Subagentes
 descripcion: Qué es un subagente, cuándo merece la pena delegar en uno, cómo se implementa como herramienta y qué cuesta en tokens y en control.
 creado: 2026-10-16
+actualizado: 2026-10-29
 orden: 2
 nivel: avanzado
 tags: [agentes, subagentes, multiagente, contexto]
@@ -20,7 +21,7 @@ Hay tres casos en los que encaja bien:
 - **Exploración ruidosa.** Búsquedas con muchos callejones sin salida, donde solo importa la conclusión.
 - **Especialización.** Un subagente con herramientas y prompt muy concretos (por ejemplo, solo lectura de la base de datos) en lugar de un agente con veinte herramientas.
 
-Anthropic describe este diseño en [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (2025): un agente principal planifica, lanza subagentes de búsqueda en paralelo y sintetiza.
+Anthropic describe este diseño en [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (2025): un agente principal planifica, lanza subagentes de búsqueda en paralelo y sintetiza. La experiencia de Cognition matiza dónde funciona: en [*Multi-Agents: What's Actually Working*](https://cognition.com/blog/multi-agents-working) (2026) defienden que las decisiones y las escrituras sigan en un solo hilo y que los subagentes aporten lectura, búsqueda o revisión con contexto limpio.
 
 ## Cómo se implementa
 
@@ -104,6 +105,38 @@ Tres decisiones de diseño se ven en el código:
 2. **El subagente tiene un formato de salida fijo.** El orquestador recibe siempre lo mismo y le cuesta menos combinar resultados.
 3. **Los fallos vuelven como `is_error`.** Un subagente caído no tumba al orquestador; este decide si reintenta o sigue sin ese dato.
 
+## Con LangGraph y otros frameworks
+
+En LangChain, un subagente es otro agente de `create_agent` envuelto en una herramienta. Es el mismo diseño que el código anterior y el que recomienda ya `langgraph-supervisor` para el patrón supervisor:
+
+```python title="subagentes_lc.py"
+from langchain.agents import create_agent
+from langchain.chat_models import init_chat_model
+from langchain.tools import tool
+
+MODEL = "anthropic:claude-sonnet-5-5"
+PROMPT_SUBAGENTE = "Investigas una sola pregunta concreta. Responde con conclusión, fuentes y lo que no pudiste confirmar."
+
+investigador = create_agent(init_chat_model(MODEL, max_tokens=2048), tools=[], system_prompt=PROMPT_SUBAGENTE)
+
+@tool
+def investigar(pregunta: str) -> str:
+    """Lanza un subagente que investiga UNA pregunta acotada y devuelve una conclusión con fuentes.
+    Describe la pregunta con todo el contexto: el subagente no ve esta conversación."""
+    salida = investigador.invoke({"messages": [("user", pregunta)]})  # contexto propio y limpio
+    return salida["messages"][-1].text                                 # solo el resumen vuelve
+
+orquestador = create_agent(
+    init_chat_model(MODEL, max_tokens=2048),
+    tools=[investigar],
+    system_prompt="Divide la pregunta en subpreguntas independientes y delega cada una con investigar.",
+)
+```
+
+Si quieres repartir trabajo en paralelo con un número de ramas que decides en tiempo de ejecución, LangGraph tiene `Send` (receta [[recetas/map-reduce-con-send]]). Deep Agents trae subagentes declarativos con la herramienta `task` ([[docs/frameworks/10-deep-agents]]), y el OpenAI Agents SDK convierte un agente en herramienta con `Agent.as_tool` o le pasa el control con *handoffs* ([[docs/frameworks/06-openai-agents-sdk]]). Más en [[cursos/langchain-y-langgraph/08-multiagente-con-langgraph]].
+
+En Claude Code y el Claude Agent SDK no escribes el bucle: defines subagentes en `.claude/agents/*.md` (o en la opción `agents`) con su descripción, herramientas y modelo, y el agente principal los lanza. Ver [[docs/claude-code/02-subagentes]] y [[plantillas/subagente]].
+
 ## Qué pasar al subagente
 
 El encargo es el único contexto que tendrá. Incluye:
@@ -131,7 +164,7 @@ Otros riesgos:
 
 ## Cuándo no usar subagentes
 
-Si las subtareas dependen unas de otras, si todas necesitan el mismo contexto compartido o si la tarea cabe con holgura en un solo agente, un subagente añade coste y puntos de fallo sin ganar nada. Empieza con un único bucle y divide solo cuando veas el contexto saturado o un cuello de botella claro. [[roadmap/60-multiagente/01-cuando-no-usar-multiagente]] repasa las señales.
+Si las subtareas dependen unas de otras, si todas necesitan el mismo contexto compartido o si la tarea cabe con holgura en un solo agente, un subagente añade coste y puntos de fallo sin ganar nada. Lo mismo si varios subagentes tendrían que escribir sobre el mismo recurso: toman decisiones incompatibles sin verse (Cognition, [*Don't Build Multi-Agents*](https://cognition.com/blog/dont-build-multi-agents), 2025). Empieza con un único bucle y divide solo cuando veas el contexto saturado o un cuello de botella claro. [[roadmap/60-multiagente/01-cuando-no-usar-multiagente]] repasa las señales.
 
 ## Ver también
 
@@ -139,3 +172,5 @@ Si las subtareas dependen unas de otras, si todas necesitan el mismo contexto co
 - [[cursos/sistemas-multiagente/02-disenar-subagentes]]: diseño detallado de subagentes.
 - [[sistemas/investigacion-multiagente]]: un sistema completo con esta arquitectura.
 - [[disciplinas/orquestador-y-subagentes]]: cómo trabajar así en el día a día.
+- [[recetas/coste-por-subagente]]: medir cuánto gasta cada subagente.
+- [[docs/claude-code/09-workflows-equipos-y-segundo-plano]]: subagentes en segundo plano, *workflows* y equipos en Claude Code.

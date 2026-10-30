@@ -2,6 +2,7 @@
 titulo: Orquestador
 descripcion: Agente o componente que divide una tarea, reparte las partes entre subagentes o trabajadores y combina sus resultados.
 creado: 2026-09-03
+actualizado: 2026-10-29
 categoria: agentes
 ingles: orchestrator
 aliases: [orchestrator, agente orquestador, agente principal]
@@ -13,7 +14,11 @@ El orquestador es la pieza que coordina un sistema con varios modelos: analiza l
 
 ## En la práctica
 
-Para el orquestador, cada subagente es una herramienta más: la llama con una instrucción y recibe un resultado resumido. Su trabajo más difícil es escribir buenos encargos (objetivo, formato de respuesta, límites, qué no repetir), porque el subagente solo sabe lo que le cuentan. Es útil cuando las subtareas son independientes y se pueden paralelizar, como investigar varias fuentes a la vez; en tareas muy secuenciales, suele salir más caro que un solo agente.
+Para el orquestador, cada subagente es una herramienta más: la llama con una instrucción y recibe un resultado resumido. Su trabajo más difícil es escribir buenos encargos (objetivo, formato de respuesta, límites, qué no repetir), porque el subagente solo sabe lo que le cuentan. Es útil cuando las subtareas son independientes y se pueden paralelizar, como investigar varias fuentes a la vez; en tareas muy secuenciales, suele salir más caro que un solo agente. Lo que mejor funciona en la práctica, según Cognition (2026): varios agentes pueden investigar en paralelo, pero conviene que solo uno escriba. En LangGraph, el supervisor se monta con subagentes expuestos como herramientas.
+
+## No confundir con
+
+- **[[glosario/handoff]]**: un agente cede la conversación a otro y deja de intervenir. El orquestador conserva el control y recibe los resultados.
 
 ## Ver también
 
@@ -22,3 +27,5 @@ Para el orquestador, cada subagente es una herramienta más: la llama con una in
 - [[sistemas/investigacion-multiagente]]
 - [[roadmap/60-multiagente/01-cuando-no-usar-multiagente]]
 - [[disciplinas/orquestador-y-subagentes]]
+- [[radar/2026-10-28-multiagente-un-solo-escritor]]
+- [[cursos/langchain-y-langgraph/08-multiagente-con-langgraph]]

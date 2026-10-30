@@ -2,6 +2,7 @@
 titulo: Construir un conjunto de prueba
 descripcion: De dónde sacar casos que representen el uso real, cómo etiquetarlos para que dos personas coincidan y cómo razonar cuántos necesitas.
 creado: 2026-10-03
+actualizado: 2026-10-29
 orden: 2
 minutos: 35
 tipo: practica
@@ -28,7 +29,7 @@ Piensa en él como código: va en el repositorio, tiene historial, se revisa en 
 Ordenadas por valor:
 
 1. **Uso real.** Conversaciones o peticiones de producción, tickets de soporte, preguntas de usuarios en pruebas. Es lo que mejor representa la distribución que importa. Anonimiza antes de copiar: quita nombres, correos, números de cliente.
-2. **Fallos vistos.** Cada traza que acabó mal ([[roadmap/40-primer-agente/06-depurar-con-trazas]]) es un caso. Son los más baratos de conseguir y los que evitan que un error vuelva.
+2. **Fallos vistos.** Cada traza que acabó mal ([[roadmap/40-primer-agente/06-depurar-con-trazas]]) es un caso. Son los más baratos de conseguir y los que evitan que un error vuelva. Mejor aún si antes haces un [[glosario/analisis-de-errores|análisis de errores]]: lees un lote de trazas, anotas qué falla en cada una y agrupas los fallos por tipo, como en [[recetas/analisis-de-errores-de-trazas]]. Los tipos más frecuentes te dicen qué categorías necesitan casos.
 3. **Bordes.** Entradas vacías o muy largas, datos que no existen, peticiones ambiguas, idiomas mezclados, preguntas fuera de alcance que el sistema debe rechazar. Escríbelos a propósito.
 4. **Adversariales.** Intentos de saltarse las reglas o de [[glosario/inyeccion-de-prompt|inyectar instrucciones]] a través de documentos o resultados de herramientas. Los verás en [[roadmap/100-produccion/04-seguridad-y-prompt-injection]].
 5. **Sintéticos.** Un modelo puede generar variantes de casos reales para cubrir huecos. Úsalo con dos condiciones: una persona revisa cada caso y quedan marcados como sintéticos para poder medirlos por separado.
