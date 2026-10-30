@@ -1,0 +1,43 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import TarjetaEntrada from '../../components/listados/TarjetaEntrada.astro';
+import FiltroChips from '../../components/listados/FiltroChips.astro';
+import { fecha, porTitulo, publicados, urlDe } from '../../lib/contenido';
+import { CATEGORIA_HERRAMIENTA } from '../../lib/nombres';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'herramientas'))!;
+const { Content } = await render(s);
+const herramientas = (await publicados('herramientas')).sort(porTitulo);
+const categoria = (c: string) => CATEGORIA_HERRAMIENTA[c] ?? c;
+// Categorías en el orden de CATEGORIA_HERRAMIENTA y, detrás, las que no estén en él
+const categorias = [...new Set([...Object.keys(CATEGORIA_HERRAMIENTA), ...herramientas.map((h) => h.data.categoria)])]
+  .map((c) => ({ valor: c, texto: categoria(c), n: herramientas.filter((h) => h.data.categoria === c).length }))
+  .filter((o) => o.n > 0);
+const licencias = [
+  { valor: 'abierta', texto: 'Open source', n: herramientas.filter((h) => h.data.open_source).length },
+  { valor: 'propietaria', texto: 'Propietaria', n: herramientas.filter((h) => !h.data.open_source).length },
+].filter((o) => o.n > 0);
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="herramientas"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/herramientas/')}>
+  <Content />
+  <section slot="despues" class="wrap listado" aria-labelledby="h-directorio">
+    <div class="listado-cab"><h2 id="h-directorio">Directorio</h2><span class="mono">sin afiliados · nadie paga por aparecer</span></div>
+    <FiltroChips objetivo="lista-herramientas" total={herramientas.length} nombre="herramientas"
+      grupos={[{ clave: 'categoria', etiqueta: 'Categoría', opciones: categorias }, { clave: 'licencia', etiqueta: 'Licencia', opciones: licencias }]} />
+    <ul class="tarjetas" id="lista-herramientas">
+      {herramientas.map((h) => (
+        <TarjetaEntrada href={urlDe(h)} titulo={h.data.titulo} descripcion={h.data.descripcion}
+          datos={{ filtrable: '', categoria: h.data.categoria, licencia: h.data.open_source ? 'abierta' : 'propietaria' }}>
+          <Fragment slot="meta"><span class="tag">{categoria(h.data.categoria)}</span><span>{h.data.licencia ?? (h.data.open_source ? 'open source' : 'propietaria')}</span></Fragment>
+          <Fragment slot="pie"><span>{h.data.lenguajes.slice(0, 3).join(' · ')}</span><span>revisada el {fecha(h.data.revisado)}</span></Fragment>
+        </TarjetaEntrada>
+      ))}
+    </ul>
+  </section>
+</PaginaLayout>
+<script>
+  import '../../scripts/filtros.ts';
+</script>

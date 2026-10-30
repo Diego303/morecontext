@@ -14,12 +14,12 @@ if (svg) {
     const a = (e.target as Element).closest<SVGAElement>('.nodos a');
     if (!a) return;
     limpiar();
-    const url = a.dataset.url!;
-    const cerca = vecinos.get(url) ?? new Set();
+    const i = a.dataset.i!;
+    const cerca = vecinos.get(i) ?? new Set();
     svg.classList.add('foco');
     a.classList.add('on');
-    nodos.forEach((n) => { if (cerca.has(n.dataset.url!)) n.classList.add('on'); });
-    lineas.forEach((l) => { if (l.dataset.a === url || l.dataset.b === url) l.classList.add('on'); });
+    nodos.forEach((n) => { if (cerca.has(n.dataset.i!)) n.classList.add('on'); });
+    lineas.forEach((l) => { if (l.dataset.a === i || l.dataset.b === i) l.classList.add('on'); });
   });
   svg.addEventListener('pointerleave', limpiar);
 

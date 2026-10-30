@@ -1,0 +1,41 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import TarjetaEntrada from '../../components/listados/TarjetaEntrada.astro';
+import FiltroChips from '../../components/listados/FiltroChips.astro';
+import { porTitulo, publicados, urlDe } from '../../lib/contenido';
+import { TIPO_PLANTILLA } from '../../lib/nombres';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'plantillas'))!;
+const { Content } = await render(s);
+const plantillas = (await publicados('plantillas')).sort(porTitulo);
+const tipos = Object.entries(TIPO_PLANTILLA)
+  .map(([tipo, titulo]) => ({ tipo, titulo, lista: plantillas.filter((p) => p.data.tipo === tipo) }))
+  .filter((t) => t.lista.length > 0);
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="plantillas"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/plantillas/')}>
+  <Content />
+  <div slot="despues" class="wrap listado">
+    <FiltroChips objetivo="lista-plantillas" total={plantillas.length} nombre="plantillas"
+      grupos={[{ clave: 'tipo', etiqueta: 'Tipo', opciones: tipos.map((t) => ({ valor: t.tipo, texto: t.titulo, n: t.lista.length })) }]} />
+    <div id="lista-plantillas">
+      {tipos.map(({ tipo, titulo, lista }) => (
+        <section class="bloque-tipo" data-contenedor aria-labelledby={`h-${tipo}`}>
+          <div class="listado-cab"><h2 id={`h-${tipo}`}>{titulo}</h2><span class="mono">{lista.length}</span></div>
+          <ul class="tarjetas">
+            {lista.map((p) => (
+              <TarjetaEntrada href={urlDe(p)} titulo={p.data.titulo} descripcion={p.data.descripcion} datos={{ filtrable: '', tipo: p.data.tipo }}>
+                <Fragment slot="meta"><span class="tag">.{p.data.formato}</span><span>{p.data.archivo}</span></Fragment>
+              </TarjetaEntrada>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  </div>
+</PaginaLayout>
+<script>
+  import '../../scripts/filtros.ts';
+</script>

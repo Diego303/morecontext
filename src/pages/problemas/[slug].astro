@@ -1,0 +1,25 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import { publicados } from '../../lib/contenido';
+import { TEMA } from '../../lib/nombres';
+import { ldArticulo } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () =>
+  (await publicados('problemas')).map((e) => ({ params: { slug: e.id }, props: { e } }))) satisfies GetStaticPaths;
+
+const { e } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+---
+<LecturaLayout entrada={e} headings={headings} seccion="problemas" jsonld={ldArticulo(e)}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/problemas/', texto: 'Problemas frecuentes' }, { texto: e.data.titulo }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo"><b>Problema</b> · {TEMA[e.data.tema]}</span>
+  <div slot="cabecera" class="ficha-datos">
+    <dl class="datos">
+      {e.data.sintoma !== e.data.titulo && <div class="ancho"><dt>Síntoma</dt><dd class="sintoma" data-pagefind-weight="6">{e.data.sintoma}</dd></div>}
+      <div><dt>Tema</dt><dd>{TEMA[e.data.tema]}</dd></div>
+    </dl>
+  </div>
+  <Content />
+</LecturaLayout>

@@ -1,0 +1,29 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import { publicados } from '../../lib/contenido';
+import { CATEGORIA_GLOSARIO, TIPO_TEXTO } from '../../lib/nombres';
+import { ldBiblioteca } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () =>
+  (await publicados('biblioteca')).map((e) => ({ params: { slug: e.id }, props: { e } }))) satisfies GetStaticPaths;
+
+const { e } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+const d = e.data;
+---
+<LecturaLayout entrada={e} headings={headings} seccion="biblioteca" jsonld={ldBiblioteca(e)}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/biblioteca/', texto: 'Biblioteca' }, { texto: d.titulo }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo"><b>Biblioteca</b> · {TIPO_TEXTO[d.tipo]} · {d.anio}</span>
+  <div slot="cabecera" class="ficha-datos">
+    <dl class="datos">
+      <div><dt>Autores</dt><dd>{d.autores}</dd></div>
+      <div><dt>Año</dt><dd>{d.anio}</dd></div>
+      <div><dt>Tipo</dt><dd>{TIPO_TEXTO[d.tipo]}</dd></div>
+      <div><dt>Tema</dt><dd>{CATEGORIA_GLOSARIO[d.tema]}</dd></div>
+      <div class="ancho"><dt>Original</dt><dd><a class="ext" href={d.url} target="_blank" rel="noopener noreferrer">{d.url.replace(/^https?:\/\//, '')}</a></dd></div>
+    </dl>
+  </div>
+  <Content />
+</LecturaLayout>

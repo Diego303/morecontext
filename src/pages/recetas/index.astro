@@ -6,11 +6,11 @@ import FiltroChips from '../../components/listados/FiltroChips.astro';
 import Dificultad from '../../components/entrada/Dificultad.astro';
 import { porTitulo, publicados, urlDe } from '../../lib/contenido';
 import { ldColeccion } from '../../lib/jsonld';
+import { TEMA } from '../../lib/nombres';
 
 const s = (await getEntry('secciones', 'recetas'))!;
 const { Content } = await render(s);
 const recetas = (await publicados('recetas')).sort(porTitulo);
-const TEMA: Record<string, string> = { prompting: 'Prompting', herramientas: 'Herramientas', rag: 'RAG', agentes: 'Agentes', evals: 'Evals', produccion: 'Producción', seguridad: 'Seguridad' };
 const NIVEL: Record<string, string> = { inicial: 'Inicial', intermedio: 'Intermedio', avanzado: 'Avanzado' };
 const opciones = (mapa: Record<string, string>, campo: 'tema' | 'nivel') => Object.entries(mapa)
   .map(([valor, texto]) => ({ valor, texto, n: recetas.filter((r) => r.data[campo] === valor).length }))

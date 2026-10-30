@@ -4,13 +4,13 @@ import { render } from 'astro:content';
 import LecturaLayout from '../../layouts/LecturaLayout.astro';
 import { publicados } from '../../lib/contenido';
 import { ldArticulo } from '../../lib/jsonld';
+import { TEMA } from '../../lib/nombres';
 
 export const getStaticPaths = (async () =>
   (await publicados('recetas')).map((e) => ({ params: { slug: e.id }, props: { e } }))) satisfies GetStaticPaths;
 
 const { e } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
 const { Content, headings } = await render(e);
-const TEMA: Record<string, string> = { prompting: 'Prompting', herramientas: 'Herramientas', rag: 'RAG', agentes: 'Agentes', evals: 'Evals', produccion: 'Producción', seguridad: 'Seguridad' };
 ---
 <LecturaLayout entrada={e} headings={headings} seccion="recetas" jsonld={ldArticulo(e)}
   migas={[{ href: '/', texto: 'Inicio' }, { href: '/recetas/', texto: 'Recetas' }, { texto: e.data.titulo }]}>

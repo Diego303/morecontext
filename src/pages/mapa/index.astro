@@ -7,7 +7,11 @@ import { ldColeccion } from '../../lib/jsonld';
 
 const W = 1000, H = 680;
 const { nodos, aristas, secciones } = await grafo(W, H);
-const pos = new Map(nodos.map((n) => [n.url, n]));
+// Las aristas se refieren a los nodos por su índice (data-i) y las coordenadas van en enteros: con ~700 notas
+// y miles de enlaces, el HTML pesa la mitad que con URLs y decimales.
+const indice = new Map(nodos.map((n, i) => [n.url, i]));
+const xy = (url: string) => nodos[indice.get(url)!];
+const px = (v: number) => Math.round(v);
 const etiquetas = new Set([...nodos].sort((a, b) => b.grado - a.grado).slice(0, 18).map((n) => n.url));
 const top = [...nodos].sort((a, b) => b.grado - a.grado || a.titulo.localeCompare(b.titulo, 'es')).slice(0, 20);
 const nombre = (s: string) => NOMBRE_SECCION[s] ?? 'Páginas';
@@ -32,13 +36,13 @@ const r = (g: number) => Math.min(9, 2.5 + Math.sqrt(g) * 0.9).toFixed(1);
         <title id="mapa-t">Mapa de notas de MoreContext</title>
         <desc id="mapa-d">{nodos.length} notas unidas por {aristas.length} enlaces. Debajo tienes la misma información en texto.</desc>
         <g class="aristas">
-          {aristas.map(([a, b]) => <line x1={pos.get(a)!.x.toFixed(1)} y1={pos.get(a)!.y.toFixed(1)} x2={pos.get(b)!.x.toFixed(1)} y2={pos.get(b)!.y.toFixed(1)} data-a={a} data-b={b} />)}
+          {aristas.map(([a, b]) => <line x1={px(xy(a).x)} y1={px(xy(a).y)} x2={px(xy(b).x)} y2={px(xy(b).y)} data-a={indice.get(a)} data-b={indice.get(b)} />)}
         </g>
         <g class="nodos">
-          {nodos.map((n) => (
-            <a href={n.url} tabindex="-1" data-url={n.url} data-s={n.seccion}>
-              <circle cx={n.x.toFixed(1)} cy={n.y.toFixed(1)} r={r(n.grado)}><title>{n.titulo} · {nombre(n.seccion)} · {n.grado} enlaces</title></circle>
-              {etiquetas.has(n.url) && <text x={(n.x + 10).toFixed(1)} y={(n.y + 4).toFixed(1)}>{n.titulo.length > 28 ? n.titulo.slice(0, 27) + '…' : n.titulo}</text>}
+          {nodos.map((n, i) => (
+            <a href={n.url} tabindex="-1" data-i={i} data-s={n.seccion}>
+              <circle cx={px(n.x)} cy={px(n.y)} r={r(n.grado)}><title>{n.titulo} · {nombre(n.seccion)} · {n.grado} enlaces</title></circle>
+              {etiquetas.has(n.url) && <text x={px(n.x + 10)} y={px(n.y + 4)}>{n.titulo.length > 28 ? n.titulo.slice(0, 27) + '…' : n.titulo}</text>}
             </a>
           ))}
         </g>

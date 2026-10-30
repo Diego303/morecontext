@@ -1,11 +1,11 @@
 ---
-// Fichas de las secciones del backlog: problemas, plantillas, biblioteca, herramientas y comunidad.
+// Fichas de las secciones del backlog con rutas genéricas (hoy, comunidad).
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { render } from 'astro:content';
 import LecturaLayout from '../../layouts/LecturaLayout.astro';
 import { urlDe } from '../../lib/contenido';
 import { apendicesVisibles, type EntradaApendice } from '../../lib/apendices';
-import { ldArticulo, ldBiblioteca } from '../../lib/jsonld';
+import { ldArticulo } from '../../lib/jsonld';
 
 export const getStaticPaths = (async () =>
   (await apendicesVisibles()).flatMap(({ id, portadilla, entradas }) =>
@@ -15,17 +15,14 @@ const { e, portadilla } = Astro.props as InferGetStaticPropsType<typeof getStati
 const { Content, headings } = await render(e);
 const d = e.data as Record<string, unknown>;
 const externo = typeof d.url === 'string' ? d.url : undefined;
-const DATOS: [string, unknown][] = [
-  ['Síntoma', d.sintoma], ['Formato', d.formato && `.${d.formato}`], ['Autores', d.autores], ['Año', d.anio],
-  ['Categoría', d.categoria], ['Licencia', d.licencia], ['Autor', d.autor],
-];
+const DATOS: [string, unknown][] = [['Autor', d.autor]];
 ---
-<LecturaLayout entrada={e} headings={headings} seccion={e.collection} jsonld={e.collection === 'biblioteca' ? ldBiblioteca(e) : ldArticulo(e)}
+<LecturaLayout entrada={e} headings={headings} seccion={e.collection} jsonld={ldArticulo(e)}
   migas={[{ href: '/', texto: 'Inicio' }, { href: urlDe(portadilla), texto: portadilla.data.titulo }, { texto: e.data.titulo }]}>
   <span slot="sobre-titulo" class="label sobre-titulo"><b>{portadilla.data.titulo}</b></span>
   <div slot="cabecera" class="ficha-datos">
     <dl class="datos">
-      {DATOS.filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => <div class:list={[{ ancho: k === 'Síntoma' }]}><dt>{k}</dt><dd>{String(v)}</dd></div>)}
+      {DATOS.filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => <div><dt>{k}</dt><dd>{String(v)}</dd></div>)}
       {externo && <div class="ancho"><dt>Enlace</dt><dd><a class="ext" href={externo} target="_blank" rel="noopener noreferrer">{externo.replace(/^https?:\/\//, '')}</a></dd></div>}
     </dl>
   </div>

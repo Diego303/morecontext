@@ -915,3 +915,14 @@ dl.datos > .ancho { flex-basis: 100%; }
   .side-nav li a, .toc li a { padding-block: 9px; }
   .editar a { padding-block: 9px; }
 }
+
+/* Plantillas, herramientas, biblioteca y problemas (contenido v2) */
+.ficha-datos a.ext { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent-cyan) 35%, transparent); text-underline-offset: 3px; overflow-wrap: anywhere; }
+.ficha-datos a.ext::after { content: "↗"; margin-left: 2px; font-size: .8em; text-decoration: none; display: inline-block; }
+.enlaces-ficha { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.sintoma { margin: 4px 0 0; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; color: var(--text-2); overflow-wrap: anywhere; }
+.ficha-datos .sintoma { margin: 2px 0 0; font-size: 15px; color: var(--text); }
+.entradas .sintoma + p { margin-top: 6px; }
+.sobre-titulo .tag { margin-left: 8px; vertical-align: 1px; }
+.fila-leccion .tag { margin-left: 6px; }
+.revisado-enlaces { margin: 10px 0 0; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }

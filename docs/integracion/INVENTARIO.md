@@ -494,3 +494,41 @@ Recuento: de 435 a 1083 páginas (+648).
 Hay 693 imágenes OG y Pagefind indexa 693 páginas. Coincide con el ensayo de I0.
 
 También: `build.log` entró por error en el commit de I1. Se quitó en un commit aparte. Los logs se guardan ahora fuera del repositorio.
+
+---
+
+## Fase I3 · hecho
+
+Por fila del plan:
+
+| Fila | Estado | Con qué |
+|---|---|---|
+| `/plantillas/` | Adaptada: de la ruta genérica a página propia | `PaginaLayout` + `FiltroChips` (tipo) + bloques por tipo con `TarjetaEntrada` (como `/patrones/`, con `data-contenedor` para ocultar bloques vacíos). Ficha: `LecturaLayout` + `ficha-datos` (tipo, formato, «Guárdala como») |
+| Descargar | Nueva | `src/scripts/plantilla.ts`: botón junto a Copiar en el primer bloque de `## La plantilla`. Baja el texto del bloque con el nombre de `archivo` |
+| `/herramientas/` | Adaptada | `FiltroChips` (categoría y licencia abierta/propietaria, con contador y estado vacío) + `TarjetaEntrada` (categoría, licencia, lenguajes, «revisada el»). Ficha: licencia, open source, lenguajes, versión revisada, revisada, enlaces ↗ a la web (`url`) y al repositorio. «Sin afiliados · nadie paga por aparecer» en la cabecera del directorio, tomado del criterio de la portadilla |
+| `/biblioteca/` | Adaptada | Bloques por tema (categorías del glosario), lista `.entradas` por año con autores, año y tipo. Ficha: autores, año, tipo, tema y enlace ↗ al original arriba. JSON-LD `ldBiblioteca` |
+| `/problemas/` | Adaptada | Lista `.entradas` + `FiltroChips` (tema). Ficha con el síntoma en la cabecera y `data-pagefind-weight` |
+| Ruta en vídeo | Nueva | Insignia de `profundidad` con `.tag` (imprescindible = `y`, por encima = neutra, extra = `c`) en la cabecera de la lección y en `FilaLeccion`. «Enlaces revisados el …» bajo la entradilla |
+| `/recetas/` (seguridad) | Hecha en I1 | `TEMA` pasa a `src/lib/nombres.ts`, compartido |
+| `/patrones/`, `/docs/`, `/cursos/`, `/roadmap/` | Sin código | Capturas: 13 patrones, 12 grupos de docs, 14 cursos y 11 niveles bien compuestos |
+| Laboratorio | No aplica | No tiene lista de modelos |
+| OG, grafo, Giscus | Existentes | OG: una imagen por página nueva (693). `/mapa/`: las aristas se refieren a los nodos por índice y las coordenadas van en enteros, y pasa de 1,2 MB a **696 KB** de HTML (el grafo tarda unos 5 s en el build). Giscus sin cambios |
+
+Otros cambios:
+
+- `src/lib/nombres.ts` (nuevo): nombres visibles de los valores de `tema`, `categoria` del glosario, tipos de plantilla, categorías de herramienta, tipos de texto y profundidad.
+- `src/lib/apendices.ts`: `APENDICES = ['comunidad']`. Las rutas genéricas `[apendice]` quedan solo para comunidad, que sigue en borrador e invisible (`/comunidad/` da 404, como antes). Las otras cuatro dejan de salir como apéndices en la portada y el pie hasta I4.
+- `src/styles/componentes.css`: bloque «Plantillas, herramientas, biblioteca y problemas» con enlaces ↗ en `ficha-datos`, `.sintoma` e insignias. Solo tokens.
+
+Decisiones nuevas:
+
+- **Síntoma igual al título.** En los 16 problemas del paquete el `sintoma` es idéntico al `titulo`. La línea del síntoma en mono (listado) y la fila «Síntoma» (ficha) solo se muestran cuando difieren, para no repetir el título. El título ya pesa lo máximo en Pagefind (h1); se comprueba en I5.
+- **Nombre de la descarga.** `archivo` a veces es una ruta con marcadores (`.claude/agents/<nombre>.md`, `.claude/skills/<nombre>/SKILL.md`, `docs/planes/olas.md`). Se descarga con el último tramo sin caracteres no válidos (`nombre.md`, `SKILL.md`, `olas.md`); la ruta completa sale en la ficha.
+- **Formato en las tarjetas.** La etiqueta de la tarjeta de plantilla muestra el formato (`.md`, `.yaml`) y el nombre del archivo va como texto: dentro de `.tag` salía en mayúsculas («AGENTS.MD»).
+
+Aceptación:
+
+- `pnpm check`: 0. `pnpm build`: 1083 páginas, sin avisos. `pnpm enlaces`: 0.
+- Capturas a 400 y 1440 px de `/plantillas/` y `agents-md`, `/herramientas/` y `langgraph`, `/biblioteca/` y `react`, `/problemas/` y `tool-result-sin-tool-use`, `/cursos/ruta-en-video/` y una lección, `/patrones/`, `/docs/`, `/cursos/`, `/roadmap/`, `/mapa/` y `/recetas/`: sin scroll horizontal ni errores de consola.
+- Descargar, probado con Playwright en 6 plantillas (`agents-md`, `criterios-de-aceptacion` en yaml, `subagente`, `skill`, `plan-de-olas` y `prompt-apuntes-de-video`, estas tres con bloque exterior de cuatro acentos): nombre esperado y contenido idéntico al bloque del Markdown.
+- Teclado: todo son botones y enlaces nativos.
