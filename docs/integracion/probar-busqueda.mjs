@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
-const [proyecto, salida] = process.argv.slice(2);
+const [proyecto, salida] = process.argv.slice(2).map((a) => path.resolve(a));
 const { chromium } = createRequire(path.join(proyecto, 'package.json'))('playwright');
 const dist = path.join(proyecto, 'dist');
 const TIPOS = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.woff2': 'font/woff2', '.wasm': 'application/wasm' };
