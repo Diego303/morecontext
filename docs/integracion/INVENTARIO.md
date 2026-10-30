@@ -589,3 +589,65 @@ Pruebas con Playwright sobre `dist/` (`docs/integracion/probar-busqueda.mjs`; re
 | Mermaid | Las 3 páginas del plan dibujan su diagrama (SVG), sin errores de consola |
 
 Aceptación: las 5 búsquedas del plan devuelven la página esperada entre las 3 primeras; las pestañas y Mermaid funcionan.
+
+---
+
+## Fase I6 · aparcada
+
+El proyecto no tiene versión en inglés (i18n no se implementó en la fase 13), y el autor decidió dejar I6 aparte por ahora (30 de octubre de 2026). No se ha tocado nada.
+
+---
+
+## Fase I7 · hecho
+
+Checklist del plan, cada punto con su prueba:
+
+| Punto | Prueba | Resultado |
+|---|---|---|
+| `validar` 0 · `check` 0 · `build` sin avisos · `enlaces` 0 · sin `wikilink--roto` | Los cinco comandos, en el clon LF | 694 archivos · 0 errores · 0 avisos; 0 · 0 · 0; **1083 páginas**, 693 indexadas, 0 avisos; 0 enlaces rotos; 0 |
+| Sin scroll horizontal de 360 a 1440 px | `pnpm smoke` (ampliada, abajo) contra `pnpm preview`, a 360, 400, 768, 1024, 1280 y 1440 px | **521 comprobaciones · 0 fallos** (HTTP 200, sin scroll horizontal, consola limpia). Páginas: lecciones de la ruta en vídeo, de harness engineering y de LangChain y LangGraph; `/plantillas/` y `agents-md`; `/herramientas/` y `langgraph`; `/biblioteca/` y `react`; `/problemas/` y `tool-result-sin-tool-use`; un sistema nuevo (`harness-sdd-claude-code`); un patrón nuevo (`inicializador-y-agente-de-trabajo`); `/docs/claude-code/hooks/`; `/mapa/`; y las 13 de siempre |
+| Copiar y Descargar en plantillas | Playwright | Copiar en `agents-md`, `criterios-de-aceptacion` y `plan-de-olas`: el botón pasa a «Copiado» y el portapapeles tiene exactamente el bloque de `## La plantilla`. Descargar: probado en I3 en 6 plantillas, nombre y contenido exactos |
+| Recuentos de la portada | Ficha temporal `herramientas/zz-prueba-de-recuento.md` y build | Con ella: portada «43 herramientas», directorio «43 de 43», filtro Protocolo de 1 a 2. Sin ella (build final): «42 herramientas». No se ha commiteado |
+| Lighthouse ≥ 95 en una página larga nueva | Lighthouse 13.6.0 con Chromium de Playwright, contra la preview | `/sistemas/harness-sdd-claude-code/`: rendimiento 98 · accesibilidad 100 · buenas prácticas 100 · SEO 100. `/herramientas/`: 98 · 100 · 100 · 100 |
+| Opcional: `comprobar-codigo.py` | — | **No ejecutado.** Necesita un entorno de Python con unas 25 librerías fijadas (anthropic, langchain, langgraph…), instaladas desde la red. El paquete dice que su contenido ya la pasa. Queda para el autor si quiere repetirla |
+| Textos en `estado: revision` | `grep` en `contenido/` | Solo en el blog: 19 entradas (lista abajo) |
+
+Cambios de código de integración en esta fase:
+
+- `scripts/smoke.mjs`: 15 páginas del contenido v2 en `PAGINAS` y 3 en `CON_MERMAID`.
+- `README.md`: el apartado de secciones nuevas describe el estado real (cuatro con contenido y páginas propias; comunidad en borrador).
+
+Nada que arreglar en el contenido.
+
+### Para que reescribas con tu voz (`estado: revision`, se publican con el aviso «En revisión»)
+
+Nuevas del paquete v2 (12):
+
+- `2026-10-14-mi-ruta-para-aprender-ia-con-videos` · Mi ruta para aprender IA con vídeos gratuitos
+- `2026-10-15-la-respuesta-mas-probable` · La respuesta más probable no es la respuesta correcta
+- `2026-10-16-cuanto-saber-de-redes-neuronales` · Cuánto necesitas saber de redes neuronales para construir agentes
+- `2026-10-18-del-autocompletado-al-agente` · Del autocompletado al agente: lo que cambió en un año
+- `2026-10-19-haz-que-funcione-no-es-una-instruccion` · «Haz que funcione» no es una instrucción
+- `2026-10-21-treinta-minutos-al-dia` · Treinta minutos al día
+- `2026-10-22-de-codex-a-claude-code` · De Codex a Claude Code: cómo evolucionó mi harness
+- `2026-10-23-una-sola-puerta-humana` · Por qué mi harness tiene una sola puerta humana
+- `2026-10-25-tres-cosas-que-se-rompen-sin-worktrees` · Tres cosas que se rompen si paralelizas sin worktrees
+- `2026-10-26-auditar-tu-propio-harness` · Auditar tu propio harness
+- `2026-10-27-el-arnes-importa-y-cuesta` · El arnés importa (y cuesta)
+- `2026-10-28-sdk-o-framework` · SDK del proveedor o framework: cómo elijo
+
+Del kit (7; las 4 marcadas con * las revisó el paquete v2):
+
+- `2026-07-01-por-que-morecontext`* · Por qué MoreContext
+- `2026-07-15-como-leer-una-traza` · Cómo leer la traza de un agente
+- `2026-07-30-por-que-mcp-importa`* · Por qué MCP importa más de lo que parece
+- `2026-08-22-dejar-un-agente-trabajando-horas`* · Qué hace falta para dejar a un agente trabajando horas
+- `2026-09-10-evals-antes-que-prompts` · Evals antes que prompts
+- `2026-09-28-el-contexto-es-un-presupuesto` · El contexto es un presupuesto, no un cajón
+- `2026-10-12-tu-primer-agente-deberia-ser-un-workflow`* · Por qué tu primer agente debería ser un workflow
+
+Otros pendientes del autor antes de publicar (del `LEEME` del paquete):
+
+- `docs/integracion/SIN-VERIFICAR.md`: 18 lotes de afirmaciones que el verificador no pudo confirmar en fuente primaria.
+- Duraciones de vídeo marcadas con «—» y títulos de vídeo sin confirmar en `cursos/ruta-en-video/`.
+- Canario `<TU NOMBRE> ·`: se deja como marcador para el lector (pregunta 4).

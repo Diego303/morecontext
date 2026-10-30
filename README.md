@@ -104,7 +104,7 @@ Una sola vez:
 
 ### Secciones nuevas: problemas, plantillas, biblioteca, herramientas y comunidad
 
-Están montadas (colección, rutas, validador, portada y pie), con su plantilla en `_plantillas/` (`problema`, `plantilla`, `paper`, `herramienta`, `proyecto`). Cada carpeta trae una portadilla y una nota de ejemplo **en borrador**. Una sección aparece en la web (portada, pie, sitemap) solo cuando su `index.md` y al menos una entrada están publicados. Hasta entonces se ve únicamente en `pnpm dev`.
+Problemas frecuentes, plantillas, biblioteca y herramientas tienen contenido desde la integración del paquete v2 (`docs/integracion/INVENTARIO.md`) y páginas propias con filtros (`src/pages/<seccion>/`); son capítulos de la portada y están en la navegación. Sus plantillas de Obsidian están en `_plantillas/` (`problema`, `plantilla`, `paper`, `herramienta`). Comunidad sigue con las rutas genéricas `[apendice]`: trae una portadilla y un proyecto de ejemplo **en borrador** (plantilla `proyecto`) y aparecerá en la web (apéndices, pie, sitemap) cuando su `index.md` y al menos una entrada estén publicados. Hasta entonces se ve únicamente en `pnpm dev`.
 
 ```bash
 pnpm nuevo problema problemas/la-respuesta-llega-cortada "La respuesta llega cortada"
