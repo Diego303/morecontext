@@ -565,3 +565,27 @@ Comprobaciones:
 - **«Continúa donde lo dejaste»**, probado con Playwright: con las lecciones hasta la 40.6 marcadas, propone `/roadmap/50-skills/que-es-una-skill/` («Llevas 29 de 60»). La lista incluye los niveles 50, 70 y 90 en su orden.
 
 Aceptación: `pnpm validar` 0 · `pnpm check` 0 · `pnpm build` 1083 páginas sin avisos · `pnpm enlaces` 0 · `wikilink--roto` 0.
+
+---
+
+## Fase I5 · hecho
+
+Sin cambios de código: todo lo que pide I5 ya estaba.
+
+- **Filtro de sección:** sale de `NOMBRE_SECCION`, que ya incluía «Plantillas», «Herramientas», «Biblioteca» y «Problemas frecuentes». Comprobado en el HTML de una ficha de cada sección.
+- **Peso del síntoma:** entró en I3 (`data-pagefind-weight` en la ficha cuando el síntoma difiere del título; si no, el síntoma es el `h1`).
+
+Pruebas con Playwright sobre `dist/` (`docs/integracion/probar-busqueda.mjs`; resultado en `docs/integracion/busqueda.md`):
+
+| Prueba | Resultado |
+|---|---|
+| «tool_result sin tool_use» | La página esperada sale 2.ª (1.ª, la del glosario `tool-result`, por la regla «glosario primero» del buscador) |
+| «LangGraph interrupt» | Esperada 2.ª |
+| «worktree» | Esperadas 1.ª y 3.ª |
+| «HNSW» | Esperada 1.ª |
+| «Ollama» | Esperadas 2.ª y 3.ª |
+| Mensaje de error literal («unexpected tool_use_id found in tool_result blocks») | Esperada 1.ª |
+| Pestañas | Sin nada guardado sale la primera. Se pulsa TypeScript; en otra página, LangChain/LangGraph sale en la primera (LangChain) y se pulsa LangGraph; al volver a la primera **sigue en TypeScript**. `mc.pestanas` = `["LangGraph","TypeScript"]` |
+| Mermaid | Las 3 páginas del plan dibujan su diagrama (SVG), sin errores de consola |
+
+Aceptación: las 5 búsquedas del plan devuelven la página esperada entre las 3 primeras; las pestañas y Mermaid funcionan.
