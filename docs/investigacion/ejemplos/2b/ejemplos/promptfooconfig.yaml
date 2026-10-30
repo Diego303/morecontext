@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: Clasificador de tickets con un modelo local
+prompts:
+  - "Clasifica el ticket en facturacion, envio, devolucion u otro. Responde solo la categoría.\n\nTicket: {{ticket}}"
+providers:
+  - id: ollama:chat:qwen3.6:27b
+    config:
+      temperature: 0
+defaultTest:
+  options:
+    provider: ollama:chat:qwen3.6:27b   # juez local para llm-rubric (si no, usa un proveedor por defecto de pago)
+tests:
+  - vars: { ticket: "Me cobrasteis dos veces este mes" }
+    assert:
+      - type: icontains
+        value: facturacion
+  - vars: { ticket: "El paquete no ha llegado" }
+    assert:
+      - type: icontains
+        value: envio
+      - type: llm-rubric
+        value: "Responde con una sola palabra, sin explicación"

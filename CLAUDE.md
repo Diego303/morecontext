@@ -15,6 +15,7 @@ Memoria del proyecto para Claude Code. Léela entera al empezar cada sesión.
 - `referencia/landing-indice.html`: portada aprobada; `referencia/componentes.css`: componentes ya diseñados.
 - `codigo-verificado/`: código probado en build real; se copia tal cual en la fase 1.
 - `integracion/`: integración del paquete de contenido v2 (`INVENTARIO.md`: reglas, mapeo de campos, plan y registro por fase).
+- `investigacion/`: informes de investigación (vanguardia y open source) en los que se basa el contenido v2, con sus ejemplos. No se publican.
 
 ## Comandos
 

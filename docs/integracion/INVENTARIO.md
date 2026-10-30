@@ -456,3 +456,41 @@ Aceptación:
 - Capturas a 400 y 1440 px (portada, una lección, un curso y `/recetas/`): **idénticas byte a byte** a las de antes.
 
 Aviso nuevo en el build, transitorio: «The collection "biblioteca" / "herramientas" / "plantillas" / "problemas" does not exist or is empty». Esas colecciones se quedan sin entradas al borrar los esqueletos; desaparece en I2.
+
+---
+
+## Fase I2 · hecho
+
+Todo en `develop`, en el clon LF (pregunta 1). Pasos:
+
+1. `clasificar.mjs --aplicar`: 419 COPIAR (`biblioteca/react` pasa de CONFLICTO a COPIAR porque su esqueleto se borró en I1), 255 SUSTITUIR, 1 MOVER+SUSTITUIR (`cursos/rag-a-fondo/04-evaluar-un-rag.md` → `10-evaluar-un-rag.md`) y 3 FUSIONAR, las tres limpias. `clasificacion.md` y `.json` son ahora el informe de la aplicación; el de I0, «solo informe», está en el historial (`076d526`).
+2. Los 8 CONFLICTO restantes se resolvieron con la versión del paquete (pregunta 2): las 4 portadillas (`problemas`, `plantillas`, `biblioteca`, `herramientas`) y las 4 `_plantillas` (`problema`, `plantilla`, `paper`, `herramienta`).
+3. `mapear-frontmatter.mjs --aplicar`: 54 archivos, listados en `mapeo-frontmatter.txt`.
+   - `web:` → `url:` en 42 fichas de herramientas y en `_plantillas/herramienta.md`.
+   - `formato: markdown` → `md` en 10 plantillas y en `_plantillas/plantilla.md`.
+4. Ninguna marca de conflicto en `contenido/`. Las dos líneas que empiezan por `<<<<<<<` y `>>>>>>>` en `recetas/integrar-features-en-paralelo.md` son el ejemplo del propio texto, idéntico al del paquete.
+5. Tus ediciones siguen: «Diego» en `boletin/002`, «Diego» ×2 en `paginas/manifiesto` y `[Diego](https://diego303.github.io/Portfolio/)` en `paginas/sobre`.
+6. Docs:
+   - `docs/GUIA-CONTENIDO.md` y `docs/MAPA-CONTENIDO.md` pasan a la v2.
+   - Adaptaciones de la guía, solo en la tabla §3.2, para que describa el esquema real: `formato` (md · txt · json · jsonl · yaml), `url` en lugar de `web` en herramientas y una fila para `comunidad/`.
+   - `docs/investigacion/` copiada del paquete. Está excluida de `astro check` por `tsconfig`, porque `docs` ya estaba excluido.
+   - `docs/integracion/SIN-VERIFICAR.md` copiado para I8.
+   - `CLAUDE.md`: añadido `investigacion/` a los documentos de referencia.
+7. Ningún ajuste de contenido fue necesario: el validador no se quejó de nada del paquete.
+
+Aceptación:
+
+- `pnpm validar`: 694 archivos · 0 errores · 0 avisos.
+- `pnpm check`: 0 · 0 · 0.
+- `pnpm build`: **1083 páginas**, sin avisos (solo «data store cleared»).
+- `pnpm enlaces`: 0 rotos.
+- `wikilink--roto` en el HTML de `dist`: 0.
+
+Recuento: de 435 a 1083 páginas (+648).
+
+- **+423 páginas de contenido**: las 427 nuevas del manifiesto menos las 4 `_plantillas`, que no se publican.
+- **+225 páginas de etiquetas** (`/tags/…`): de 162 a 387.
+
+Hay 693 imágenes OG y Pagefind indexa 693 páginas. Coincide con el ensayo de I0.
+
+También: `build.log` entró por error en el commit de I1. Se quitó en un commit aparte. Los logs se guardan ahora fuera del repositorio.
