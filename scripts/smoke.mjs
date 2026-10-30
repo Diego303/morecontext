@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Prueba de humo del sitio construido (fase 12): con la preview levantada, abre las páginas clave
 // a varios anchos y comprueba scroll horizontal, errores de consola, Mermaid dibujado,
-// paleta Ctrl+K, pestañas sincronizadas y botón Copiar.
+// paleta Ctrl+K, pestañas sincronizadas y botón Copiar, y el icono [+] animado (hero, «buscando» en la paleta,
+// [+] → [✓] al copiar, movimiento reducido) con los archivos de marca.
 // Uso:  pnpm build && pnpm preview   (en otra terminal)  →  pnpm smoke [--base http://localhost:4321]
 // La primera vez: pnpm exec playwright install chromium
 import { chromium } from 'playwright';
@@ -84,6 +85,108 @@ for (const ruta of CON_MERMAID) {
   await copiar.click();
   comprobar((await copiar.textContent())?.trim() === 'Copiado', 'Copiar no muestra «Copiado»');
   await contexto.close();
+}
+
+// 5) Icono [+] del hero: se eleva al pasar el ratón, baja sobre su sombra al pulsar y vuelve al soltar.
+//    Es decorativo: ni foco ni aria (el nombre lo da el h1).
+const desplazamiento = (m) => (m.match(/matrix\(([^)]+)\)/)?.[1].split(',').map(Number) ?? [1, 0, 0, 1, 0, 0]).slice(4);
+for (const ancho of [400, 1440]) {
+  const { pagina } = await abrir('/', ancho);
+  const transform = () => pagina.locator('.wm-mark .mc-front').evaluate((el) => getComputedStyle(el).transform);
+  const caja = await pagina.locator('.wm-mark').boundingBox();
+  const reposo = await transform();
+  await pagina.mouse.move(caja.x + caja.width / 2, caja.y + caja.height / 2);
+  await pagina.waitForTimeout(250);
+  const encima = await transform();
+  await pagina.mouse.down();
+  await pagina.waitForTimeout(50);
+  const pulsado = await transform();
+  await pagina.mouse.up();
+  await pagina.waitForTimeout(250);
+  const soltado = await transform();
+  comprobar(reposo === 'none' && encima !== 'none', `/ @${ancho}: el [+] del hero no se eleva al pasar el ratón (${reposo} → ${encima})`);
+  comprobar(desplazamiento(pulsado).every((v) => v > 0), `/ @${ancho}: el [+] del hero no baja al pulsar (${pulsado})`);
+  comprobar(soltado === encima, `/ @${ancho}: el [+] del hero no vuelve al soltar (${soltado})`);
+  comprobar(await pagina.locator('.wm-mark').evaluate((s) => !s.hasAttribute('tabindex') && s.getAttribute('aria-hidden') === 'true'),
+    `/ @${ancho}: el [+] del hero no es decorativo`);
+  await pagina.close();
+}
+
+// 6) Paleta: el [+] anima «buscando» (con aria-busy) mientras la búsqueda tarda, y se apaga al terminar o al cerrar.
+//    Las peticiones a /pagefind/ se retrasan 600 ms para que la búsqueda tarde.
+{
+  const pagina = await navegador.newPage({ viewport: { width: 1280, height: 900 } });
+  await pagina.route('**/pagefind/**', async (r) => { await new Promise((x) => setTimeout(x, 600)); await r.continue(); });
+  await pagina.goto(BASE + '/', { waitUntil: 'networkidle' });
+  const estado = () => pagina.evaluate(() => ({
+    buscando: document.querySelector('#buscador .bus-icono .mc-icon')?.classList.contains('is-searching'),
+    ocupado: document.querySelector('#buscador [data-resultados]')?.getAttribute('aria-busy'),
+  }));
+  const encendido = () => pagina.waitForFunction(() => document.querySelector('#buscador .bus-icono .mc-icon')?.classList.contains('is-searching')
+    && document.querySelector('#buscador [data-resultados]')?.getAttribute('aria-busy') === 'true', null, { timeout: 5000 }).then(() => true, () => false);
+  const campo = pagina.locator('#buscador input[type=search]');
+  await pagina.keyboard.press('Control+k');
+  await campo.pressSequentially('tool use', { delay: 30 });
+  comprobar(await encendido(), 'Paleta: no aparecen .is-searching y aria-busy="true" mientras se busca');
+  await pagina.waitForFunction(() => document.querySelectorAll('#buscador [data-resultados] a').length > 0, null, { timeout: 15000 });
+  const fin = await estado();
+  comprobar(fin.buscando === false && fin.ocupado === null, `Paleta: «buscando» no se apaga al llegar los resultados (${JSON.stringify(fin)})`);
+  await campo.fill('');
+  await campo.pressSequentially('ventana de contexto', { delay: 20 });
+  await encendido();
+  await pagina.keyboard.press('Escape');
+  await pagina.waitForTimeout(1500);   // la búsqueda interrumpida termina sin volver a encenderlo
+  const cerrado = await estado();
+  comprobar(cerrado.buscando === false && cerrado.ocupado === null, `Paleta: «buscando» queda encendido tras cerrarla (${JSON.stringify(cerrado)})`);
+  await pagina.close();
+}
+
+// 7) Copiar en un bloque con pestañas (la segunda): «Copiado», [+] → [✓] y el código de la pestaña visible; a los 1,6 s, vuelta
+{
+  const contexto = await navegador.newContext({ viewport: { width: 1280, height: 900 } });
+  await contexto.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
+  const pagina = await contexto.newPage();
+  await pagina.goto(BASE + '/roadmap/40-primer-agente/el-bucle-agentico/', { waitUntil: 'networkidle' });
+  const bloque = pagina.locator('.code--tabs').first();
+  await bloque.locator('.code__tab').nth(1).click();
+  const esperado = await bloque.locator('.code__panel:not([hidden]) pre').evaluate((pre) => pre.innerText);
+  const boton = bloque.locator('.code__copy');
+  const leer = () => boton.evaluate((b) => ({ texto: b.querySelector('.code__copy-t')?.textContent, copiado: b.querySelector('.mc-icon')?.classList.contains('is-copied') }));
+  await boton.click();
+  await pagina.waitForTimeout(100);
+  const justo = await leer();
+  const copiado = await pagina.evaluate(() => navigator.clipboard.readText());
+  comprobar(justo.texto === 'Copiado' && justo.copiado === true, `Copiar: justo después no hay «Copiado» con .is-copied (${JSON.stringify(justo)})`);
+  comprobar(copiado === esperado, 'Copiar: el portapapeles no tiene el código de la pestaña visible');
+  await pagina.waitForTimeout(1700);
+  const luego = await leer();
+  comprobar(luego.texto === 'Copiar' && luego.copiado === false, `Copiar: a los 1,8 s no vuelve a «Copiar» sin .is-copied (${JSON.stringify(luego)})`);
+  await contexto.close();
+}
+
+// 8) Movimiento reducido: al copiar se ve el [✓] (scale(1)) sin animación
+{
+  const contexto = await navegador.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  await contexto.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE });
+  const pagina = await contexto.newPage();
+  await pagina.emulateMedia({ reducedMotion: 'reduce' });
+  await pagina.goto(BASE + '/roadmap/40-primer-agente/el-bucle-agentico/', { waitUntil: 'networkidle' });
+  const boton = pagina.locator('.code__copy').first();
+  await boton.click();
+  await pagina.waitForTimeout(100);
+  const check = await boton.locator('.mc-check').evaluate((c) => ({ transform: getComputedStyle(c).transform, animacion: getComputedStyle(c).animationName }));
+  comprobar(check.transform === 'matrix(1, 0, 0, 1, 0, 0)' && check.animacion === 'none', `Movimiento reducido: el [✓] no está en scale(1) sin animar (${JSON.stringify(check)})`);
+  await contexto.close();
+}
+
+// 9) Marca: favicon, iconos y manifiesto del kit; ninguna página con el icono antiguo
+for (const ruta of ['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png', '/site.webmanifest', '/icon-maskable-512.png']) {
+  const r = await fetch(BASE + ruta);
+  comprobar(r.status === 200, `${ruta}: HTTP ${r.status}`);
+}
+for (const ruta of PAGINAS) {
+  const html = await (await fetch(BASE + ruta)).text();
+  comprobar(!/#i-mark|fill: var\(--accent-yellow\)|M8 5H5v14h3/.test(html), `${ruta}: todavía tiene el icono [+] antiguo`);
 }
 
 await navegador.close();
