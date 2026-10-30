@@ -1,0 +1,63 @@
+/* Icono [+] animado (src/scripts/icono-marca.ts), portado de morecontext-animaciones-v1 (docs/marca/).
+   Solo tres estados: elevación (hero de la portada), buscando (paleta) y copiado (botón Copiar).
+   La cara, la tinta y la sombra amarilla van escritas en el SVG; el verde del copiado sale de los tokens.
+   Los desplazamientos están en unidades del viewBox (26 × 26): escalan con el tamaño del icono. */
+
+/* ---------- Base ---------- */
+.mc-icon {
+  --mc-ease-mech: cubic-bezier(.65, 0, .35, 1);
+  display: block;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.mc-icon .mc-front,
+.mc-icon .mc-bl,
+.mc-icon .mc-br,
+.mc-icon .mc-plus,
+.mc-icon .mc-check {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.mc-icon .mc-check { transform: scale(0); }   /* oculto hasta copiar */
+
+/* ---------- Elevación: se eleva al pasar el ratón y baja sobre su sombra al pulsar ---------- */
+.mc-lift .mc-front, .mc-lift .mc-shadow { transition: transform 140ms ease; }
+@media (hover: hover) {
+  .mc-lift:hover .mc-front { transform: translate(-1.2px, -1.2px); }
+  .mc-lift:hover .mc-shadow { transform: translate(.8px, .8px); }
+}
+.mc-lift:active .mc-front { transform: translate(2.4px, 2.4px); transition: none; }
+.mc-lift:active .mc-shadow { transform: none; transition: none; }
+
+/* ---------- Buscando: mientras dure la búsqueda ---------- */
+.mc-icon.is-searching .mc-bl { animation: mc-open-l 900ms ease-in-out infinite; }
+.mc-icon.is-searching .mc-br { animation: mc-open-r 900ms ease-in-out infinite; }
+.mc-icon.is-searching .mc-plus { animation: mc-quarter 900ms var(--mc-ease-mech) infinite; }
+@keyframes mc-open-l { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-1.6px); } }
+@keyframes mc-open-r { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(1.6px); } }
+@keyframes mc-quarter { from { transform: rotate(0deg); } to { transform: rotate(90deg); } }
+
+/* ---------- Copiado: [+] → [✓] con la sombra en verde, 1,6 s ---------- */
+.mc-icon.is-copied .mc-plus { animation: mc-plus-out 1.6s ease; }
+.mc-icon.is-copied .mc-check { animation: mc-check-in 1.6s ease; }
+.mc-icon.is-copied .mc-shadow { animation: mc-flash-green 1.6s ease; }
+@keyframes mc-plus-out {
+  0% { transform: rotate(0deg) scale(1); }
+  18%, 85% { transform: rotate(90deg) scale(0); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+@keyframes mc-check-in {
+  0%, 12% { transform: scale(0); }
+  28%, 85% { transform: scale(1); }
+  100% { transform: scale(0); }
+}
+/* Sin fotograma final: vuelve al amarillo del propio SVG */
+@keyframes mc-flash-green { 0%, 85% { fill: var(--accent-green); } }
+
+/* ---------- Movimiento reducido: sin animaciones; al copiar se sigue viendo [✓] en verde ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .mc-icon *, .mc-lift * { animation: none !important; transition: none !important; }
+  .mc-icon.is-copied .mc-plus { transform: scale(0); }
+  .mc-icon.is-copied .mc-check { transform: scale(1); }
+  .mc-icon.is-copied .mc-shadow { fill: var(--accent-green); }
+}

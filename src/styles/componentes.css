@@ -503,7 +503,7 @@ dialog.buscador {
 dialog.buscador[open] { display: flex; flex-direction: column; }
 dialog.buscador::backdrop { background: var(--bg-overlay); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
 .bus-in { display: flex; align-items: center; gap: 12px; padding: 0 14px; background: var(--code-bg); border-bottom: 1px solid var(--border); }
-.bus-in svg { flex: none; color: var(--text-faint); }
+.bus-icono { display: flex; flex: none; } /* [+] que anima «buscando» (icono-marca.css) */
 .bus-in input { flex: 1; min-width: 0; padding: 16px 0; color: var(--text); background: transparent; border: 0; outline: none; font-family: var(--font-sans); font-size: 17px; }
 .bus-in input::placeholder { font-family: var(--font-hand); font-size: 20px; color: var(--text-ghost); }
 .bus-in input::-webkit-search-cancel-button { display: none; }

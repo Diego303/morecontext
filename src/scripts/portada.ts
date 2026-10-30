@@ -6,4 +6,6 @@ campo?.addEventListener('input', () => {
   form!.requestSubmit();          // buscador.ts abre la paleta con el texto
   campo.value = '';
 });
+// Safari de iOS solo aplica :active (el [+] del hero baja al pulsarlo) si la página escucha toques.
+document.addEventListener('touchstart', () => {}, { passive: true });
 export {};
