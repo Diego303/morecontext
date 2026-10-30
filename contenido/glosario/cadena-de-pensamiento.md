@@ -2,6 +2,7 @@
 titulo: Cadena de pensamiento
 descripcion: Técnica de prompting que pide al modelo razonar paso a paso antes de responder para mejorar tareas de varios pasos.
 creado: 2026-07-17
+actualizado: 2026-10-29
 categoria: prompting
 ingles: chain of thought
 aliases: [chain of thought, chain-of-thought, CoT, razonamiento paso a paso]
@@ -13,7 +14,7 @@ La cadena de pensamiento (*chain of thought*, CoT) consiste en pedir al modelo q
 
 ## En la práctica
 
-Separa el razonamiento de la respuesta para poder procesarla con código: pide el razonamiento dentro de `<razonamiento>` y la respuesta dentro de `<respuesta>`, y extrae solo la segunda. Ayuda en tareas con varios pasos; en tareas simples solo añade tokens y [[glosario/latencia]]. Con modelos que tienen [[glosario/razonamiento-extendido]], suele ser mejor activar esa función que forzar el razonamiento en el texto.
+Separa el razonamiento de la respuesta para poder procesarla con código: pide el razonamiento dentro de `<razonamiento>` y la respuesta dentro de `<respuesta>`, y extrae solo la segunda. Ayuda en tareas con varios pasos; en tareas simples solo añade tokens y [[glosario/latencia]]. Con modelos que tienen [[glosario/razonamiento-extendido]], suele ser mejor dejar que razonen en sus bloques `thinking` que forzar el razonamiento en el texto. En los modelos actuales de Claude, la documentación desaconseja pedir el razonamiento paso a paso en la salida, porque puede disparar rechazos: pide una explicación breve o lee el razonamiento con `display: "summarized"`. Los [[glosario/modelo-de-razonamiento|modelos de razonamiento]] nacieron de entrenar esta misma idea.
 
 ## No confundir con
 
@@ -26,3 +27,4 @@ Separa el razonamiento de la respuesta para poder procesarla con código: pide e
 - [[docs/prompting/04-razonamiento]]
 - [[glosario/react]]
 - [[glosario/zero-shot]]
+- [[biblioteca/chain-of-thought]]

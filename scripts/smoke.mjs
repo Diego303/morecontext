@@ -13,8 +13,14 @@ const PAGINAS = [
   '/', '/roadmap/', '/roadmap/40-primer-agente/el-bucle-agentico/', '/docs/', '/docs/herramientas/uso-de-herramientas/',
   '/glosario/', '/glosario/rag/', '/recetas/', '/recetas/aprobacion-humana-antes-de-actuar/', '/patrones/',
   '/sistemas/agente-de-codigo/', '/radar/', '/blog/',
+  // Contenido v2: secciones nuevas y una página de cada tipo nuevo
+  '/plantillas/', '/plantillas/agents-md/', '/herramientas/', '/herramientas/langgraph/', '/biblioteca/', '/biblioteca/react/',
+  '/problemas/', '/problemas/tool-result-sin-tool-use/', '/cursos/ruta-en-video/fase-0-que-es-la-ia/',
+  '/cursos/harness-engineering/el-flujo-como-maquina-de-estados/', '/cursos/langchain-y-langgraph/langgraph-estado-nodos-y-aristas/',
+  '/sistemas/harness-sdd-claude-code/', '/patrones/inicializador-y-agente-de-trabajo/', '/docs/claude-code/hooks/', '/mapa/',
 ];
-const CON_MERMAID = ['/roadmap/40-primer-agente/el-bucle-agentico/', '/sistemas/agente-de-codigo/', '/patrones/enrutado/'];
+const CON_MERMAID = ['/roadmap/40-primer-agente/el-bucle-agentico/', '/sistemas/agente-de-codigo/', '/patrones/enrutado/',
+  '/cursos/harness-engineering/el-flujo-como-maquina-de-estados/', '/sistemas/harness-sdd-claude-code/', '/cursos/langchain-y-langgraph/langgraph-estado-nodos-y-aristas/'];
 
 const fallos = [];
 let comprobaciones = 0;

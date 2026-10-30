@@ -2,6 +2,7 @@
 titulo: "Instrucciones claras y contexto suficiente"
 descripcion: "Cómo escribir una instrucción que el modelo no pueda malinterpretar: objetivo, contexto, restricciones y formato, con los datos separados mediante etiquetas XML."
 creado: 2026-09-11
+actualizado: 2026-10-29
 orden: 1
 minutos: 35
 tipo: practica
@@ -89,7 +90,7 @@ Con la segunda versión, el modelo también evitará tablas, abreviaturas y sím
 
 Cuando el prompt mezcla órdenes y contenido (un correo, un documento, la entrada del usuario), el modelo puede confundir dónde acaba uno y empieza el otro. La forma más fiable de separarlos son **etiquetas XML** con nombres descriptivos: `<correo>`, `<documento>`, `<datos_cliente>`. No hay etiquetas especiales: el nombre que elijas sirve si es claro y lo usas de forma coherente.
 
-Esto tiene dos ventajas. La primera, que puedes referirte a ellas en las instrucciones («usa solo la información de `<documento>`»). La segunda, que reduce el riesgo de que un texto con frases tipo «ignora lo anterior» se tome como una orden. Contra la [[glosario/inyeccion-de-prompt|inyección de prompt]] no basta, aunque es un primer paso.
+Esto tiene dos ventajas. La primera, que puedes referirte a ellas en las instrucciones («usa solo la información de `<documento>`»). La segunda, que reduce el riesgo de que un texto con frases tipo «ignora lo anterior» se tome como una orden. Contra la [[glosario/inyeccion-de-prompt|inyección de prompt]] no basta, aunque es un primer paso: las defensas que sí funcionan son de diseño, y están en [[docs/seguridad/03-patrones-contra-inyeccion]].
 
 En código, construye el prompt con una plantilla y mete los datos en su sitio:
 
@@ -191,3 +192,4 @@ Con documentos largos, pon el documento primero y las instrucciones y la pregunt
 - [[roadmap/10-prompting/02-ejemplos-few-shot]]: cuando las instrucciones no bastan, enseña con casos.
 - [[modelos/01-principios-de-prompting]]: los principios con más ejemplos de antes y después.
 - [[modelos/02-ingenieria-de-contexto]]: qué meter en el contexto y en qué orden.
+- [[problemas/el-modelo-ignora-instrucciones]]: qué revisar cuando una instrucción clara no se cumple.

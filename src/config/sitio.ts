@@ -30,9 +30,11 @@ export const PARTES = [
   ] },
   { num: 'II', nombre: 'Consultar', enlaces: [
     { href: '/docs/', texto: 'Documentación' }, { href: '/modelos/', texto: 'Guía de modelos' }, { href: '/glosario/', texto: 'Glosario' },
+    { href: '/biblioteca/', texto: 'Biblioteca' }, { href: '/problemas/', texto: 'Problemas frecuentes' },
   ] },
   { num: 'III', nombre: 'Construir', enlaces: [
     { href: '/sistemas/', texto: 'Sistemas' }, { href: '/patrones/', texto: 'Patrones' }, { href: '/recetas/', texto: 'Recetas' },
+    { href: '/plantillas/', texto: 'Plantillas' }, { href: '/herramientas/', texto: 'Herramientas' },
   ] },
   { num: 'IV', nombre: 'Trabajar', enlaces: [{ href: '/disciplinas/', texto: 'Disciplinas y formas de trabajar' }] },
   { num: 'V', nombre: 'Estar al día', enlaces: [
@@ -44,7 +46,7 @@ export const PARTES = [
 export const NAV = [
   { href: '/docs/', texto: 'Docs' }, { href: '/modelos/', texto: 'Modelos' }, { href: '/sistemas/', texto: 'Sistemas' },
   { href: '/patrones/', texto: 'Patrones' }, { href: '/disciplinas/', texto: 'Disciplinas' }, { href: '/recetas/', texto: 'Recetas' },
-  { href: '/radar/', texto: 'Radar' }, { href: '/blog/', texto: 'Blog' },
+  { href: '/herramientas/', texto: 'Herramientas' }, { href: '/radar/', texto: 'Radar' }, { href: '/blog/', texto: 'Blog' },
 ] as const;
 
 /** Nombre visible de cada sección (para migas, filtros de búsqueda y etiquetas). */

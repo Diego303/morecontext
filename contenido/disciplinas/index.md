@@ -2,6 +2,7 @@
 titulo: Disciplinas y formas de trabajar
 descripcion: Las disciplinas transversales que sostienen un agente fiable y las formas de trabajar con IA en tu día a día, con prácticas concretas.
 creado: 2026-07-10
+actualizado: 2026-10-29
 orden: 7
 tags: [disciplinas]
 relacionados: ["[[patrones/index]]", "[[cursos/index]]", "[[sistemas/index]]"]
@@ -19,6 +20,7 @@ Lo que un equipo debe cuidar en cualquier sistema con modelos.
 - [[disciplinas/seguridad]]: tratar cada entrada externa como no confiable y limitar lo que puede hacer el agente.
 - [[disciplinas/diseno-de-herramientas]]: herramientas que el modelo entiende y usa bien.
 - [[disciplinas/ux-de-agentes]]: interfaces que muestran lo que pasa y dejan corregir.
+- [[disciplinas/harness-engineering]]: diseñar el entorno del agente (instrucciones, herramientas, *hooks*, verificación, estado) para que sea fiable, reanudable y barato.
 
 ## Formas de trabajar
 
@@ -30,7 +32,9 @@ Hábitos para trabajar con agentes, sobre todo con agentes de código.
 - [[disciplinas/orquestador-y-subagentes]]: delegar búsquedas y subtareas para mantener limpio el contexto principal.
 - [[disciplinas/explorar-planificar-implementar-verificar]]: un ciclo de cuatro fases para cambios no triviales.
 - [[disciplinas/cambios-pequenos-y-revisables]]: entregas que una persona puede revisar de verdad.
+- [[disciplinas/trabajo-en-paralelo-con-agentes]]: varias sesiones a la vez, cada una en su *worktree*, integrando de una en una.
+- [[disciplinas/verificar-antes-de-dar-por-hecho]]: nada está terminado sin evidencia fresca, un comando ejecutado después del último cambio.
 
 ## Cómo usar esta sección
 
-No hace falta leerla en orden. Elige la disciplina que más te duela hoy y aplica una sola práctica. Si quieres profundizar, varias tienen un curso detrás: [[cursos/context-engineering/index]], [[cursos/evals-para-agentes/index]] y [[cursos/seguridad-y-prompt-injection/index]].
+No hace falta leerla en orden. Elige la disciplina que más te duela hoy y aplica una sola práctica. Si quieres profundizar, varias tienen un curso detrás: [[cursos/context-engineering/index]], [[cursos/evals-para-agentes/index]], [[cursos/seguridad-y-prompt-injection/index]] y [[cursos/harness-engineering/index]]. Las formas de trabajar con agentes de código se ven juntas, en un sistema real, en [[sistemas/harness-sdd-claude-code]].

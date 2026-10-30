@@ -2,6 +2,7 @@
 titulo: Contexto para agentes de larga duración
 descripcion: Cómo mantener un agente trabajando durante horas combinando compactación, notas, subagentes y puntos de control que permiten reanudar con contexto limpio.
 creado: 2026-10-12
+actualizado: 2026-10-29
 orden: 4
 minutos: 50
 tipo: proyecto
@@ -9,8 +10,9 @@ objetivos:
   - Explicar cómo se combinan compactación, notas estructuradas y subagentes en una tarea que supera una ventana de contexto
   - Implementar un agente por sesiones que guarda un punto de control y reanuda con contexto limpio
   - Diseñar el estado externo (progreso, notas, pruebas) que permite verificar el avance sin leer el historial
+  - Detectar un contexto saturado con un canario y pasar a una sesión nueva con un traspaso estructurado
 requiere: ["[[cursos/context-engineering/03-compactacion-y-memoria]]", "[[roadmap/40-primer-agente/03-condiciones-de-parada]]"]
-relacionados: ["[[radar/2026-07-28-agentes-de-larga-duracion]]", "[[blog/2026-08-22-dejar-un-agente-trabajando-horas]]", "[[cursos/sistemas-multiagente/03-coordinacion-y-estado]]", "[[disciplinas/context-engineering]]"]
+relacionados: ["[[radar/2026-07-28-agentes-de-larga-duracion]]", "[[blog/2026-08-22-dejar-un-agente-trabajando-horas]]", "[[cursos/sistemas-multiagente/03-coordinacion-y-estado]]", "[[disciplinas/context-engineering]]", "[[cursos/harness-engineering/11-sesiones-largas]]", "[[recetas/canario-de-contexto]]"]
 tags: [contexto, agentes, memoria, larga-duracion]
 ---
 
@@ -23,7 +25,7 @@ Una tarea larga (migrar un módulo entero, procesar cientos de documentos, inves
 - **Contexto acotado**: en cada momento, el agente ve solo lo que necesita para el siguiente paso.
 - **Progreso duradero**: si el proceso muere, se pierde como mucho el trabajo desde el último punto de control.
 
-*[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 2025) propone tres técnicas para tareas de largo horizonte: **compactación**, **toma de notas estructurada** y **arquitecturas de subagentes**. Ya conoces las dos primeras ([[cursos/context-engineering/03-compactacion-y-memoria]]). Aquí las combinas con la tercera y con puntos de control.
+*[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 29 sept. 2025) propone tres técnicas para tareas de largo horizonte: **compactación**, **toma de notas estructurada** y **arquitecturas de subagentes**. Ya conoces las dos primeras ([[cursos/context-engineering/03-compactacion-y-memoria]]). Aquí las combinas con la tercera y con puntos de control.
 
 ## Las tres técnicas juntas
 
@@ -56,6 +58,8 @@ El estado vive en tres sitios, cada uno con un propósito:
 - **`progreso.json`**: lista de tareas con estado (`pendiente`, `hecha`, `bloqueada`). Estructurado, para que tu código lo lea sin el modelo.
 - **`NOTAS.md`**: decisiones, contexto y avisos para la siguiente sesión. Texto libre, para el modelo.
 - **El propio entorno**: commits de git, archivos generados, tests. Es la fuente de verdad más fiable, porque se puede comprobar.
+
+Es el patrón que Anthropic describe en *[Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)* (Justin Young, 26 nov. 2025; comentado en [[biblioteca/effective-harnesses]]). Allí, una primera sesión **inicializadora** prepara el terreno: un script `init.sh` que arranca el entorno, un archivo de progreso, un commit inicial y una lista de funcionalidades en JSON, todas con `"passes": false`. Cada sesión posterior lee el progreso y el `git log`, ejecuta `init.sh` y una prueba básica para comprobar que nada está roto, trabaja en **una** funcionalidad, hace commit y actualiza el progreso. Dos detalles del artículo que conviene copiar: el agente solo puede cambiar el campo `passes`, nunca borrar ni reescribir las pruebas, y la lista va en JSON porque el modelo la sobrescribe menos que un Markdown. Es lo que hace aquí `marcar_tarea`: el estado lo cambia una herramienta con un `enum`, no el modelo editando el archivo.
 
 ## El agente por sesiones
 
@@ -113,12 +117,12 @@ def sesion(herramientas: list[dict], handlers: dict) -> bool:
         resp = client.messages.create(model=MODEL, max_tokens=4096, system=SYSTEM,
                                       tools=tools, messages=messages)
         messages.append({"role": "assistant", "content": resp.content})
-        if resp.stop_reason == "end_turn":
-            break
+        if resp.stop_reason in ("end_turn", "model_context_window_exceeded", "max_tokens"):
+            break  # fin de sesión: la siguiente arranca limpia desde progreso.json y NOTAS.md
         if resp.stop_reason == "pause_turn":
             continue
         if resp.stop_reason != "tool_use":
-            raise RuntimeError(f"stop_reason inesperado: {resp.stop_reason}")
+            raise RuntimeError(f"stop_reason inesperado: {resp.stop_reason}")  # refusal: lo revisa un humano
         resultados = []
         for b in resp.content:
             if b.type != "tool_use":
@@ -152,10 +156,19 @@ Un `progreso.json` inicial puede ser tan simple como:
    {"id": "t3", "descripcion": "Eliminar requests de las dependencias", "estado": "pendiente"}]}
 ```
 
-Cuatro decisiones del diseño. Cada sesión arranca con contexto limpio y solo el estado relevante, así que el contexto nunca arrastra basura de horas atrás. El estado estructurado lo escribe una herramienta, no el modelo editando JSON a mano. Hay dos límites (pasos por sesión y número de sesiones) para que el coste total esté acotado ([[roadmap/40-primer-agente/03-condiciones-de-parada]]). Y el agente puede marcar una tarea como `bloqueada` con motivo, en lugar de insistir sin fin.
+Cuatro decisiones del diseño. Cada sesión arranca con contexto limpio y solo el estado relevante, así que el contexto nunca arrastra basura de horas atrás. Si una sesión se llena (`model_context_window_exceeded`) o se corta por `max_tokens`, se cierra como cualquier otra: lo hecho ya está en disco. El estado estructurado lo escribe una herramienta, no el modelo editando JSON a mano. Hay dos límites (pasos por sesión y número de sesiones) para que el coste total esté acotado ([[roadmap/40-primer-agente/03-condiciones-de-parada]]). Y el agente puede marcar una tarea como `bloqueada` con motivo, en lugar de insistir sin fin.
 
 > [!consejo] El entorno es el mejor punto de control
 > Siempre que puedas, haz que «hecha» signifique algo comprobable: un test en verde, un commit, un archivo validado contra un esquema. Así puedes verificar el progreso sin creer al agente, y la sesión siguiente puede comprobar el estado real en lugar de fiarse de las notas.
+
+## Saber cuándo cortar y cómo traspasar
+
+En un agente propio, tu bucle decide cuándo termina una sesión. En una sesión interactiva con un agente de código (horas de trabajo con Claude Code, por ejemplo) lo decides tú, y el problema es darte cuenta a tiempo. Dos técnicas del harness del autor ([[cursos/harness-engineering/11-sesiones-largas]]):
+
+- **Un [[glosario/canario-de-contexto|canario de contexto]].** Una instrucción al principio del archivo de memoria obliga a empezar cada respuesta con un prefijo fijo y poco común (`<TU NOMBRE> ·`). Mientras aparece, el agente sigue atendiendo a las instrucciones del principio. La primera respuesta sin él es la señal para cortar. Es una heurística, no una medida: úsala como alarma temprana ([[recetas/canario-de-contexto]]).
+- **Un [[glosario/traspaso-de-sesion|traspaso de sesión]] estructurado.** Antes de abrir una sesión nueva, genera un documento con lo que solo existe en la conversación: decisiones y su motivo, restricciones que dio la persona, trabajo a medias y el siguiente paso. Lo que ya está en disco (git, progreso, tests) no se copia, se referencia. La sesión nueva empieza leyendo ese traspaso y comprobando el estado real.
+
+Es la misma idea que `NOTAS.md` en el agente de esta lección, aplicada al trabajo con una persona delante. Un traspaso con contexto limpio suele ir mejor que compactar una y otra vez la misma sesión: en *[Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps)* (mar. 2026), Anthropic cuenta que con algunos modelos los reinicios de contexto con traspaso eran necesarios y con otros bastaba la compactación, así que mídelo con el tuyo. Si el síntoma ya está ahí, mira [[problemas/contexto-saturado-en-sesiones-largas]].
 
 ## Prefijo estable, caché barata
 
@@ -185,9 +198,11 @@ En una tarea larga harás cientos de llamadas con el mismo prompt de sistema y l
 - Trabaja por sesiones con contexto limpio y un punto de control atómico en disco.
 - Haz que «hecha» sea comprobable en el entorno.
 - Prefijo estable para la caché, límites de pasos y de sesiones para el coste.
+- En sesiones interactivas, un canario avisa de la saturación y un traspaso estructurado lleva lo importante a la sesión nueva.
 
 ## Para seguir
 
 - [[blog/2026-08-22-dejar-un-agente-trabajando-horas]]
 - [[cursos/sistemas-multiagente/index]]
 - [[roadmap/100-produccion/02-costes-y-prompt-caching]]
+- [[sistemas/agente-de-larga-duracion]]

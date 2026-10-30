@@ -2,15 +2,17 @@
 titulo: Qué meter en el contexto y qué no
 descripcion: Criterios para el prompt de sistema, las herramientas, los ejemplos y los resultados de herramientas, y cómo cargar información bajo demanda en lugar de precargarla.
 creado: 2026-10-07
+actualizado: 2026-10-29
 orden: 2
 minutos: 45
 tipo: practica
 objetivos:
   - Aplicar el criterio del mínimo conjunto de tokens de alta señal a cada componente del contexto
   - Implementar resultados de herramientas recortados, filtrados y paginados
-  - Decidir entre precargar información y recuperarla bajo demanda con referencias ligeras
+  - Decidir entre precargar información y recuperarla bajo demanda con referencias ligeras y herramientas diferidas
+  - Aplicar las lecciones de Manus sobre caché KV, herramientas enmascaradas y compresión restaurable
 requiere: ["[[cursos/context-engineering/01-el-contexto-como-presupuesto]]"]
-relacionados: ["[[modelos/02-ingenieria-de-contexto]]", "[[disciplinas/diseno-de-herramientas]]", "[[docs/prompting/01-prompt-de-sistema]]", "[[glosario/rag]]"]
+relacionados: ["[[modelos/02-ingenieria-de-contexto]]", "[[disciplinas/diseno-de-herramientas]]", "[[docs/prompting/01-prompt-de-sistema]]", "[[glosario/rag]]", "[[docs/herramientas/05-busqueda-y-carga-diferida]]"]
 tags: [contexto, herramientas, prompting]
 ---
 
@@ -18,7 +20,7 @@ Al terminar esta lección sabrás revisar cada componente del contexto de un age
 
 ## La idea
 
-*[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 2025) resume el objetivo en una frase: encontrar **el conjunto más pequeño posible de tokens de alta señal** que maximice la probabilidad del resultado que buscas. Cada token que entra debe ganarse el sitio. Si quitarlo no cambiaría el comportamiento, sobra; si añade ruido, resta.
+*[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 29 sept. 2025) resume el objetivo en una frase: encontrar **el conjunto más pequeño posible de tokens de alta señal** que maximice la probabilidad del resultado que buscas. Cada token que entra debe ganarse el sitio. Si quitarlo no cambiaría el comportamiento, sobra; si añade ruido, resta.
 
 Ese criterio se aplica de forma distinta a cada componente.
 
@@ -41,6 +43,23 @@ Cada herramienta ocupa contexto en todas las llamadas y es una decisión que el 
 - Fusiona herramientas que hacen casi lo mismo (`buscar_cliente_por_email` y `buscar_cliente_por_id` → `buscar_cliente` con un campo de filtro).
 - Quita las que el agente no usa en tus trazas.
 - Escribe descripciones que digan cuándo usarla y qué devuelve, no solo qué hace ([[disciplinas/diseno-de-herramientas]]).
+
+### Herramientas bajo demanda
+
+¿Y si de verdad necesitas muchas? Con varios [[glosario/servidor-mcp|servidores MCP]] conectados es fácil tener decenas de herramientas y miles de tokens de definiciones en cada llamada, se usen o no. La [[glosario/carga-diferida-de-herramientas|carga diferida]] lo resuelve: marcas las herramientas con `defer_loading: true`, dejas sin diferir una herramienta de búsqueda y las tres a cinco que más se usan, y el modelo busca las demás cuando las necesita. La API inserta la definición en ese momento sin tocar el prefijo de `tools`, así que la caché se conserva.
+
+```python nocheck title="herramientas diferidas (fragmento)"
+tools = [
+    {"type": "tool_search_tool_bm25_20251119", "name": "tool_search_tool_bm25"},  # nunca diferida
+    {"name": "buscar_cliente", ...},                         # de uso constante: sin diferir
+    {"name": "anular_factura", ..., "defer_loading": True},  # se carga solo si el modelo la busca
+    # ...cientos más con defer_loading
+]
+```
+
+Anthropic publicó en *[Introducing advanced tool use on the Claude Developer Platform](https://www.anthropic.com/engineering/advanced-tool-use)* (nov. 2025) una reducción del 85 % en tokens de definiciones en su evaluación interna. Compensa a partir de unas 10 herramientas o 10.000 tokens de definiciones; con pocas herramientas que se usan siempre, no. El detalle está en [[docs/herramientas/05-busqueda-y-carga-diferida]] y el caso práctico en [[recetas/carga-diferida-de-herramientas]].
+
+Un paso más es no exponer las herramientas como llamadas sino como código. En *[Code execution with MCP](https://www.anthropic.com/engineering/code-execution-with-mcp)* (4 nov. 2025), Anthropic propone presentar cada servidor MCP como archivos de una API en un *sandbox* (`./servers/google-drive/getDocument.ts`): el agente lista y lee solo lo que necesita, escribe un programa que encadena llamadas y filtra los datos, y al contexto llega el resultado final en lugar de cada respuesta intermedia. Su ejemplo pasa de unos 150.000 tokens a unos 2.000. El precio es un entorno de ejecución que tienes que aislar y vigilar. En la API de Claude, la versión gestionada de esta idea es la [[glosario/llamada-programatica|llamada programática de herramientas]] ([[docs/herramientas/06-llamada-programatica]]).
 
 ## Ejemplos: canónicos, no exhaustivos
 
@@ -116,6 +135,16 @@ Hay dos estrategias para dar información al agente, y el artículo de Anthropic
 
 El artículo sugiere que lo más eficaz suele ser un **híbrido**: precargar algo de información para ir rápido (como hace un archivo de memoria del proyecto, [[cursos/agentes-de-codigo/02-contexto-del-repositorio]]) y dejar que el agente explore el resto.
 
+## Lo que enseñó Manus en producción
+
+Yichao «Peak» Ji contó en *[Context Engineering for AI Agents: Lessons from Building Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus)* (jul. 2025) lo que aprendieron tras rehacer varias veces el agente de Manus. Tres lecciones cambian cómo montas el contexto:
+
+- **Diseña para la caché KV.** En un agente la entrada pesa mucho más que la salida (en su caso, del orden de 100 a 1), así que el porcentaje de aciertos de caché decide coste y latencia. Prefijo estable (nada de la hora al principio del prompt de sistema), contexto que solo crece por el final y serialización determinista: un JSON con las claves en otro orden ya es otro prefijo ([[glosario/kv-cache|caché KV]], [[docs/contexto/02-prompt-caching]]).
+- **Enmascara, no quites.** Añadir o quitar herramientas a mitad de tarea invalida la caché de todo lo que va detrás de ellas y confunde al modelo si el historial menciona herramientas que ya no existen. En lugar de cambiar la lista, restringe qué puede elegir en cada paso. En la API de Claude tienes `tool_choice: none` para un paso sin herramientas, la carga diferida de arriba y los [[glosario/mensaje-de-sistema-intermedio|mensajes de sistema a mitad de conversación]], que cambian instrucciones sin tocar el prefijo ([[docs/contexto/06-mensajes-de-sistema-a-mitad-de-conversacion]]).
+- **Compresión restaurable.** Cuando saques algo del contexto, deja con qué recuperarlo: la URL de una página, la ruta de un archivo. El sistema de archivos pasa a ser memoria ilimitada que el agente consulta. Es lo que hacen el marcador de `limpiar_resultados` de la lección siguiente y el «Pide pagina=2» de `formatear`.
+
+Otras dos de su lista que verás en el curso: recitar el plan con un `todo.md` que el agente reescribe al final del contexto, para que el objetivo no se pierda en medio, y **dejar los errores en el contexto**, porque ver la acción fallida y su error es lo que evita que el modelo la repita.
+
 ## Orden y estructura
 
 Lo que entra también tiene que estar bien colocado. Documentos largos arriba y la pregunta al final; cada documento en su etiqueta con metadatos (`<documento fuente="..." fecha="...">`); instrucciones separadas de datos. Esto ayuda al modelo a localizar cada cosa y reduce el efecto de la posición que viste en la lección anterior ([[modelos/07-documentos-largos]]).
@@ -146,9 +175,11 @@ Lo que entra también tiene que estar bien colocado. Documentos largos arriba y 
 - Pocas herramientas, sin solapamiento; ejemplos canónicos.
 - Resultados de herramientas filtrados, paginados y con aviso de recorte.
 - Híbrido entre precarga y recuperación bajo demanda; datos separados de instrucciones.
+- Muchas herramientas: carga diferida o código. Prefijo estable, enmascarar en vez de quitar y compresión restaurable.
 
 ## Para seguir
 
 - [[cursos/context-engineering/03-compactacion-y-memoria]]
 - [[disciplinas/diseno-de-herramientas]]
 - [[cursos/rag-a-fondo/index]]
+- [[recetas/carga-diferida-de-herramientas]]

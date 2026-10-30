@@ -2,6 +2,7 @@
 titulo: Memoria
 descripcion: Información que un agente guarda fuera de la ventana de contexto para recuperarla en pasos o sesiones posteriores.
 creado: 2026-08-20
+actualizado: 2026-10-29
 categoria: contexto
 ingles: memory
 aliases: [memory, memoria a largo plazo, memoria del agente]
@@ -13,7 +14,9 @@ En un sistema con LLM, memoria es todo lo que el agente conserva fuera de la [[g
 
 ## En la práctica
 
-Distingue dos niveles. La **memoria de trabajo** es el propio historial de la conversación; se gestiona recortando y con [[glosario/compactacion]]. La **memoria persistente** sobrevive entre sesiones: preferencias del usuario, decisiones tomadas, notas de progreso de una tarea larga. Lo habitual es darle al agente herramientas para leer y escribir esa memoria, y decidir con criterio qué se guarda: memorizarlo todo llena el contexto de ruido.
+Distingue dos niveles. La **memoria de trabajo** es el propio historial de la conversación; se gestiona recortando y con [[glosario/compactacion]]. La **memoria persistente** sobrevive entre sesiones: preferencias del usuario, decisiones tomadas, notas de progreso de una tarea larga. Lo habitual es darle al agente herramientas para leer y escribir esa memoria (Anthropic ofrece la herramienta de memoria `memory_20250818`, que se ejecuta en tu lado) y decidir con criterio qué se guarda: memorizarlo todo llena el contexto de ruido. Para clasificar lo que guardas, ver [[glosario/tipos-de-memoria]].
+
+En LangGraph, open source, las dos piezas tienen nombre: el [[glosario/checkpointer]] (`InMemorySaver`, `SqliteSaver`, `PostgresSaver`) guarda el estado de cada conversación por `thread_id`, y un *store* (`InMemoryStore`, `PostgresStore`) guarda la memoria a largo plazo entre conversaciones.
 
 ## No confundir con
 
@@ -26,3 +29,4 @@ Distingue dos niveles. La **memoria de trabajo** es el propio historial de la co
 - [[roadmap/30-contexto-y-rag/06-memoria-entre-sesiones]]
 - [[cursos/context-engineering/03-compactacion-y-memoria]]
 - [[patrones/02-llamada-aumentada]]
+- [[cursos/langchain-y-langgraph/06-memoria-y-persistencia]]

@@ -2,6 +2,7 @@
 titulo: Explorar, planificar, implementar, verificar
 descripcion: El flujo de cuatro fases que separa entender de tocar, con herramientas distintas en cada fase y un plan revisable antes de cambiar código.
 creado: 2026-09-18
+actualizado: 2026-10-29
 orden: 3
 minutos: 50
 tipo: practica
@@ -10,7 +11,7 @@ objetivos:
   - Implementar un agente por fases con herramientas de solo lectura en la exploración
   - Diseñar un plan como artefacto revisable con criterio de verificación por paso
 requiere: ["[[cursos/agentes-de-codigo/01-como-trabaja-un-agente-de-codigo]]", "[[roadmap/40-primer-agente/04-planificar-antes-de-actuar]]"]
-relacionados: ["[[disciplinas/explorar-planificar-implementar-verificar]]", "[[disciplinas/spec-primero]]", "[[sistemas/agente-de-codigo]]"]
+relacionados: ["[[disciplinas/explorar-planificar-implementar-verificar]]", "[[disciplinas/spec-primero]]", "[[sistemas/agente-de-codigo]]", "[[docs/claude-code/02-subagentes]]"]
 tags: [agentes, codigo, planificacion]
 ---
 
@@ -134,6 +135,8 @@ if __name__ == "__main__":
 
 Dos decisiones merecen explicación. Cada fase arranca con un historial nuevo y recibe solo el resultado de la anterior (notas, plan). Eso mantiene el contexto limpio: los cuarenta resultados de búsqueda de la exploración no viajan a la implementación, solo su resumen. Y la planificación no tiene herramientas: no hace falta, y así no puede «planificar» editando.
 
+Los agentes de código de uso diario traen estas fases de serie. En Claude Code, el modo de permisos `plan` deja al agente leer y proponer sin tocar nada hasta que apruebas, y los subagentes integrados `Explore` y `Plan` exploran con herramientas de solo lectura en un contexto aparte y devuelven solo el resumen. Tus propios subagentes en `.claude/agents/` declaran en `tools` qué pueden usar, que es exactamente el `permitidas` de este código ([[docs/claude-code/02-subagentes]], [[plantillas/subagente]]). Para pedir el plan con un formato fijo tienes [[plantillas/prompt-plan-de-implementacion]].
+
 > [!aviso] Cuándo saltarse fases
 > Para un cambio de una línea con causa obvia, el plan formal es ceremonia. El flujo completo compensa cuando la tarea toca varios archivos, la causa no está clara o el área es delicada. Si dudas, explora siempre; planifica cuando el cambio pase de unas pocas líneas.
 
@@ -166,3 +169,4 @@ Dos decisiones merecen explicación. Cada fase arranca con un historial nuevo y 
 - [[cursos/agentes-de-codigo/04-revisar-y-confiar]]
 - [[disciplinas/spec-primero]]
 - [[patrones/03-encadenado]]
+- [[cursos/harness-engineering/07-spec-congelada-y-aceptacion]]

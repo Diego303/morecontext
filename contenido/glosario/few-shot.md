@@ -2,6 +2,7 @@
 titulo: Few-shot
 descripcion: Técnica de prompting que incluye unos pocos ejemplos de entrada y salida para que el modelo imite el patrón.
 creado: 2026-07-15
+actualizado: 2026-10-29
 categoria: prompting
 aliases: [few-shot prompting, aprendizaje con pocos ejemplos]
 tags: [prompting]
@@ -31,3 +32,4 @@ Entrada: "{ticket}" → Categoría:
 - [[docs/prompting/02-ejemplos-few-shot]]
 - [[modelos/01-principios-de-prompting]]
 - [[recetas/clasificar-y-enrutar-tickets]]
+- [[biblioteca/gpt-3-few-shot]]

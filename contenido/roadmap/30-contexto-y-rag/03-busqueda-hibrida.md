@@ -2,6 +2,7 @@
 titulo: "Búsqueda híbrida: vectorial + BM25"
 descripcion: Combina búsqueda por palabras clave con BM25 y búsqueda por vectores, y fusiona ambas listas con Reciprocal Rank Fusion para no perder ni paráfrasis ni códigos exactos.
 creado: 2026-08-25
+actualizado: 2026-10-29
 orden: 3
 minutos: 50
 tipo: practica
@@ -12,7 +13,7 @@ objetivos:
   - Medir si la búsqueda híbrida mejora a cada método por separado con tus preguntas.
 requiere: ["[[roadmap/30-contexto-y-rag/01-embeddings]]", "[[roadmap/30-contexto-y-rag/02-chunking]]"]
 tags: [rag, bm25, busqueda-hibrida]
-relacionados: ["[[glosario/busqueda-hibrida]]", "[[glosario/bm25]]", "[[recetas/busqueda-hibrida-con-bm25]]", "[[cursos/rag-a-fondo/03-recuperar-bien]]"]
+relacionados: ["[[glosario/busqueda-hibrida]]", "[[glosario/bm25]]", "[[recetas/busqueda-hibrida-con-bm25]]", "[[cursos/rag-a-fondo/03-recuperar-bien]]", "[[recetas/fusionar-rankings-con-rrf]]"]
 ---
 
 Al terminar esta lección tendrás un recuperador que encuentra tanto «¿cómo devuelvo un pedido?» como «error ERR-4012». Combinarás dos métodos que fallan en sitios distintos y aprenderás a fusionar sus resultados sin calibrar puntuaciones.
@@ -34,7 +35,7 @@ flowchart LR
 
 ## BM25 en cinco minutos
 
-[[glosario/bm25|BM25]] es la función de puntuación clásica de los buscadores por palabras clave ([Robertson y Zaragoza, 2009](#para-seguir)). Para cada término de la consulta suma una puntuación que crece con tres cosas:
+[[glosario/bm25|BM25]] es la función de puntuación clásica de los buscadores por palabras clave ([Robertson y Zaragoza, 2009](https://nowpublishers.com/article/Details/INR-019)). Para cada término de la consulta suma una puntuación que crece con tres cosas:
 
 - **Frecuencia en el fragmento**: si el término aparece más veces, más puntos. Pero con saturación: la décima aparición aporta mucho menos que la primera. El parámetro `k1` controla esa saturación.
 - **Rareza en el corpus** (IDF): un término que aparece en pocos fragmentos vale mucho; «el» o «de» casi nada.
@@ -87,7 +88,7 @@ class BM25:
         return [i for i in orden[:k] if puntos[i] > 0]
 ```
 
-Para producción no hace falta que lo programes tú: la mayoría de motores de búsqueda y muchos [[glosario/vector-store|vector stores]] traen BM25 o algo equivalente. Escribirlo una vez te sirve para entender por qué una consulta sale o no sale.
+Para producción no hace falta que lo programes tú: la biblioteca abierta `rank-bm25` (`BM25Okapi`) hace lo mismo en una línea, y muchos [[glosario/vector-store|vector stores]] traen BM25 o algo equivalente: PostgreSQL con `tsvector('spanish')` junto a [[herramientas/pgvector|pgvector]], o [[herramientas/qdrant|Qdrant]], que desde la versión 1.20 calcula BM25 sobre el texto guardado. Escribirlo una vez te sirve para entender por qué una consulta sale o no sale.
 
 > [!consejo] El tokenizador importa
 > En español conviene quitar tildes al indexar y al consultar (`unicodedata.normalize` y descartar las marcas diacríticas), porque los usuarios escriben «devolucion» y «devolución». Mantén igual el tratamiento en ambos lados.
@@ -96,7 +97,11 @@ Para producción no hace falta que lo programes tú: la mayoría de motores de b
 
 Tienes dos listas ordenadas. El problema es que sus puntuaciones no son comparables: un coseno de 0,8 y un BM25 de 12,3 no significan nada juntos. Normalizarlas funciona mal porque sus distribuciones cambian con cada consulta.
 
-**Reciprocal Rank Fusion** (RRF) evita el problema usando solo la posición. Cada fragmento recibe, por cada lista en la que aparece, `1 / (k + posición)`, y se suman:
+**Reciprocal Rank Fusion** ([[glosario/rrf|RRF]]) evita el problema usando solo la posición. Cada fragmento recibe, por cada lista en la que aparece, `1 / (k + posición)`, y se suman:
+
+```text
+RRF(d) = Σ  1 / (k + posición_r(d))     para cada lista r en la que aparece d
+```
 
 ```python tab="Python" title="rrf.py"
 def rrf(rankings: list[list[int]], k: int = 60) -> list[int]:
@@ -118,7 +123,9 @@ export function rrf(rankings: number[][], k = 60): number[] {
 }
 ```
 
-La constante `k` suaviza la ventaja de los primeros puestos; 60 es el valor habitual y rara vez merece la pena tocarlo. Un fragmento que sale tercero en ambas listas supera a uno que sale primero en una y no aparece en la otra, que es justo lo que quieres.
+La constante `k` suaviza la ventaja de los primeros puestos; 60 es el valor habitual y rara vez merece la pena tocarlo. Haz la cuenta con `k = 60`: un fragmento que sale tercero en ambas listas suma 1/63 + 1/63 ≈ 0,032, y uno que sale primero en una y no aparece en la otra se queda en 1/61 ≈ 0,016. Gana el que las dos listas consideran bueno, que es justo lo que quieres. No hace falta memorizar la fórmula; la idea es «bien colocado en vectores más bien colocado en palabras da una señal combinada».
+
+RRF funciona igual con tres o más listas (por ejemplo, vectores de dos modelos distintos más BM25) y es lo que usan por dentro varias bases vectoriales para su modo híbrido: Qdrant lo expone como `RrfQuery(rrf=Rrf(k=60))`. La receta [[recetas/fusionar-rankings-con-rrf]] lo trata aislado, con pruebas y pesos por lista, y [[recetas/busqueda-hibrida-con-qdrant]] lo monta sobre una base vectorial abierta.
 
 ## El recuperador híbrido completo
 
@@ -152,7 +159,7 @@ Pide a cada método bastantes más candidatos de los que vas a devolver (aquí 3
 Casi siempre que tus documentos tengan códigos, referencias, nombres de producto o jerga interna, que en una empresa es lo normal. Si solo tienes texto narrativo y preguntas parafraseadas, la ganancia puede ser pequeña. **No lo decidas por intuición: mídelo** con las preguntas que escribiste en las lecciones anteriores, comparando las tres variantes (solo vectores, solo BM25, híbrida).
 
 > [!aviso] Filtra antes, no después
-> Si el usuario solo puede ver ciertos documentos (por departamento, por cliente), aplica el filtro de permisos dentro de cada búsqueda. Filtrar después del top-k puede dejarte sin resultados o, peor, colar un fragmento que no debía ver.
+> Si el usuario solo puede ver ciertos documentos (por departamento, por cliente), aplica el filtro de permisos dentro de cada búsqueda. Filtrar después del top-k puede dejarte sin resultados o, peor, colar un fragmento que no debía ver. Lo tienes a fondo en [[cursos/rag-a-fondo/07-permisos-y-multi-tenant]].
 
 ## Errores frecuentes
 
@@ -183,4 +190,5 @@ Casi siempre que tus documentos tengan códigos, referencias, nombres de product
 - [[roadmap/30-contexto-y-rag/04-reranking]]
 - [[recetas/busqueda-hibrida-con-bm25]]
 - [[cursos/rag-a-fondo/03-recuperar-bien]]
-- Robertson y Zaragoza, 2009. *The Probabilistic Relevance Framework: BM25 and Beyond*.
+- [[recetas/fusionar-rankings-con-rrf]]
+- Robertson y Zaragoza, 2009. [*The Probabilistic Relevance Framework: BM25 and Beyond*](https://nowpublishers.com/article/Details/INR-019).

@@ -2,6 +2,7 @@
 titulo: Revisar y saber cuándo confiar
 descripcion: Cómo revisar los cambios de un agente de código, qué señales indican que no debes fiarte y cómo graduar su autonomía según el riesgo de cada acción.
 creado: 2026-09-21
+actualizado: 2026-10-29
 orden: 4
 minutos: 45
 tipo: practica
@@ -10,7 +11,7 @@ objetivos:
   - Implementar comprobaciones automáticas de alarmas sobre un diff de git
   - Decidir el nivel de autonomía de un agente según la reversibilidad y el alcance de cada acción
 requiere: ["[[cursos/agentes-de-codigo/03-explorar-planificar-implementar-verificar]]"]
-relacionados: ["[[disciplinas/cambios-pequenos-y-revisables]]", "[[disciplinas/humano-en-el-bucle]]", "[[patrones/07-evaluador-optimizador]]", "[[roadmap/80-evals/04-evals-de-trayectoria]]"]
+relacionados: ["[[disciplinas/cambios-pequenos-y-revisables]]", "[[disciplinas/humano-en-el-bucle]]", "[[patrones/07-evaluador-optimizador]]", "[[roadmap/80-evals/04-evals-de-trayectoria]]", "[[docs/claude-code/04-hooks]]"]
 tags: [agentes, codigo, revision]
 ---
 
@@ -101,7 +102,7 @@ Con esto no sustituyes la revisión. La diriges: sabes qué mirar primero.
 
 ## Un segundo par de ojos automático
 
-Puedes añadir un modelo revisor que lea el diff y el plan con una rúbrica concreta: ¿el cambio cumple cada paso?, ¿hay cambios fuera de alcance?, ¿los tests nuevos fallarían sin el arreglo? Es el patrón [[patrones/07-evaluador-optimizador]] aplicado a la revisión. Funciona mejor con una rúbrica de preguntas cerradas que con «revisa este código» ([[recetas/modelo-juez-con-rubrica]]). Úsalo para priorizar tu atención, nunca como sustituto de los tests.
+Puedes añadir un modelo revisor que lea el diff y el plan con una rúbrica concreta: ¿el cambio cumple cada paso?, ¿hay cambios fuera de alcance?, ¿los tests nuevos fallarían sin el arreglo? Es el patrón [[patrones/07-evaluador-optimizador]] aplicado a la revisión. Funciona mejor con una rúbrica de preguntas cerradas que con «revisa este código» ([[recetas/modelo-juez-con-rubrica]]) y con un revisor **sin el contexto del agente que escribió el cambio**: Cognition cuenta en *[Multi-Agents: What's Actually Working](https://cognition.com/blog/multi-agents-working)* (abr. 2026) que el bucle generador-verificador les funciona precisamente cuando el revisor llega en limpio. Pide el veredicto con un formato fijo ([[plantillas/veredicto-de-revision]]). Úsalo para priorizar tu atención, nunca como sustituto de los tests.
 
 ## Graduar la autonomía
 
@@ -120,6 +121,52 @@ La confianza se gana con datos. Si mides cuántas propuestas del agente aceptas 
 
 > [!peligro] Tests que el agente puede editar
 > Si el agente puede modificar los tests y su objetivo es que pasen, tienes un conflicto de intereses en el bucle. Para tareas sensibles, protege los tests existentes: rechaza ediciones sobre ellos desde la herramienta y permite solo añadir tests nuevos.
+
+## Los mismos límites en Claude Code
+
+Si usas un agente de código ya hecho, la tabla anterior se traduce en configuración. En Claude Code hay dos piezas ([[docs/claude-code/06-permisos-y-sandbox]], [[docs/claude-code/04-hooks]]):
+
+- **Reglas de permisos** en `settings.json`: `permissions.allow`, `ask` y `deny` con la sintaxis `Herramienta(patrón)`, por ejemplo `"allow": ["Bash(uv run pytest *)"]` o `"deny": ["Bash(git push *)"]`. Se evalúan en orden deny → ask → allow y gana la primera que encaja: un `deny` de cualquier ámbito gana a un `allow`.
+- **Hooks**: un script que recibe un JSON por stdin antes de cada herramienta (`tool_name`, `tool_input`, `cwd`…) y decide. **Si sale con código 2, la llamada se bloquea** y lo que escriba en stderr le llega al modelo como motivo. Un hook que devuelve `allow` no se salta las reglas `deny`; uno que sale con 2 bloquea aunque haya un `allow`.
+
+La protección de tests del aviso de arriba, como hook:
+
+```python title=".claude/hooks/proteger_tests.py"
+import json, subprocess, sys
+from pathlib import Path
+
+evento = json.load(sys.stdin)
+if evento.get("tool_name") not in ("Edit", "Write"):
+    sys.exit(0)
+raiz = Path(evento["cwd"]).resolve()
+ruta = Path(evento["tool_input"].get("file_path", "")).resolve()
+if not ruta.is_relative_to(raiz):
+    sys.exit(0)
+rel = ruta.relative_to(raiz).as_posix()
+versionados = subprocess.run(["git", "ls-files", "--", "tests/"], cwd=raiz,
+                             capture_output=True, text=True).stdout.split()
+if rel in versionados:
+    print(f"{rel} es un test existente: no lo modifiques. Añade un test nuevo en otro archivo.",
+          file=sys.stderr)
+    sys.exit(2)  # 2 = bloquear; el motivo llega al modelo
+```
+
+```json title=".claude/settings.json"
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [{"type": "command", "command": "python3",
+                   "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/proteger_tests.py"],
+                   "timeout": 10, "onFailure": "block"}]
+      }
+    ]
+  }
+}
+```
+
+Dos matices. El *sandbox* de Bash de Claude Code limita sistema de archivos y red de los comandos, pero **no cubre las herramientas de archivos (`Edit`, `Write`), ni MCP, ni los propios hooks**: por eso esta protección va en un hook y no en el *sandbox*. Y pedir aprobación para todo no es seguro: Anthropic contó en *[How we contain Claude across products](https://www.anthropic.com/engineering/how-we-contain-claude)* (may. 2026) que los usuarios aprobaban alrededor del 93 % de las peticiones de permiso. Reserva `ask` para lo irreversible y bloquea por diseño lo que nunca debe pasar. La receta [[recetas/hook-que-bloquea-comandos-peligrosos]] tiene otro hook completo con sus pruebas.
 
 ## Errores frecuentes
 
@@ -149,3 +196,4 @@ La confianza se gana con datos. Si mides cuántas propuestas del agente aceptas 
 - [[sistemas/agente-de-codigo]]
 - [[disciplinas/pair-programming-con-agentes]]
 - [[cursos/evals-para-agentes/index]]
+- [[cursos/harness-engineering/08-veredictos-y-reparacion-acotada]]

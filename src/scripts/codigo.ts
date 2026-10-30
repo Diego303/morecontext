@@ -1,8 +1,24 @@
 // Bloques de código generados por remark-bloques-codigo: barra con pestañas/archivo + botón Copiar.
-// Las pestañas se sincronizan en toda la web por su etiqueta («Python», «TypeScript») y se recuerdan.
-const CLAVE = 'mc.pestana';
-const leer = () => { try { return localStorage.getItem(CLAVE); } catch { return null; } };
-const guardar = (v: string) => { try { localStorage.setItem(CLAVE, v); } catch { /* modo privado */ } };
+// Las pestañas se sincronizan en toda la web por su etiqueta («Python», «TypeScript», «LangGraph»…).
+// Se recuerdan varias etiquetas por orden de uso (la más reciente primero): así elegir «LangGraph» en un
+// grupo de frameworks no hace olvidar que preferías «TypeScript» en los grupos de lenguajes.
+const CLAVE = 'mc.pestanas';
+const CLAVE_ANTIGUA = 'mc.pestana';
+const MAX_RECORDADAS = 12;
+function leer(): string[] {
+  try {
+    const crudo = localStorage.getItem(CLAVE);
+    if (crudo !== null) {
+      const v = JSON.parse(crudo);
+      if (Array.isArray(v)) return v.filter((x) => typeof x === 'string');
+    }
+  } catch { /* modo privado o valor corrupto */ }
+  try { const a = localStorage.getItem(CLAVE_ANTIGUA); return a ? [a] : []; } catch { return []; }
+}
+function guardar(etiqueta: string) {
+  const lista = [etiqueta, ...leer().filter((x) => x !== etiqueta)].slice(0, MAX_RECORDADAS);
+  try { localStorage.setItem(CLAVE, JSON.stringify(lista)); } catch { /* modo privado */ }
+}
 
 function activar(bloque: HTMLElement, etiqueta: string) {
   const paneles = [...bloque.querySelectorAll<HTMLElement>(':scope > .code__panel')];
@@ -69,8 +85,9 @@ function montar(bloque: HTMLElement) {
   barra.append(archivo, copiar);
   bloque.prepend(barra);
   if (bloque.classList.contains('code--tabs')) {
-    const guardada = leer();
-    if (!guardada || !activar(bloque, guardada)) activar(bloque, paneles[0].dataset.tab!);
+    // La etiqueta usada más recientemente que exista en este grupo; si ninguna, la primera.
+    const elegida = leer().find((e) => paneles.some((p) => p.dataset.tab === e));
+    activar(bloque, elegida ?? paneles[0].dataset.tab!);
   }
 }
 

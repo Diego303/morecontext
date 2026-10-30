@@ -2,6 +2,7 @@
 titulo: La llamada aumentada
 descripcion: "El bloque básico de todo sistema agéntico: un modelo con recuperación, herramientas y memoria, y cómo montarlo con una interfaz sencilla y bien documentada."
 creado: 2026-07-10
+actualizado: 2026-10-29
 tags: [patrones, herramientas, rag, memoria]
 aliases: [Augmented LLM, LLM aumentado]
 orden: 2
@@ -124,7 +125,13 @@ def preguntar(pregunta: str, empleado_id: str, memoria: str, max_rondas: int = 5
     raise RuntimeError("Demasiadas rondas de herramientas")
 ```
 
-Si el modelo pide varias herramientas a la vez, todas sus respuestas van juntas en un único mensaje `user`, un `tool_result` por cada `tool_use`. Los detalles están en [[docs/herramientas/01-uso-de-herramientas]] y el manejo de errores en [[roadmap/20-herramientas/03-errores-e-is-error]].
+Si el modelo pide varias herramientas a la vez, todas sus respuestas van juntas en un único mensaje `user`, un `tool_result` por cada `tool_use`. Los detalles están en [[docs/herramientas/01-uso-de-herramientas]] y el manejo de errores en [[roadmap/20-herramientas/03-errores-e-is-error]]. Si la API te devuelve un 400 por un `tool_result` huérfano, mira [[problemas/tool-result-sin-tool-use]].
+
+Las herramientas pueden venir también de un [[glosario/servidor-mcp|servidor MCP]] en lugar de tu propio código, sin cambiar el bucle: lo ves en [[recetas/servidor-mcp-de-solo-lectura]].
+
+### Con un framework
+
+En LangChain (MIT), la llamada aumentada es `init_chat_model(MODEL, max_tokens=1024).bind_tools(herramientas)`: un modelo que devuelve `AIMessage.tool_calls` en lugar de bloques `tool_use`, y al que respondes con `ToolMessage`. Las rondas las resuelve `create_agent`, el mismo bucle de arriba ya escrito. Lo que esconde: si una herramienta lanza una excepción, por defecto el agente se rompe en lugar de devolverle el error al modelo; necesitas `ToolErrorMiddleware` para el equivalente de `is_error`. La versión completa como grafo está en [[patrones/08-agente-autonomo]] y la referencia en [[docs/frameworks/04-langchain]].
 
 > [!aviso] Lo recuperado también es entrada no confiable
 > Un documento o un resultado de herramienta puede contener instrucciones maliciosas. Trátalo como datos, delimítalo con etiquetas y no le des permisos que no necesita. Lee [[glosario/inyeccion-de-prompt]].

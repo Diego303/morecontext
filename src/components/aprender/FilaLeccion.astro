@@ -1,13 +1,16 @@
 ---
 // Fila de una lección en la ficha de un nivel o curso: número, título, minutos y tipo, casilla de hecha.
+// En la ruta en vídeo, además, la insignia de profundidad.
 import MarcarHecha from './MarcarHecha.astro';
-interface Props { numero: string; href: string; titulo: string; minutos: number; tipo: string; leccion: string }
-const { numero, href, titulo, minutos, tipo, leccion } = Astro.props;
+import { PROFUNDIDAD } from '../../lib/nombres';
+interface Props { numero: string; href: string; titulo: string; minutos: number; tipo: string; leccion: string; profundidad?: string }
+const { numero, href, titulo, minutos, tipo, leccion, profundidad } = Astro.props;
+const prof = profundidad ? PROFUNDIDAD[profundidad] : undefined;
 const TIPO: Record<string, string> = { teoria: 'teoría', practica: 'práctica', proyecto: 'proyecto' };
 ---
 <li class="fila-leccion">
   <span class="n">{numero}</span>
   <a href={href}>{titulo}</a>
-  <span class="d">{minutos} min · {TIPO[tipo] ?? tipo}</span>
+  <span class="d">{minutos} min · {TIPO[tipo] ?? tipo}{prof && <span class={`tag ${prof.clase}`}>{prof.texto}</span>}</span>
   <MarcarHecha leccion={leccion} titulo={titulo} compacta />
 </li>

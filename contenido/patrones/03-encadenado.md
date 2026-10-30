@@ -2,6 +2,7 @@
 titulo: Encadenado de prompts
 descripcion: Divide una tarea en pasos fijos, cada uno una llamada al modelo que recibe la salida del anterior, con comprobaciones en código entre ellos.
 creado: 2026-07-15
+actualizado: 2026-10-29
 tags: [patrones, workflows, prompting]
 aliases: [Prompt chaining, Cadena de prompts]
 orden: 3
@@ -109,6 +110,75 @@ Para asegurar el JSON sin reintentos puedes usar salidas estructuradas con esque
 
 > [!consejo] Cada eslabón, su propio test
 > Guarda entradas y salidas intermedias. Cuando la salida final falla, mirar qué devolvió cada paso te dice en segundos qué eslabón arreglar.
+
+## Con LangGraph
+
+El mismo encadenado como [[glosario/grafo-de-estado|grafo de estado]] en LangGraph (MIT). Cada paso es un nodo que recibe el estado y devuelve lo que cambia; la puerta es una arista condicional que manda a redactar, de vuelta a extraer o al final. Necesitas `pip install langgraph langchain langchain-anthropic`.
+
+```python title="encadenado_langgraph.py"
+import json
+from typing import TypedDict
+
+from langchain.chat_models import init_chat_model
+from langgraph.graph import END, START, StateGraph
+
+MODEL = "anthropic:claude-sonnet-5-5"
+MAX_INTENTOS = 3
+
+
+class Estado(TypedDict, total=False):
+    transcripcion: str
+    asistentes: list[str]
+    datos: dict
+    error: str        # vacío = la puerta pasa
+    intentos: int
+    acta: str
+
+
+def construir(modelo=None):
+    llm = modelo or init_chat_model(MODEL, max_tokens=2048)
+
+    def extraer(state: Estado):
+        aviso = f"\nEl intento anterior falló: {state['error']}. Corrígelo." if state.get("error") else ""
+        r = llm.invoke('Extrae decisiones y tareas. Devuelve solo JSON {"decisiones": [str], '
+                       '"tareas": [{"tarea": str, "responsable": str}]}.'
+                       f"{aviso}\n<transcripcion>\n{state['transcripcion']}\n</transcripcion>")
+        intentos = state.get("intentos", 0) + 1
+        try:
+            datos = json.loads(r.text)
+        except json.JSONDecodeError as e:
+            return {"error": f"JSON inválido ({e})", "intentos": intentos}
+        fuera = [t["responsable"] for t in datos["tareas"] if t["responsable"] not in state["asistentes"]]
+        error = f"{fuera} no están entre los asistentes" if fuera else ""
+        return {"datos": datos, "error": error, "intentos": intentos}
+
+    def puerta(state: Estado):                     # la comprobación en código decide la arista
+        if not state["error"]:
+            return "redactar"
+        return END if state["intentos"] >= MAX_INTENTOS else "extraer"
+
+    def redactar(state: Estado):
+        r = llm.invoke("Redacta el acta en Markdown con secciones Decisiones y Tareas. "
+                       f"No añadas nada que no esté en estos datos:\n{json.dumps(state['datos'], ensure_ascii=False)}")
+        return {"acta": r.text}
+
+    g = StateGraph(Estado)
+    g.add_node("extraer", extraer)
+    g.add_node("redactar", redactar)
+    g.add_edge(START, "extraer")
+    g.add_conditional_edges("extraer", puerta, ["redactar", "extraer", END])
+    g.add_edge("redactar", END)
+    return g.compile()
+
+
+if __name__ == "__main__":
+    out = construir().invoke({"transcripcion": "…", "asistentes": ["Ana", "Luis"]})
+    print(out.get("acta") or f"A revisión humana: {out['error']}")
+```
+
+Si el grafo termina sin `acta`, la puerta no pasó en tres intentos y el caso va a revisión humana. Para pasos lineales también tienes la Functional API (`@entrypoint` y `@task`), que se escribe como funciones normales y guarda cada tarea en el *checkpointer*.
+
+**Qué esconde el framework**: aquí, poco. Te da trazas por nodo (`stream_mode="updates"`) y, con un *checkpointer*, reanudar a mitad de cadena; a cambio, para dos o tres pasos las funciones de arriba se leen mejor. Más en [[docs/frameworks/05-langgraph]].
 
 ## Coste y latencia
 

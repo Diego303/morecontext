@@ -2,6 +2,7 @@
 titulo: "Ejemplos few-shot: enseñar con casos"
 descripcion: "Cuándo añadir ejemplos al prompt, cuántos poner, cómo elegirlos para cubrir los casos difíciles y cómo evitar que el modelo copie detalles que no debe."
 creado: 2026-09-12
+actualizado: 2026-10-29
 orden: 2
 minutos: 35
 tipo: practica
@@ -20,7 +21,7 @@ Al terminar esta lección sabrás cuándo merece la pena añadir ejemplos a un p
 
 Hay cosas que cuestan mucho describir y se entienden enseguida con un caso. «Usa un tono cercano pero profesional» admite mil interpretaciones; dos respuestas de muestra fijan una. A esta técnica se le llama *few-shot*: incluir unos pocos ejemplos de entrada y salida para que el modelo infiera el patrón. Sin ejemplos, se habla de [[glosario/zero-shot|zero-shot]].
 
-La capacidad de aprender de ejemplos dentro del propio prompt, sin reentrenar el modelo, se documentó a gran escala en [Language Models are Few-Shot Learners](https://arxiv.org/abs/2005.14165) (Brown et al., 2020). Desde entonces es una de las técnicas más usadas, porque funciona y no cuesta más que unos tokens.
+La capacidad de aprender de ejemplos dentro del propio prompt, sin reentrenar el modelo, se documentó a gran escala en [Language Models are Few-Shot Learners](https://arxiv.org/abs/2005.14165) (Brown et al., 2020), que tienes comentado en [[biblioteca/gpt-3-few-shot]]. Desde entonces es una de las técnicas más usadas, porque funciona y no cuesta más que unos tokens.
 
 ```mermaid
 flowchart LR
@@ -96,13 +97,19 @@ Responde solo con la etiqueta, en minúsculas.
 
 <opinion>{opinion}</opinion>"""
 
+ETIQUETAS = {"queja", "sugerencia", "elogio", "pregunta"}
+
 def clasificar(opinion: str) -> str:
     resp = client.messages.create(
         model=MODEL,
-        max_tokens=10,
+        max_tokens=1024,                      # incluye el razonamiento: no lo ajustes a la etiqueta
+        output_config={"effort": "low"},      # tarea sencilla: menos razonamiento, menos coste y latencia
         messages=[{"role": "user", "content": PROMPT.format(opinion=opinion)}],
     )
-    return "".join(b.text for b in resp.content if b.type == "text").strip()
+    etiqueta = "".join(b.text for b in resp.content if b.type == "text").strip().lower()
+    if etiqueta not in ETIQUETAS:
+        raise ValueError(f"Etiqueta inesperada: {etiqueta!r} (stop_reason={resp.stop_reason})")
+    return etiqueta
 
 print(clasificar("Genial todo, pero el horario de los sábados debería ampliarse."))
 ```
@@ -127,17 +134,22 @@ Responde solo con la etiqueta, en minúsculas.
 
 <opinion>${opinion}</opinion>`;
 
+const ETIQUETAS = new Set(["queja", "sugerencia", "elogio", "pregunta"]);
+
 const resp = await client.messages.create({
   model: MODEL,
-  max_tokens: 10,
+  max_tokens: 1024, // incluye el razonamiento: no lo ajustes a la etiqueta
+  output_config: { effort: "low" },
   messages: [{ role: "user", content: prompt("Genial todo, pero el horario de los sábados debería ampliarse.") }],
 });
-console.log(resp.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim());
+const etiqueta = resp.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim().toLowerCase();
+if (!ETIQUETAS.has(etiqueta)) throw new Error(`Etiqueta inesperada: ${etiqueta}`);
+console.log(etiqueta);
 ```
 
 Fíjate en el segundo ejemplo: mezcla elogio y sugerencia, y muestra cómo se aplica la regla de desempate. Ese ejemplo enseña más que los otros tres juntos.
 
-El `max_tokens=10` funciona como red de seguridad: si el modelo empieza a explicar en vez de dar la etiqueta, se corta pronto y lo detectas. Comprueba igualmente que la salida está entre las etiquetas permitidas; en [[roadmap/10-prompting/03-formato-de-salida]] verás cómo validarlo de forma sistemática.
+Dos detalles del código. El primero: la red de seguridad es la comprobación de que la salida está entre las etiquetas permitidas, no un `max_tokens` diminuto. Los modelos actuales razonan antes de responder y ese razonamiento cuenta dentro de `max_tokens`, así que un límite de 10 tokens puede cortar la respuesta antes de que aparezca la etiqueta. El segundo: para una clasificación sencilla basta un [[glosario/esfuerzo|esfuerzo]] bajo, que reduce ese razonamiento. En [[roadmap/10-prompting/03-formato-de-salida]] verás cómo garantizar el formato de forma sistemática.
 
 ### Como turnos de conversación
 
@@ -159,7 +171,9 @@ Este formato marca bien qué es respuesta y qué es entrada, y es cómodo cuando
 
 ## Ejemplos con razonamiento
 
-Para tareas que requieren pensar (decidir una prioridad, detectar una incoherencia), puedes incluir en cada ejemplo una breve justificación antes de la respuesta. El modelo imitará el razonamiento además del resultado. Es una forma de [[glosario/cadena-de-pensamiento|cadena de pensamiento]] guiada por ejemplos, en la línea de [Wei et al., 2022](https://arxiv.org/abs/2201.11903). Si luego necesitas solo la respuesta, pide que la ponga en una etiqueta aparte (`<respuesta>`) y extráela en tu código.
+Para tareas que requieren pensar (decidir una prioridad, detectar una incoherencia), puedes incluir en cada ejemplo una breve justificación antes de la respuesta. El modelo imitará el criterio además del resultado. Es una forma de [[glosario/cadena-de-pensamiento|cadena de pensamiento]] guiada por ejemplos, en la línea de [Wei et al., 2022](https://arxiv.org/abs/2201.11903) (comentado en [[biblioteca/chain-of-thought]]). Si luego necesitas solo la respuesta, pide que la ponga en una etiqueta aparte (`<respuesta>`) y extráela en tu código.
+
+Con los modelos de razonamiento actuales esto se usa menos: ya piensan por su cuenta antes de responder (ver [[glosario/modelo-de-razonamiento]]). La justificación de los ejemplos sigue sirviendo para enseñar **qué criterio** aplicar, en una o dos frases. No pidas que vuelque todo su razonamiento paso a paso en la salida: alarga la respuesta y la documentación de Claude desaconseja pedirlo, porque puede provocar rechazos. Si necesitas leerlo, pide un resumen del razonamiento con `thinking={"type": "adaptive", "display": "summarized"}`.
 
 ## Errores frecuentes
 

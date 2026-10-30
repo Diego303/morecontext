@@ -2,6 +2,7 @@
 titulo: El bucle agéntico
 descripcion: Escribe a mano, en Python y TypeScript, el bucle completo de un agente, tratando cada stop_reason y devolviendo un tool_result por cada tool_use.
 creado: 2026-09-18
+actualizado: 2026-10-29
 orden: 2
 minutos: 50
 tipo: practica
@@ -32,7 +33,7 @@ flowchart TD
   H --> R[Añadir tool_result]
   R --> M
   S -- end_turn --> F[Respuesta final]
-  S -- max_tokens / refusal --> E[Parar y avisar]
+  S -- max_tokens / refusal / otros --> E[Parar y avisar]
   S -- pause_turn --> M
 ```
 
@@ -56,6 +57,7 @@ Tres reglas que, si se rompen, la API rechaza la petición o el modelo se confun
 | `pause_turn` | Una herramienta del servidor pausó el turno | Reenvías el historial tal cual para que continúe |
 | `refusal` | El modelo se niega a seguir | Paras y lo comunicas |
 | `stop_sequence` | Encontró una secuencia de parada tuya | Lo tratas como final; aquí no usamos ninguna |
+| `model_context_window_exceeded` | El historial llenó la [[glosario/ventana-de-contexto|ventana de contexto]] del modelo | Paras; para seguir tendrías que recortar o [[glosario/compactacion|compactar]] el historial |
 
 Más detalle sobre cada valor en [[glosario/stop-reason]].
 
@@ -141,7 +143,7 @@ def agente(pregunta: str, max_pasos: int = 10) -> str:
 
         if resp.stop_reason == "max_tokens":
             raise RuntimeError("Respuesta cortada por max_tokens")
-        raise RuntimeError(f"El agente paró: {resp.stop_reason}")      # refusal, stop_sequence
+        raise RuntimeError(f"El agente paró: {resp.stop_reason}")      # refusal, stop_sequence, ventana llena
 
     raise RuntimeError(f"Sin respuesta tras {max_pasos} pasos")
 
@@ -249,6 +251,80 @@ Fíjate en el paso 1: el modelo pidió **dos herramientas a la vez**. Por eso el
 - Bucle `while True` sin límite de pasos.
 - Ejecutar el `input` de una herramienta sin validarlo. El modelo puede pedir lo que no debe; tu código decide.
 
+## El mismo agente con LangChain y con LangGraph
+
+Ahora que has escrito el bucle, mira cómo lo hacen dos [[glosario/framework-de-agentes|frameworks]] abiertos (MIT). Las herramientas son las mismas funciones de `agente.py`; cambia quién escribe el bucle.
+
+```python tab="LangChain" title="agente_langchain.py"
+from langchain.agents import create_agent
+from langchain.agents.middleware import ModelCallLimitMiddleware, ToolErrorMiddleware
+from langchain.chat_models import init_chat_model
+from langchain.tools import tool
+
+from agente import SYSTEM, ejecutar          # las mismas herramientas y el mismo prompt
+
+MODEL = "anthropic:claude-sonnet-5-5"        # o "ollama:<modelo>" con langchain-ollama
+
+@tool
+def ver_pedidos(email: str) -> str:
+    """Lista los pedidos de un cliente por su email. Devuelve id, estado y fecha de cada pedido."""
+    return ejecutar("ver_pedidos", {"email": email})
+
+@tool
+def buscar_ayuda(tema: str) -> str:
+    """Busca en el centro de ayuda por tema. Úsala para políticas: devoluciones, envíos, pagos."""
+    return ejecutar("buscar_ayuda", {"tema": tema})
+
+agente = create_agent(
+    model=init_chat_model(MODEL, max_tokens=2048),   # sin max_tokens usa el máximo del modelo
+    tools=[ver_pedidos, buscar_ayuda],
+    system_prompt=SYSTEM,
+    middleware=[
+        ToolErrorMiddleware(on_error=lambda exc, request: f"Error: {exc}"),  # el equivalente a is_error
+        ModelCallLimitMiddleware(run_limit=10, exit_behavior="end"),         # el límite de pasos
+    ],
+)
+
+if __name__ == "__main__":
+    r = agente.invoke({"messages": [{"role": "user", "content": "Soy ana@example.com. ¿Dónde está mi pedido?"}]})
+    for m in r["messages"]:                  # human → ai(tool_calls) → tool → ai
+        m.pretty_print()
+```
+
+```python tab="LangGraph" title="agente_langgraph.py"
+from langchain.chat_models import init_chat_model
+from langchain.messages import SystemMessage
+from langgraph.graph import START, MessagesState, StateGraph
+from langgraph.prebuilt import ToolNode, tools_condition
+
+from agente_langchain import MODEL, SYSTEM, buscar_ayuda, ver_pedidos
+
+TOOLS = [ver_pedidos, buscar_ayuda]
+llm = init_chat_model(MODEL, max_tokens=2048).bind_tools(TOOLS)
+
+def modelo(state: MessagesState):
+    return {"messages": [llm.invoke([SystemMessage(SYSTEM), *state["messages"]])]}
+
+g = StateGraph(MessagesState)                # el estado es la lista de mensajes
+g.add_node("modelo", modelo)
+g.add_node("tools", ToolNode(TOOLS, handle_tool_errors=True))   # errores de vuelta al modelo
+g.add_edge(START, "modelo")
+g.add_conditional_edges("modelo", tools_condition)  # ¿hay tool_calls? → "tools"; si no → fin
+g.add_edge("tools", "modelo")
+grafo = g.compile()
+
+if __name__ == "__main__":
+    r = grafo.invoke({"messages": [("user", "Soy ana@example.com. ¿Dónde está mi pedido?")]},
+                     {"recursion_limit": 21})           # tope de pasos: el de por defecto es enorme
+    print(r["messages"][-1].content)
+```
+
+Lo que **esconde LangChain**: `create_agent` es tu bucle `for` ya escrito. Añade al historial la respuesta entera, ejecuta todas las llamadas a herramientas del turno y devuelve un `ToolMessage` por cada una (tu `tool_result`). Lo que no hace por ti: si una herramienta lanza una excepción, el agente se rompe salvo que añadas `ToolErrorMiddleware`, y sin `max_tokens` el modelo puede generar hasta el máximo que admite.
+
+Lo que **esconde LangGraph**: el bucle se vuelve un grafo explícito. `tools_condition` es tu `if resp.stop_reason == "tool_use"` y `ToolNode` es tu bucle sobre los bloques `tool_use`. Ganas control (añadir un nodo de aprobación entre el modelo y las herramientas es añadir un nodo y una arista) y estado persistente con un *checkpointer*. A cambio, el límite de pasos lo pones tú con `recursion_limit`, que cuenta pasos del grafo (cada vuelta modelo → herramientas son dos).
+
+Ninguno de los dos trata `refusal` o `model_context_window_exceeded` como tú: el mensaje vuelve como un `AIMessage` más y el agente termina. Si te importa distinguir esos finales, mira `response_metadata["stop_reason"]` del último mensaje. Lo tienes a fondo en [[cursos/langchain-y-langgraph/03-tu-primer-agente-con-create-agent]] y [[cursos/langchain-y-langgraph/05-langgraph-estado-nodos-y-aristas]].
+
 ## Ejercicio
 
 > [!ejercicio] Rómpelo a propósito
@@ -273,3 +349,4 @@ Fíjate en el paso 1: el modelo pidió **dos herramientas a la vez**. Por eso el
 - [[docs/agentes/01-el-bucle-agentico]]
 - [[docs/herramientas/01-uso-de-herramientas]]
 - [[glosario/react]]
+- [[docs/frameworks/02-equivalencias]]

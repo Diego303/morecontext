@@ -2,6 +2,7 @@
 titulo: Regresiones en CI
 descripcion: Ejecuta tus evals en GitHub Actions en cada cambio, compara con una línea base, falla con umbrales claros y mantén el coste bajo control.
 creado: 2026-10-10
+actualizado: 2026-10-29
 orden: 5
 minutos: 35
 tipo: proyecto
@@ -172,6 +173,8 @@ Cada parte tiene un motivo:
 - La clave de API va en los secretos del repositorio, nunca en el código. Ten en cuenta que GitHub no pasa secretos a los workflows lanzados desde *forks*: en un repositorio abierto, esas evals tendrán que ejecutarse después de revisar el cambio.
 - `upload-artifact` con `if: always()` guarda los resultados también cuando falla, que es justo cuando los quieres leer.
 
+Si prefieres no mantener `run.py` y `comparar.py`, [[herramientas/promptfoo]] hace casi lo mismo con un archivo YAML y un comando que devuelve error cuando fallan las aserciones; la integración con CI está en [[recetas/evals-con-promptfoo]]. La lógica de línea base y casos críticos la sigues decidiendo tú.
+
 > [!consejo] Una clave solo para CI
 > Crea una clave de API dedicada a CI con su propio límite de gasto. Si algo se descontrola, el daño queda acotado y sabes de dónde viene el consumo.
 
@@ -183,13 +186,16 @@ Un caso que falla una vez puede ser ruido. Tres estrategias, de menos a más car
 2. **Repetir solo los fallos.** Si un caso que pasaba en la base falla, ejecútalo dos veces más y considéralo roto si falla en la mayoría.
 3. **Repetir todo N veces** y comparar medias. Más fiable y N veces más caro: resérvalo para la ejecución nocturna o para decisiones grandes como un cambio de modelo.
 
-Fija también lo que puedas fijar: la versión exacta del modelo, `temperature` en el juez y datos de prueba estáticos para las herramientas.
+Fija también lo que puedas fijar: el ID exacto del modelo del agente y del juez, el [[glosario/esfuerzo]] de cada uno (`output_config={"effort": …}`), el esquema de salida del juez y datos de prueba estáticos para las herramientas. No busques `temperature`: en la API de Claude ya no existe, y la variación que queda se gestiona con las tres estrategias de arriba.
+
+La tolerancia no debería ser más fina que el ruido de tu propio montaje. Anthropic midió que, en evals de agentes de código, solo los recursos asignados al entorno movían hasta 6 puntos los resultados de Terminal-Bench 2.0, y pide escepticismo ante diferencias de menos de 3 puntos entre modelos mientras no se documente y se iguale la configuración ([*Quantifying infrastructure noise in agentic coding evals*](https://www.anthropic.com/engineering/infrastructure-noise), feb. 2026). Mide la variación de tu suite ejecutándola varias veces sin cambiar nada antes de fijar la tolerancia.
 
 ## Errores frecuentes
 
 - Ejecutar la suite completa en cada *push* y descubrir la factura a fin de mes.
 - Guardar solo la cifra global y no poder decir qué casos se rompieron.
 - Fijar umbrales a ojo, sin mirar la variación real entre ejecuciones.
+- Cambiar el modelo o el esfuerzo del juez en la misma *pull request* que el prompt: no sabrás cuál movió la métrica.
 - Actualizar la línea base automáticamente en cada ejecución, con lo que las regresiones se vuelven la nueva normalidad.
 - Ejecutar herramientas con efectos reales desde CI.
 

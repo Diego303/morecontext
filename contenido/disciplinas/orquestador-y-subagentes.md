@@ -2,10 +2,11 @@
 titulo: Orquestador y subagentes en tu día a día
 descripcion: Usar subagentes en tu trabajo diario con herramientas de IA para explorar, buscar y revisar en paralelo sin llenar tu conversación principal de ruido.
 creado: 2026-10-06
+actualizado: 2026-10-29
 orden: 10
 tipo: forma-de-trabajar
 tags: [forma-de-trabajar, multiagente, subagentes]
-relacionados: ["[[roadmap/60-multiagente/02-orquestador-y-subagentes]]", "[[patrones/06-orquestador-trabajadores]]", "[[docs/agentes/02-subagentes]]", "[[glosario/subagente]]"]
+relacionados: ["[[roadmap/60-multiagente/02-orquestador-y-subagentes]]", "[[patrones/06-orquestador-trabajadores]]", "[[docs/agentes/02-subagentes]]", "[[glosario/subagente]]", "[[docs/claude-code/02-subagentes]]"]
 ---
 
 Esta forma de trabajar consiste en usar tu conversación principal con el agente como [[glosario/orquestador|orquestador]] y delegar en [[glosario/subagente|subagentes]] las tareas que generan mucho ruido: buscar en un repositorio grande, leer documentación, revisar un diff con otros ojos. Cada subagente trabaja con su propio contexto y te devuelve solo la conclusión.
@@ -41,18 +42,32 @@ También ganas tiempo con el paralelismo: tres investigaciones independientes a 
 - **Pide un formato de vuelta corto.** «Responde con una lista de archivo:línea y una frase por cada uno. Máximo 15 entradas.» Lo trata [[roadmap/60-multiagente/03-pasar-contexto-entre-agentes]].
 - **Lanza en paralelo solo lo independiente.** Si la tarea B necesita el resultado de A, van en serie.
 - **Usa un subagente como revisor.** Un contexto limpio que no ha escrito el código detecta cosas que el autor da por buenas. Pásale el diff y la [[disciplinas/spec-primero|spec]], no la conversación.
-- **Limita las herramientas del subagente.** Un explorador solo necesita leer. Si no puede editar, no puede romper nada.
+- **Limita las herramientas del subagente.** Un explorador solo necesita leer. Si no puede editar, no puede romper nada. En Claude Code, cada subagente es un archivo en `.claude/agents/` con `name`, `description` y, entre otros campos, `tools` y `model` ([[docs/claude-code/02-subagentes]], [[plantillas/subagente]]).
+- **Un solo escritor.** Varios subagentes pueden leer y opinar a la vez; editar, mejor uno. Es la conclusión de Cognition tras un año de pruebas ([*Multi-Agents: What's Actually Working*](https://cognition.com/blog/multi-agents-working), abril de 2026): los demás aportan criterio, no acciones ([[radar/2026-10-28-multiagente-un-solo-escritor]]).
 - **No delegues la decisión.** El subagente investiga y recomienda. Tú y el agente principal decidís.
 
 > [!aviso] Multiplicar agentes multiplica el gasto
 > Cada subagente arranca con su propio contexto y lo paga. Para una búsqueda de un archivo, una llamada directa es más barata y rápida. Ver [[roadmap/60-multiagente/05-coste-de-multiplicar-agentes]].
+
+### Así lo hace un harness: el orquestador no escribe código
+
+El harness SDD del autor ([[sistemas/harness-sdd-claude-code]]) lleva esta forma de trabajar al límite. La sesión principal es solo **orquestador**: arranca cada fase, lee el informe corto que devuelve el subagente (resultado, siguiente paso, bloqueos, avisos de seguridad) y aplica la transición con una herramienta determinista. No implementa ni relee todos los artefactos, así que su contexto apenas crece en toda la feature. El trabajo lo hacen cuatro subagentes con contexto limpio y un contrato cada uno:
+
+| Subagente | Herramientas | Qué entrega |
+|---|---|---|
+| Explorador | Leer, buscar y escribir su informe | `context.md`, sin proponer soluciones |
+| Diseñador | Además, editar y ejecutar para validar | La spec completa para la puerta humana |
+| Constructor | Editar, escribir y ejecutar | El código que cumple la spec aprobada, sin rediseñar |
+| Revisor | Leer y ejecutar, nunca editar código | Un veredicto estructurado con evidencia |
+
+Cada uno escribe solo sus archivos (un *hook* lo impide si lo intenta) y ningún subagente lanza a otro. Encima de los cuatro se pueden registrar **especialistas** opcionales (por ejemplo, de seguridad o de accesibilidad) que se activan por etiquetas de la feature o por las rutas cambiadas, en puntos fijos: antes de la puerta humana, después de implementar o después de verificar. Dejan su informe y nunca tocan la spec ni el estado. Lo desarrolla [[cursos/harness-engineering/05-agentes-y-orquestador]].
 
 ## Señales de que lo haces mal
 
 - Lanzas subagentes para tareas que el agente principal resolvería con una búsqueda.
 - Los subagentes devuelven tres pantallas de texto y el contexto principal se llena igual.
 - El subagente vuelve con algo irrelevante porque el encargo decía «mira lo de la autenticación».
-- Dos subagentes editan los mismos archivos a la vez y se pisan.
+- Dos subagentes editan los mismos archivos a la vez y se pisan ([[disciplinas/trabajo-en-paralelo-con-agentes]]).
 - Aceptas la conclusión de un subagente sin comprobar ni una de sus referencias.
 - No sabes cuánto gasta una sesión con subagentes frente a una sin ellos.
 

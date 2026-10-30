@@ -2,6 +2,7 @@
 titulo: Cómo contribuir
 descripcion: Cómo proponer correcciones, recetas y términos del glosario, qué estilo seguir, cómo usar las plantillas y el flujo de trabajo con Obsidian y git.
 creado: 2026-07-03
+actualizado: 2026-10-29
 tags: [proyecto, contribuir]
 relacionados: ["[[paginas/manifiesto]]", "[[paginas/licencia]]", "[[recetas/index]]", "[[glosario/index]]"]
 ---
@@ -29,6 +30,15 @@ Las [[recetas/index|recetas]] y los términos del [[glosario/index|glosario]] so
 
 Para lecciones, sistemas o cambios de estructura, abre antes una incidencia y lo hablamos. Así no trabajas en algo que luego no encaja.
 
+## Proponer plantillas, herramientas, lecturas y problemas
+
+Cuatro secciones crecen sobre todo con aportaciones pequeñas. Cada una tiene su plantilla en `_plantillas/` y unas reglas propias:
+
+- **[[plantillas/index|Plantillas]]** (plantilla `plantilla.md`): un prompt, una spec, una checklist o una configuración que uses de verdad. Indica `tipo`, `formato` y el nombre de `archivo` sugerido, y añade un ejemplo rellenado. Si se inspira en la de otra persona, enlaza el original en vez de copiarla entera.
+- **[[herramientas/index|Herramientas]]** (plantilla `herramienta.md`): una ficha por herramienta, sin enlaces de afiliado. La `licencia` va como identificador SPDX (o «propietaria») y `open_source` dice si lo es. Comprueba la versión y pon la fecha en `revisado`. Si eres quien la mantiene, dilo en el *pull request*.
+- **[[biblioteca/index|Biblioteca]]** (plantilla `paper.md`): un paper o un texto que haya cambiado cómo se construye. Título, autores, año y URL comprobados en la fuente, y tu comentario: qué idea aporta, qué ha envejecido y dónde se ve en MoreContext.
+- **[[problemas/index|Problemas frecuentes]]** (plantilla `problema.md`): un síntoma que te hayas encontrado. El campo `sintoma` lleva el mensaje de error literal o la frase con la que alguien lo buscaría. Explica cómo confirmar la causa antes del arreglo.
+
 ## Estilo de la casa
 
 - Español de España, tuteo, voz activa y frases cortas.
@@ -40,7 +50,7 @@ Para lecciones, sistemas o cambios de estructura, abre antes una incidencia y lo
 
 ## Usar las plantillas
 
-La carpeta `_plantillas/` tiene una plantilla por tipo de página: lección, artículo de docs, receta, término, patrón, sistema, entrada del radar y el resto. Cada una trae el frontmatter de su colección y las secciones que esperamos.
+La carpeta `_plantillas/` tiene una plantilla por tipo de página: lección, artículo de docs, receta, término, patrón, sistema, entrada del radar, herramienta, paper, problema y el resto. No la confundas con la sección pública [[plantillas/index|Plantillas]]: `_plantillas/` no se publica y sirve para crear notas. Cada una trae el frontmatter de su colección y las secciones que esperamos.
 
 En Obsidian, crea una nota nueva y usa *Insertar plantilla*. Fuera de Obsidian, copia el archivo y sustituye los valores. Deja `estado: borrador` mientras escribes. La web no publica los borradores.
 

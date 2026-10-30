@@ -108,20 +108,22 @@
 .ix-chs { columns: 2; column-gap: 56px; }
 .ix-ch { display: block; padding-bottom: 40px; break-inside: avoid; }
 .ix-ch h4 a { display: flex; align-items: baseline; margin-bottom: 6px; padding: 0 0 10px; color: var(--text); border-bottom: 1px solid var(--border-2); }
-.ix-ch h4 .n { flex: none; width: 30px; font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--text-faint); }
+.ix-ch h4 .n { flex: none; width: 38px; font-family: var(--font-mono); font-size: 13px; font-weight: 500; color: var(--text-faint); }
 .ix-ch h4 .t { font-size: 17.5px; font-weight: 600; line-height: 1.35; transition: color .12s ease; }
 .ix-ch h4 .d { color: var(--text-muted); }
 .ix-ch h4 a:hover { color: var(--text); }
 .ix-ch h4 a:hover .t { color: var(--accent-pink); }
 .ix-ch ol { margin: 0; padding: 0; list-style: none; }
 .ix-ch li a { display: flex; align-items: baseline; padding: 6px 0; color: var(--text-2); border-radius: var(--radius-sm); }
-.ix-ch li .n { flex: none; width: 30px; font-family: var(--font-mono); font-size: 11.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+.ix-ch li .n { flex: none; width: 38px; font-family: var(--font-mono); font-size: 11.5px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
 .ix-ch li .t { font-size: 15px; line-height: 1.45; transition: color .12s ease; }
 .ix-ch li a:hover { color: var(--text); }
 .ix-ch li a:hover .t { color: var(--accent-pink); }
 .ix-ch li a:hover > i { background-image: radial-gradient(circle, var(--text-faint) .9px, transparent 1.2px); }
 .ix-ch li a:hover .d { color: var(--text); }
-.ix-ch .note { margin: 14px 0 0 30px; font-size: 18px; }
+/* Datos largos («medio día sobre el harness base»): se parten a la derecha en vez de salirse del capítulo */
+.ix-ch li .d { max-width: 55%; white-space: normal; text-align: right; }
+.ix-ch .note { margin: 14px 0 0 38px; font-size: 18px; }
 .ix-colophon { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; max-width: none; margin-top: 8px; padding-top: 20px; border-top: 1px dashed var(--border); font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }
 
 /* ---------- Ensayo + boletín ---------- */
@@ -199,6 +201,6 @@
   .news form .btn { flex: 1 1 100%; }
 }
 @media (max-width: 420px) {
-  .ix-ch li .n, .ix-ch h4 .n { width: 26px; }
+  .ix-ch li .n, .ix-ch h4 .n { width: 36px; }
   .lead-line > i { margin: 0 6px; }
 }

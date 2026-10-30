@@ -2,12 +2,13 @@
 titulo: Pasar contexto entre agentes
 descripcion: Cómo escribir tareas autocontenidas para un subagente que no ve nada de tu conversación y cómo pedirle un informe que el orquestador pueda usar.
 creado: 2026-09-18
+actualizado: 2026-10-29
 orden: 3
 minutos: 30
 tipo: practica
 objetivos:
   - Redactar tareas autocontenidas con objetivo, contexto, alcance, criterio de terminado y formato de retorno.
-  - Implementar un informe estructurado del subagente con una herramienta strict de entrega.
+  - Implementar un informe estructurado del subagente con una herramienta strict de entrega y una entrega final con output_config.format, sin forzar herramientas.
   - Decidir qué información viaja en el informe y qué se guarda aparte por referencia.
 requiere: ["[[roadmap/60-multiagente/02-orquestador-y-subagentes]]"]
 tags: [agentes, multiagente, contexto]
@@ -51,66 +52,90 @@ Cuando el orquestador lanza varios subagentes a la vez, añade una línea de **f
 
 El orquestador va a leer varios informes seguidos. Si cada uno llega en un formato distinto, con distinto nivel de detalle, la síntesis se complica y empeora. Define el formato de vuelta y haz que se cumpla.
 
-Una forma fiable es darle al subagente una herramienta de entrega con `strict: True`. Así sus argumentos cumplen siempre el `input_schema` y el bucle sabe exactamente cuándo ha terminado: cuando el modelo la invoca.
+Una forma fiable es darle al subagente una herramienta de entrega con `strict: True`. Así sus argumentos cumplen siempre el `input_schema` y el bucle sabe exactamente cuándo ha terminado: cuando el modelo la invoca. Para los casos en que no la invoca (se agota el presupuesto o termina con texto), una última llamada sin herramientas y con [[glosario/salida-estructurada|salida estructurada]] devuelve el mismo esquema.
 
 ```python title="informe.py"
+import json
+
 import anthropic
 
 MODEL = "claude-sonnet-5-5"
 client = anthropic.Anthropic()
 
+ESQUEMA_INFORME = {
+    "type": "object",
+    "properties": {
+        "hallazgos": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "afirmacion": {"type": "string"},
+                    "fuente": {"type": "string", "description": "URL o identificador"},
+                },
+                "required": ["afirmacion", "fuente"],
+                "additionalProperties": False,
+            },
+        },
+        "no_encontrado": {"type": "array", "items": {"type": "string"}},
+        "confianza": {"type": "string", "enum": ["alta", "media", "baja"]},
+    },
+    "required": ["hallazgos", "no_encontrado", "confianza"],
+    "additionalProperties": False,
+}
+
 ENTREGAR = {
     "name": "entregar_informe",
     "description": "Entrega tu informe final. Llámala una sola vez, cuando hayas terminado.",
     "strict": True,
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "hallazgos": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "afirmacion": {"type": "string"},
-                        "fuente": {"type": "string", "description": "URL o identificador"},
-                    },
-                    "required": ["afirmacion", "fuente"],
-                    "additionalProperties": False,
-                },
-            },
-            "no_encontrado": {"type": "array", "items": {"type": "string"}},
-            "confianza": {"type": "string", "enum": ["alta", "media", "baja"]},
-        },
-        "required": ["hallazgos", "no_encontrado", "confianza"],
-        "additionalProperties": False,
-    },
+    "input_schema": ESQUEMA_INFORME,   # el mismo esquema para la herramienta y la entrega final
 }
 
+SISTEMA = "Eres un investigador. Resuelve la tarea con tus herramientas y termina llamando a entregar_informe."
+
+def entrega_final(tools: list, mensajes: list) -> dict:
+    """Sin forzar herramienta: tool_choice none + output_config.format con el mismo esquema."""
+    if mensajes[-1]["role"] != "user":                 # el system intermedio va justo después de un user
+        mensajes.append({"role": "user", "content": "Entrega el informe."})
+    mensajes.append({"role": "system", "content": "Último paso: entrega el informe con lo que tengas. "
+                                                  "Lo que no hayas encontrado va en no_encontrado."})
+    resp = client.messages.create(
+        model=MODEL, max_tokens=2048, system=SISTEMA, messages=mensajes,
+        tools=tools,                                   # mismas tools: no rompe la caché del prefijo
+        tool_choice={"type": "none"},                  # en esta llamada no puede usar ninguna
+        output_config={"format": {"type": "json_schema", "schema": ESQUEMA_INFORME}},
+    )
+    if resp.stop_reason != "end_turn":                 # refusal o max_tokens: el JSON no es fiable
+        return {"hallazgos": [], "no_encontrado": ["(sin informe)"], "confianza": "baja",
+                "error": f"stop_reason={resp.stop_reason}"}
+    return json.loads(next(b.text for b in resp.content if b.type == "text"))
+
 def ejecutar_subagente(tarea: str, herramientas: list, ejecutar, max_pasos: int = 8) -> dict:
+    tools = herramientas + [ENTREGAR]
     mensajes = [{"role": "user", "content": tarea}]
-    for paso in range(max_pasos):
-        ultimo = paso == max_pasos - 1
-        resp = client.messages.create(
-            model=MODEL, max_tokens=2048, tools=herramientas + [ENTREGAR], messages=mensajes,
-            # en el último paso obligamos a entregar lo que tenga
-            tool_choice={"type": "tool", "name": "entregar_informe"} if ultimo else {"type": "auto"},
+    for _ in range(max_pasos):
+        resp = client.messages.create(                 # tool_choice auto (por defecto)
+            model=MODEL, max_tokens=2048, system=SISTEMA, tools=tools, messages=mensajes,
         )
         mensajes.append({"role": "assistant", "content": resp.content})
         usos = [b for b in resp.content if b.type == "tool_use"]
         entrega = next((b for b in usos if b.name == "entregar_informe"), None)
         if entrega:
-            return entrega.input  # fin: no hace falta responder con tool_result
-        if resp.stop_reason != "tool_use":
-            return {"hallazgos": [], "no_encontrado": [tarea], "confianza": "baja",
-                    "error": f"stop_reason={resp.stop_reason}"}
+            return entrega.input                       # fin: no hace falta responder con tool_result
+        if resp.stop_reason == "pause_turn":
+            continue
+        if resp.stop_reason != "tool_use":             # terminó sin entregar (end_turn, max_tokens…)
+            if usos:                                   # max_tokens cortó una llamada a medias: descarta el turno
+                mensajes.pop()
+            break
         mensajes.append({"role": "user", "content": [
             {"type": "tool_result", "tool_use_id": b.id, "content": ejecutar(b.name, b.input)}
             for b in usos
         ]})
-    raise AssertionError("inalcanzable: el último paso fuerza la entrega")
+    return entrega_final(tools, mensajes)              # presupuesto agotado o fin sin entrega
 ```
 
-Tres decisiones de este código merecen explicación. La entrega cierra el bucle: como no vuelves a llamar al modelo, no necesitas responder a ese `tool_use`. En el último paso se usa [[glosario/tool-choice]] para forzar la entrega, de modo que el subagente devuelve algo útil en lugar de cortarse a medias. Y si el modelo se detiene por otro motivo, el resultado sigue la misma forma, con `confianza: "baja"` y la tarea en `no_encontrado`, para que el orquestador lo trate igual que un informe pobre.
+Tres decisiones de este código merecen explicación. La entrega cierra el bucle: como no vuelves a llamar al modelo, no necesitas responder a ese `tool_use`. Cuando el subagente no entrega por su cuenta, **no se fuerza la herramienta**: con [[glosario/tool-choice|tool_choice]] `{"type": "tool", …}` o `{"type": "any"}`, Opus 5.5, Sonnet 5.5 y Fable 5.1 responden 400. En su lugar, la última llamada prohíbe herramientas (`tool_choice: none`), fija el formato con `output_config.format` y avisa con un [[glosario/mensaje-de-sistema-intermedio|mensaje de sistema intermedio]], que tiene que ir justo después de un mensaje `user` (por eso, si el bucle acabó en un turno del asistente, se añade antes un «Entrega el informe.») y no invalida la caché de `tools` ni de `system`. Y si esa llamada se detiene por otro motivo, el resultado sigue la misma forma, con `confianza: "baja"`, para que el orquestador lo trate igual que un informe pobre. Las alternativas (aviso de un solo turno, retirar las herramientas de trabajo) están en [[recetas/entregar-resultado-sin-forzar-herramienta]].
 
 > [!aviso] strict no valida el contenido
 > El esquema garantiza la forma, no la verdad. Una URL inventada cumple `"type": "string"`. Si las fuentes importan, comprueba en tu código que existen o que salieron de un `tool_result` real del subagente.
@@ -150,6 +175,7 @@ def combinar(informes: list[dict]) -> tuple[list[dict], list[str]]:
 - Dejar que cada subagente devuelva texto libre con un formato distinto.
 - Devolver el material completo en el informe y llenar el contexto del orquestador.
 - Fiarse de las fuentes del informe sin comprobar que salieron de una herramienta.
+- Forzar la entrega con `tool_choice` en un modelo 5.5: la API responde 400.
 
 ## Ejercicio
 
@@ -165,7 +191,7 @@ def combinar(informes: list[dict]) -> tuple[list[dict], list[str]]:
 
 - El subagente solo sabe lo que dice la tarea; el orquestador solo sabe lo que dice el informe.
 - Una tarea autocontenida tiene objetivo, contexto, alcance, fuentes, criterio de terminado y formato de retorno.
-- Una herramienta de entrega con `strict: True` da informes con forma fija y un final claro del bucle.
+- Una herramienta de entrega con `strict: True` da informes con forma fija y un final claro del bucle; si no la usa, una última llamada con `output_config.format` devuelve el mismo esquema, sin forzar herramientas.
 - El informe lleva conclusiones con fuente; el material grande se guarda aparte y viaja por referencia.
 - El esquema garantiza la forma; comprueba tú las fuentes.
 
@@ -174,3 +200,4 @@ def combinar(informes: list[dict]) -> tuple[list[dict], list[str]]:
 - [[roadmap/60-multiagente/04-paralelismo]]
 - [[disciplinas/context-engineering]]
 - [[cursos/sistemas-multiagente/03-coordinacion-y-estado]]
+- [[recetas/entregar-resultado-sin-forzar-herramienta]]

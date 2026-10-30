@@ -2,10 +2,11 @@
 titulo: Qué hace falta para dejar a un agente trabajando horas
 descripcion: Un análisis de las piezas que necesita un agente para trabajar sin supervisión durante horas, del estado externo a los presupuestos y la verificación.
 creado: 2026-08-22
+actualizado: 2026-10-29
 estado: revision
 tipo: analisis
 tags: [agentes, larga-duracion, contexto, produccion]
-relacionados: ["[[radar/2026-07-28-agentes-de-larga-duracion]]", "[[cursos/context-engineering/04-contexto-para-agentes-largos]]", "[[roadmap/40-primer-agente/03-condiciones-de-parada]]", "[[disciplinas/observabilidad]]"]
+relacionados: ["[[radar/2026-07-28-agentes-de-larga-duracion]]", "[[cursos/context-engineering/04-contexto-para-agentes-largos]]", "[[roadmap/40-primer-agente/03-condiciones-de-parada]]", "[[disciplinas/observabilidad]]", "[[patrones/10-inicializador-y-agente-de-trabajo]]"]
 ---
 
 Un agente que resuelve una pregunta en treinta segundos y uno que trabaja tres horas en una migración usan el mismo [[glosario/bucle-agentico|bucle]]: llamar al modelo, ejecutar las herramientas que pida, devolver los resultados, repetir. Lo que cambia es todo lo que rodea al bucle. En este análisis repaso qué piezas creo que hacen falta para que dejar un agente trabajando solo sea una decisión razonable y no una apuesta.
@@ -62,5 +63,8 @@ Lo razonable es diseñar la revisión desde el principio: hitos donde el agente 
 Si tuviera que priorizar, empezaría por el criterio de fin y el presupuesto, porque sin ellos todo lo demás da igual. Después el estado externo con checkpoints. Después permisos y aprobaciones. La observabilidad la montaría en paralelo desde el primer día, porque es lo que te permite descubrir qué falla en las otras cinco.
 
 Nada de esto es nuevo. Son las mismas ideas que aplicamos a cualquier proceso por lotes que corre de noche. La diferencia es que aquí el proceso toma decisiones, y eso hace que cada una de estas piezas importe más. Para seguir, mira [[cursos/context-engineering/04-contexto-para-agentes-largos]].
+
+> [!nota] Actualización (oct. 2026)
+> Anthropic lleva la idea de las notas fuera de la ventana a un patrón concreto en [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) (26 nov. 2025): una primera sesión prepara el entorno, la lista de funcionalidades y el archivo de progreso, y cada sesión siguiente avanza una funcionalidad y deja el estado listo para la próxima ([[patrones/10-inicializador-y-agente-de-trabajo]]).
 
 *Borrador inicial: pendiente de reescribir con la voz del autor.*

@@ -2,6 +2,7 @@
 titulo: Servidor MCP de solo lectura
 descripcion: Expón una base de datos SQLite a un agente mediante un servidor MCP en Python con MCPServer que solo puede leer, con límites de filas y de tiempo.
 creado: 2026-09-03
+actualizado: 2026-10-29
 nivel: intermedio
 minutos: 40
 tema: herramientas
@@ -150,36 +151,36 @@ if __name__ == "__main__":
     mcp.run()  # transporte stdio por defecto
 ```
 
-3. **Pruébalo con un cliente MCP en Python.** Lanza el servidor por `stdio`, lista sus herramientas e intenta escribir:
+3. **Pruébalo con un cliente MCP en Python.** `Client`, el cliente de alto nivel del SDK 2.x, lanza el servidor como subproceso por `stdio`, lista sus herramientas e intenta escribir. Con la revisión `2026-07-28` de la especificación no hay saludo `initialize` ni sesión: cada petición lleva su versión y sus capacidades ([[docs/estandares/01-mcp-2026-07-28]]).
 
 ```python title="probar_cliente.py"
 import asyncio
+import json
 import sys
 
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from mcp import Client, StdioServerParameters
 
 PARAMS = StdioServerParameters(command=sys.executable, args=["servidor.py"], env={"DB_PATH": "tienda.db"})
 
 
 async def main():
-    async with stdio_client(PARAMS) as (lectura, escritura):
-        async with ClientSession(lectura, escritura) as sesion:
-            await sesion.initialize()
-            herramientas = await sesion.list_tools()
-            print("Herramientas:", [h.name for h in herramientas.tools])
+    async with Client(PARAMS) as cliente:
+        herramientas = await cliente.list_tools()
+        print("Herramientas:", [h.name for h in herramientas.tools])
 
-            ok = await sesion.call_tool("consultar", {"sql": "SELECT nombre, ciudad FROM clientes"})
-            print("SELECT:", ok.content[0].text)
+        ok = await cliente.call_tool("consultar", {"sql": "SELECT nombre, ciudad FROM clientes"})
+        print("SELECT:", json.loads(ok.content[0].text)["filas"])
 
-            for sql in ["DELETE FROM pedidos", "WITH x AS (SELECT 1) DELETE FROM pedidos",
-                        "SELECT 1; DROP TABLE pedidos"]:
-                malo = await sesion.call_tool("consultar", {"sql": sql})
-                print("Rechazada:" if malo.is_error else "¡ACEPTADA!", malo.content[0].text[:90])
+        for sql in ["DELETE FROM pedidos", "WITH x AS (SELECT 1) DELETE FROM pedidos",
+                    "SELECT 1; DROP TABLE pedidos"]:
+            malo = await cliente.call_tool("consultar", {"sql": sql})
+            print("Rechazada:" if malo.is_error else "¡ACEPTADA!", malo.content[0].text[:90])
 
 
 asyncio.run(main())
 ```
+
+En tutoriales anteriores verás `stdio_client` + `ClientSession` + `await sesion.initialize()`. En el SDK 2.x sigue funcionando como vía de compatibilidad con servidores antiguos, pero para código nuevo usa `Client`. En los tests también puedes pasarle la instancia del servidor (`Client(mcp)`) y probarlo en el mismo proceso, sin subproceso.
 
 4. **Conéctalo a tu host.** En un cliente de escritorio compatible con MCP se declara así (la ubicación del archivo depende del host):
 
@@ -202,12 +203,13 @@ También puedes inspeccionarlo en el navegador con `npx @modelcontextprotocol/in
 ```text
 # salida de ejemplo
 Herramientas: ['listar_tablas', 'describir_tabla', 'consultar']
-SELECT: {"columnas": ["nombre", "ciudad"], "filas": [["Ana López", "Valencia"], ...], "truncado": false}
+SELECT: [['Ana López', 'Valencia'], ['Panadería Lola', 'Sevilla']]
 Rechazada: Error executing tool consultar: Solo se permiten consultas SELECT (o WITH ... SELECT).
-Rechazada: Error executing tool consultar: La consulta falló: not authorized. ...
-Rechazada: Error executing tool consultar: La consulta falló: You can only execute one statement at a time.
+Rechazada: Error executing tool consultar: La consulta falló: not authorized. Revisa nombres con desc
+Rechazada: Error executing tool consultar: La consulta falló: You can only execute one statement at a
 ```
 
+- Los mensajes llegan con el prefijo `Error executing tool consultar: ` que añade el SDK a cada `ToolError`, y `is_error` vale `True`.
 - La segunda consulta (`WITH x AS (SELECT 1) DELETE …`) pasa el filtro de texto, pero la para el *authorizer*. Por eso no basta con mirar si empieza por `SELECT`.
 - Comprueba el archivo: `sqlite3 tienda.db "SELECT count(*) FROM pedidos"` debe seguir dando 3.
 - Pregunta al agente algo que requiera un `JOIN` y revisa en los logs (stderr) qué SQL generó.
@@ -217,6 +219,37 @@ Rechazada: Error executing tool consultar: La consulta falló: You can only exec
 - **PostgreSQL o MySQL.** Crea un usuario de base de datos con permiso `SELECT` solo sobre las tablas necesarias, y abre la transacción en modo de solo lectura. El permiso en la base de datos es la capa principal: el resto es defensa adicional ([[glosario/minimo-privilegio]]).
 - **Vistas en lugar de tablas.** Expón vistas que ya excluyan columnas sensibles (correos, teléfonos) y filtren filas. El agente no puede filtrar lo que no ve.
 - **Consultas predefinidas.** Para usuarios finales, en vez de SQL libre, ofrece herramientas concretas (`ventas_por_cliente(cliente, mes)`). Menos flexibles, más seguras y más fáciles de usar para el modelo ([[disciplinas/diseno-de-herramientas]]).
+- **Desde un agente de LangChain.** `MCPAdapter` (en `pip install "langchain[mcp,anthropic]"`, beta, compatible con `mcp` 2.x) lanza el servidor por `stdio` y convierte sus herramientas en herramientas de LangChain. Un `ToolError` llega al modelo como `ToolMessage` con `status="error"`, así que el agente puede corregir su SQL. No mezcles en el mismo entorno el paquete antiguo `langchain-mcp-adapters`: exige `mcp<2`. Más en [[recetas/herramientas-mcp-en-un-agente-langchain]].
+
+```python title="agente_langchain.py"
+import asyncio
+import warnings
+from pathlib import Path
+
+from langchain.agents import create_agent
+from langchain.chat_models import init_chat_model
+from langchain_core._api import LangChainBetaWarning
+
+warnings.filterwarnings("ignore", category=LangChainBetaWarning)  # langchain.mcp avisa de que es beta
+from langchain.mcp import MCPAdapter  # noqa: E402
+
+MODEL = "anthropic:claude-sonnet-5-5"
+SERVIDOR = Path(__file__).with_name("servidor.py")  # un Path se lanza por stdio; un str tiene que ser una URL
+
+
+async def main(pregunta: str, model=None):
+    async with MCPAdapter(SERVIDOR) as mcp:
+        tools = await mcp.list_tools()
+        agente = create_agent(model or init_chat_model(MODEL, max_tokens=1024), tools,
+                              system_prompt="Respondes con datos de la tienda. Mira el esquema antes de consultar.")
+        r = await agente.ainvoke({"messages": [("user", pregunta)]})
+        return r["messages"][-1].content
+
+
+if __name__ == "__main__":
+    print(asyncio.run(main("¿Cuánto ha gastado Ana López en total?")))
+```
+
 - **Resources.** Publica el esquema de la base de datos como *resource* MCP para que el host lo cargue en contexto sin gastar una llamada a herramienta.
 - **Remoto.** Para servir a varios usuarios, usa el transporte *Streamable HTTP* con autenticación. Lo trata [[cursos/mcp-de-cero-a-servidor/04-seguridad-y-despliegue]].
 

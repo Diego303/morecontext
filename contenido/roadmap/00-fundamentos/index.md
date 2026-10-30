@@ -2,8 +2,9 @@
 titulo: "Nivel 00 · Fundamentos"
 descripcion: "Qué es un LLM, cómo se mide en tokens, qué cabe en su contexto y cómo hacer tu primera llamada a la API midiendo coste y latencia."
 creado: 2026-09-01
+actualizado: 2026-10-29
 nivel: 0
-horas: 3
+horas: 4
 objetivo: "Entender qué hace un modelo de lenguaje y llamarlo desde código sabiendo cuánto cuesta y cuánto tarda cada petición."
 prerrequisitos: []
 proyecto:
@@ -11,7 +12,7 @@ proyecto:
   descripcion: "Un programa de línea de comandos que recibe una pregunta, llama a la API y muestra la respuesta junto con los tokens de entrada y salida, la latencia y el coste estimado de la llamada."
   entregable: "Un archivo preguntar.py (o preguntar.ts) que se ejecuta con una pregunta como argumento, avisa si la respuesta se corta por max_tokens y añade una fila por llamada a un CSV con tokens, latencia y coste; más ese CSV con al menos 5 llamadas reales."
 tags: [fundamentos, api, tokens]
-relacionados: ["[[roadmap/index]]", "[[docs/fundamentos/index]]", "[[glosario/llm]]", "[[roadmap/10-prompting/index]]"]
+relacionados: ["[[roadmap/index]]", "[[docs/fundamentos/index]]", "[[glosario/llm]]", "[[roadmap/10-prompting/index]]", "[[cursos/la-ia-por-dentro/index]]"]
 ---
 
 Este nivel es el suelo sobre el que se apoya todo lo demás. Si nunca has llamado a la API de un modelo de lenguaje, empieza aquí. Si ya lo has hecho, repasa las lecciones de tokens y de coste: casi todos los problemas que verás más adelante (agentes caros, respuestas cortadas, contextos que no caben) se explican con lo que aprendes en este nivel.
@@ -26,7 +27,7 @@ Necesitas saber instalar paquetes, usar la terminal y leer código sencillo. No 
 
 ## Qué vas a saber hacer
 
-Al terminar podrás explicar qué hace un modelo y en qué falla, contar [[glosario/token|tokens]] antes de enviar una petición, razonar sobre la [[glosario/ventana-de-contexto|ventana de contexto]] y escribir un script que llama a la API, interpreta la respuesta y registra lo que ha costado.
+Al terminar podrás explicar qué hace un modelo, cómo se ha entrenado y en qué falla, contar [[glosario/token|tokens]] antes de enviar una petición, razonar sobre la [[glosario/ventana-de-contexto|ventana de contexto]] y escribir un script que llama a la API, interpreta la respuesta y registra lo que ha costado.
 
 ## Lecciones
 
@@ -35,6 +36,10 @@ Al terminar podrás explicar qué hace un modelo y en qué falla, contar [[glosa
 3. [[roadmap/00-fundamentos/03-ventana-de-contexto]]. Qué entra en cada petición, por qué la API no recuerda nada entre llamadas y qué hacer cuando la conversación crece.
 4. [[roadmap/00-fundamentos/04-primera-llamada-api]]. Instalar el SDK, configurar la clave y hacer tu primera petición leyendo bien la respuesta.
 5. [[roadmap/00-fundamentos/05-coste-y-latencia]]. Medir tokens, tiempo total y tiempo hasta el primer token, y convertirlo en coste por llamada.
+6. [[roadmap/00-fundamentos/06-como-se-entrena-un-llm]]. Qué le ha pasado al modelo antes de tu primera petición: parámetros, preentrenamiento, ajuste con instrucciones, alineamiento y razonamiento. Explica por qué no sabe lo que pasó el mes pasado y por qué sigue instrucciones.
+7. [[roadmap/00-fundamentos/07-empresa-modelo-herramienta]]. Proveedor, modelo, herramienta agéntica, framework, protocolo y plataforma: un mapa para leer documentación y titulares sin mezclar capas.
+
+Las lecciones 1 a 5 llevan al proyecto; la 6 y la 7 son teoría que puedes leer en cualquier momento del nivel. Si prefieres empezar con vídeos, [[cursos/ruta-en-video/04-fase-3-llms-tokens-y-contexto]] cubre lo mismo con material audiovisual seleccionado, y si quieres bajar a las redes neuronales, sigue [[cursos/la-ia-por-dentro/index]].
 
 ## El proyecto del nivel
 

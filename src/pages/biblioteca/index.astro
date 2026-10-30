@@ -1,0 +1,34 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import { porTitulo, publicados, urlDe } from '../../lib/contenido';
+import { CATEGORIA_GLOSARIO, TIPO_TEXTO } from '../../lib/nombres';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'biblioteca'))!;
+const { Content } = await render(s);
+const textos = (await publicados('biblioteca')).sort((a, b) => a.data.anio - b.data.anio || porTitulo(a, b));
+const temas = Object.entries(CATEGORIA_GLOSARIO)
+  .map(([tema, titulo]) => ({ tema, titulo, lista: textos.filter((t) => t.data.tema === tema) }))
+  .filter((t) => t.lista.length > 0);
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="biblioteca"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/biblioteca/')}>
+  <Content />
+  <div slot="despues" class="wrap narrow listado">
+    {temas.map(({ tema, titulo, lista }) => (
+      <section class="bloque-tipo" aria-labelledby={`h-${tema}`}>
+        <div class="listado-cab"><h2 id={`h-${tema}`}>{titulo}</h2><span class="mono">{lista.length} · por año</span></div>
+        <ol class="entradas">
+          {lista.map((t) => (
+            <li>
+              <div class="meta"><span>{t.data.autores}</span><span>{t.data.anio}</span><span>{TIPO_TEXTO[t.data.tipo]}</span></div>
+              <h3><a href={urlDe(t)}>{t.data.titulo}</a></h3>
+              <p>{t.data.descripcion}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))}
+  </div>
+</PaginaLayout>

@@ -2,6 +2,7 @@
 titulo: "Definir herramientas con JSON Schema"
 descripcion: "Cómo escribir nombre, descripción e input_schema de una herramienta para que el modelo la elija cuando toca y le pase argumentos válidos, con strict y Pydantic."
 creado: 2026-09-24
+actualizado: 2026-10-29
 orden: 2
 minutos: 45
 tipo: practica
@@ -31,7 +32,7 @@ flowchart LR
   A --> V[Tu código valida y ejecuta]
 ```
 
-Escribe cada definición pensando en un desarrollador nuevo que tiene que usar tu función sin poder leer su código. Anthropic recoge esta idea y otras buenas prácticas en [Writing effective tools for agents](https://www.anthropic.com/engineering/writing-tools-for-agents).
+Escribe cada definición pensando en un desarrollador nuevo que tiene que usar tu función sin poder leer su código. Anthropic recoge esta idea y otras buenas prácticas en [Writing effective tools for agents — with agents](https://www.anthropic.com/engineering/writing-tools-for-agents) (septiembre de 2025).
 
 ## El nombre
 
@@ -103,7 +104,7 @@ Para listas, `{"type": "array", "items": {"type": "string"}}`. Para objetos anid
 
 ## Genera el esquema desde tu código
 
-Si ya validas con Pydantic, no escribas el esquema dos veces. Define el modelo de argumentos y genera el JSON Schema desde él:
+Si ya validas con Pydantic, no escribas el esquema dos veces. Define el modelo de argumentos y genera el JSON Schema desde él. Las pestañas muestran la misma herramienta con el SDK de Anthropic (Python y TypeScript), con el decorador `@tool` de LangChain y en el formato de la API compatible con OpenAI que usan los servidores de modelos abiertos:
 
 ```python tab="Python" title="tools_pydantic.py"
 from typing import Literal, Optional
@@ -161,6 +162,55 @@ export function ejecutar(entrada: unknown) {
 }
 ```
 
+```python tab="LangChain" title="tools_langchain.py"
+from typing import Literal, Optional
+from langchain.tools import tool
+
+@tool(parse_docstring=True)   # sin parse_docstring, las descripciones de "Args:" no llegan al esquema
+def buscar_pedidos(
+    email: str,
+    estado: Optional[Literal["pendiente", "enviado", "entregado", "devuelto"]] = None,
+    desde: Optional[str] = None,
+) -> dict:
+    """Busca pedidos de un cliente con filtros opcionales y devuelve como máximo 20. Úsala cuando el usuario pregunte por sus pedidos sin dar un número concreto.
+
+    Args:
+        email: Email del cliente tal como lo escribió.
+        estado: Filtra por estado. Omítelo para ver todos.
+        desde: Fecha mínima de compra, AAAA-MM-DD.
+    """
+    return {"pedidos": []}  # LangChain valida los argumentos con el esquema antes de llamar
+
+print(buscar_pedidos.args_schema.model_json_schema())  # el esquema que verá el modelo
+```
+
+```python tab="Ollama" title="tools_openai.py"
+# Formato de la API compatible con OpenAI (Ollama, vLLM, llama.cpp, LM Studio…)
+TOOL = {
+    "type": "function",
+    "function": {
+        "name": "buscar_pedidos",
+        "description": "Busca pedidos de un cliente con filtros opcionales y devuelve como máximo 20. "
+                       "Úsala cuando el usuario pregunte por sus pedidos sin dar un número concreto.",
+        "parameters": {                                   # el mismo JSON Schema que input_schema
+            "type": "object",
+            "properties": {
+                "email": {"type": "string", "description": "Email del cliente tal como lo escribió."},
+                "estado": {"type": "string", "enum": ["pendiente", "enviado", "entregado", "devuelto"],
+                           "description": "Filtra por estado. Omítelo para ver todos."},
+                "desde": {"type": "string", "description": "Fecha mínima de compra, AAAA-MM-DD."},
+            },
+            "required": ["email"],
+        },
+    },
+}
+
+# uso: client.chat.completions.create(model=MODEL, messages=..., tools=[TOOL])
+# los argumentos llegan como texto JSON en call.function.arguments: json.loads y valida
+```
+
+Las tres formas describen lo mismo: nombre, descripción y JSON Schema. Cambia el envoltorio. En LangChain, `@tool` construye el esquema a partir de la firma y del docstring (con `parse_docstring=True` para que las descripciones de `Args:` lleguen a cada campo) y valida los argumentos antes de ejecutar la función; `bind_tools` lo convierte después al formato de Anthropic o de OpenAI según el modelo. En la API compatible con OpenAI, el esquema va en `parameters` dentro de `function`, y los argumentos llegan como una cadena JSON que tienes que parsear y validar tú. Con modelos abiertos, el *tool calling* depende del modelo y de la configuración del servidor: lo verás en [[cursos/agentes-con-modelos-abiertos/04-herramientas-con-modelos-abiertos]].
+
 Revisa el esquema que genera tu librería antes de enviarlo: a veces incluye campos como `title` o construcciones (`anyOf` con `null`) que son válidas pero más verbosas de lo necesario.
 
 ## Argumentos garantizados con `strict`
@@ -185,7 +235,7 @@ TOOL_ESTRICTA = {
 }
 ```
 
-Tiene las mismas limitaciones que las salidas estructuradas que viste en [[roadmap/10-prompting/03-formato-de-salida]]: sin esquemas recursivos, sin restricciones numéricas ni de longitud, y con `additionalProperties: false`. Consulta los detalles actuales en la [documentación oficial](https://platform.claude.com/docs).
+En LangChain, el equivalente es `bind_tools(..., strict=True)`. Tiene las mismas limitaciones que las salidas estructuradas que viste en [[roadmap/10-prompting/03-formato-de-salida]]: sin esquemas recursivos, sin restricciones numéricas ni de longitud, y con `additionalProperties: false`. Consulta los detalles actuales en la [documentación oficial](https://platform.claude.com/docs).
 
 > [!aviso] Valida siempre en tu código
 > `strict` garantiza la forma, no la validez del dato: un email con forma de texto puede no existir, y un id de pedido puede ser de otro cliente. Comprueba permisos y reglas de negocio antes de ejecutar, sobre todo en herramientas que modifican algo.
@@ -196,7 +246,7 @@ Tiene las mismas limitaciones que las salidas estructuradas que viste en [[roadm
 - **Sin solapamientos.** Si dos herramientas pueden responder a la misma pregunta, el modelo dudará. Di en cada descripción cuándo usar la otra.
 - **Devuelve lo útil.** Un resultado con 40 campos internos llena el contexto. Devuelve los campos que sirven para responder, con nombres legibles.
 
-Este diseño es una disciplina en sí misma: [[disciplinas/diseno-de-herramientas]].
+Este diseño es una disciplina en sí misma: [[disciplinas/diseno-de-herramientas]]. Y cuando el conjunto crece a decenas de herramientas, sus definiciones llenan el contexto en cada llamada: la solución es cargarlas bajo demanda ([[docs/herramientas/05-busqueda-y-carga-diferida]]).
 
 ## Errores frecuentes
 
@@ -229,3 +279,4 @@ Este diseño es una disciplina en sí misma: [[disciplinas/diseno-de-herramienta
 - [[roadmap/20-herramientas/03-errores-e-is-error]]: qué pasa cuando la herramienta falla.
 - [[disciplinas/diseno-de-herramientas]]: criterios para diseñar conjuntos de herramientas.
 - [[recetas/extraer-facturas-a-json]]: una herramienta estricta usada para extraer datos.
+- [[problemas/modelo-local-no-llama-herramientas]]: qué revisar cuando un modelo abierto ignora tus herramientas.

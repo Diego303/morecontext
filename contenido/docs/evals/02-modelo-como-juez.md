@@ -2,6 +2,7 @@
 titulo: Modelo como juez
 descripcion: Cómo usar un modelo para puntuar respuestas con una rúbrica, obtener veredictos estructurados, calibrarlo con etiquetas humanas y mitigar sus sesgos.
 creado: 2026-10-19
+actualizado: 2026-10-29
 orden: 2
 nivel: intermedio
 tags: [evals, modelo-juez, rubrica]
@@ -44,7 +45,16 @@ Es la parte que más importa. Una buena rúbrica:
 
 ### Razonar antes del veredicto
 
-Pide al juez que escriba su análisis antes de la nota. En un esquema JSON, pon el campo de razonamiento **antes** que el veredicto: el modelo genera en orden y así la nota se apoya en el análisis. Además, cuando revises discrepancias, el razonamiento te dirá por qué puntuó así.
+Pide al juez que escriba su análisis antes de la nota. En un esquema JSON, pon el campo de razonamiento **antes** que el veredicto: el modelo genera en orden y así la nota se apoya en el análisis. Además, cuando revises discrepancias, el razonamiento te dirá por qué puntuó así. Pide un análisis breve y concreto (afirmaciones y respaldo), no que vuelque su razonamiento paso a paso: con los modelos 5.x ya razona por dentro, y pedir el razonamiento en la salida puede disparar rechazos.
+
+### Estabilizar al juez sin `temperature`
+
+En la API de Claude ya no existe `temperature` (versión `2026-10-21`), así que «juez con `temperature=0`» no es una opción. La estabilidad sale de otras piezas:
+
+- **Salida estructurada** con un `enum` cerrado para el veredicto.
+- **Rúbrica cerrada** y binaria siempre que puedas, con una salida «no se puede determinar» para casos sin información suficiente, en lugar de forzar una nota.
+- **Modelo y esfuerzo fijos**: el ID completo del modelo y el `effort` explícito, registrados con cada resultado.
+- **Varias muestras y voto** en los casos que importan: tres llamadas y mayoría.
 
 ## Ejemplo completo
 
@@ -80,10 +90,12 @@ def juzgar(documentos: str, pregunta: str, respuesta: str) -> dict:
                  f"<pregunta>{pregunta}</pregunta>\n"
                  f"<respuesta_a_evaluar>\n{respuesta}\n</respuesta_a_evaluar>")
     resp = client.messages.create(
-        model=MODEL, max_tokens=1500, system=RUBRICA,
+        model=MODEL, max_tokens=4096, system=RUBRICA,
         messages=[{"role": "user", "content": contenido}],
-        output_config={"format": {"type": "json_schema", "schema": ESQUEMA}},
+        output_config={"format": {"type": "json_schema", "schema": ESQUEMA}, "effort": "medium"},
     )
+    if resp.stop_reason != "end_turn":  # cortado o rechazado: no hay JSON válido que leer
+        raise RuntimeError(f"El juez no terminó: {resp.stop_reason}")
     texto = "".join(b.text for b in resp.content if b.type == "text")
     veredicto = json.loads(texto)
     if veredicto["veredicto"] not in ("fiel", "parcial", "infiel"):  # valida igualmente
@@ -111,12 +123,13 @@ const ESQUEMA = {
 
 export async function juzgar(documentos: string, pregunta: string, respuesta: string) {
   const resp = await client.messages.create({
-    model: MODEL, max_tokens: 1500, system: RUBRICA,
+    model: MODEL, max_tokens: 4096, system: RUBRICA,
     messages: [{ role: "user", content:
       `<documentos>\n${documentos}\n</documentos>\n<pregunta>${pregunta}</pregunta>\n` +
       `<respuesta_a_evaluar>\n${respuesta}\n</respuesta_a_evaluar>` }],
-    output_config: { format: { type: "json_schema", schema: ESQUEMA } },
+    output_config: { format: { type: "json_schema", schema: ESQUEMA }, effort: "medium" },
   });
+  if (resp.stop_reason !== "end_turn") throw new Error(`El juez no terminó: ${resp.stop_reason}`);
   const texto = resp.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
   return JSON.parse(texto) as { analisis: string; afirmaciones_sin_respaldo: string[]; veredicto: string };
 }
@@ -135,11 +148,13 @@ Las etiquetas XML separan con claridad qué es fuente, qué es pregunta y qué e
 
 Un juez sin calibrar es una opinión más. Antes de fiarte de él:
 
-1. Etiqueta a mano 30–100 casos con el mismo criterio que usa el juez.
-2. Ejecuta el juez sobre esos casos.
-3. Mide la coincidencia y, sobre todo, **lee los desacuerdos**. Suelen revelar que la rúbrica es ambigua.
+1. Etiqueta a mano 30–100 casos con el mismo criterio que usa el juez, con veredictos binarios (pasa o falla) y casos de los dos tipos.
+2. Ejecuta el juez sobre esos casos. Separa los que usas para ajustar la rúbrica de los que usas para medirla, o te engañarás.
+3. Mide la coincidencia por separado en cada clase: la **tasa de verdaderos positivos** (de los que pasan según la persona, cuántos aprueba el juez) y la **de verdaderos negativos** (de los que fallan, cuántos suspende). Un porcentaje global alto puede esconder un juez que lo aprueba todo. Y, sobre todo, **lee los desacuerdos**: suelen revelar que la rúbrica es ambigua.
 4. Ajusta la rúbrica y repite hasta que la coincidencia te parezca suficiente para tu uso.
 5. Vuelve a calibrar cuando cambies el modelo juez o la rúbrica.
+
+El procedimiento completo, con la corrección de la tasa observada, está en [[recetas/validar-un-modelo-juez]]. El problema de fondo, que los criterios cambian al ver las salidas, lo describen Shankar et al., 2024, [*Who Validates the Validators?*](https://arxiv.org/abs/2404.12272).
 
 > [!aviso] El juez también es un sistema que evaluar
 > Si el juez cambia, tus números cambian aunque el sistema evaluado siga igual. Fija el modelo y la versión de la rúbrica, y regístralos junto a cada resultado.
@@ -160,7 +175,8 @@ Un juez sin calibrar es una opinión más. Antes de fiarte de él:
 - **Escalas largas sin anclas**: «puntúa de 1 a 10» da números inestables.
 - **Varios criterios en un juez**: no sabrás qué falló.
 - **Usar la salida del juez como verdad sin calibrar**.
-- **Juez más débil que el sistema evaluado** en tareas difíciles: no detecta errores sutiles. Para el juez, usa un modelo al menos tan capaz como el evaluado, salvo que tu calibración diga que uno más pequeño basta.
+- **Juez más débil que el sistema evaluado** en tareas difíciles: no detecta errores sutiles y tiende a inflar las notas. Pasa a menudo al usar un modelo local pequeño como juez para ahorrar. Para el juez, usa un modelo al menos tan capaz como el evaluado, salvo que tu calibración diga que uno más pequeño basta ([[docs/modelos-abiertos/08-evals-abiertas]]).
+- **Copiar `temperature=0` de un ejemplo antiguo**: con el SDK 2.x da `TypeError`.
 
 ## Ver también
 
@@ -168,3 +184,4 @@ Un juez sin calibrar es una opinión más. Antes de fiarte de él:
 - [[docs/evals/01-disenar-evals]]: dónde encaja el juez en una eval.
 - [[cursos/evals-para-agentes/03-graders]]: código, modelo y humano.
 - [[modelos/03-formato-y-salidas-estructuradas]]: cómo garantizar el JSON.
+- [[biblioteca/llm-as-a-judge]]: el artículo de Zheng et al., comentado.

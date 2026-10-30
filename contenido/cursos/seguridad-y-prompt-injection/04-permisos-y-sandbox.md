@@ -1,7 +1,8 @@
 ---
 titulo: Permisos y sandbox
-descripcion: Mínimo privilegio por herramienta y por usuario, políticas de aprobación según el riesgo, credenciales acotadas y ejecución aislada en contenedores con control de red.
+descripcion: Mínimo privilegio por herramienta y por usuario, aprobaciones sin fatiga, credenciales acotadas y ejecución aislada con control de red, con el caso real del sandbox y el modo auto de Claude Code.
 creado: 2026-10-23
+actualizado: 2026-10-29
 orden: 4
 minutos: 60
 tipo: proyecto
@@ -9,9 +10,9 @@ objetivos:
   - Diseñar una política de permisos que clasifica cada herramienta por riesgo y define cuándo requiere aprobación.
   - Aplicar mínimo privilegio con credenciales acotadas por usuario y por tarea.
   - Ejecutar código generado por un agente en un contenedor sin red, sin privilegios y con límites de recursos.
-  - Registrar decisiones de permisos para auditoría.
+  - Registrar decisiones de permisos para auditoría y medir la fatiga de aprobación.
 requiere: ["[[cursos/seguridad-y-prompt-injection/03-defensas-en-capas]]"]
-relacionados: ["[[glosario/sandbox]]", "[[glosario/minimo-privilegio]]", "[[docs/seguridad/02-permisos-y-minimo-privilegio]]", "[[radar/2026-07-02-uso-del-ordenador-en-sandbox]]", "[[sistemas/soporte-con-aprobacion-humana]]"]
+relacionados: ["[[glosario/sandbox]]", "[[glosario/minimo-privilegio]]", "[[docs/seguridad/02-permisos-y-minimo-privilegio]]", "[[radar/2026-07-02-uso-del-ordenador-en-sandbox]]", "[[sistemas/soporte-con-aprobacion-humana]]", "[[docs/claude-code/06-permisos-y-sandbox]]"]
 tags: [seguridad, permisos, sandbox, contenedores]
 ---
 
@@ -93,7 +94,17 @@ class Autorizador:
         return ok, motivo
 ```
 
-La comprobación ocurre en tu código, antes de ejecutar, para cada `tool_use`. Si se rechaza, devuelves el motivo como `tool_result` con `is_error: True`. Pasar al modelo solo las herramientas de `POLITICA` hace que las demás ni siquiera existan para él. El sistema [[sistemas/soporte-con-aprobacion-humana]] aplica esta misma idea a un caso completo.
+La comprobación ocurre en tu código, antes de ejecutar, para cada `tool_use`. Si se rechaza, devuelves el motivo como `tool_result` con `is_error: True`. Pasar al modelo solo las herramientas de `POLITICA` hace que las demás ni siquiera existan para él. El sistema [[sistemas/soporte-con-aprobacion-humana]] aplica esta misma idea a un caso completo, y en Claude Code la misma política se escribe como reglas `allow`, `ask` y `deny` o como un hook que bloquea ([[recetas/hook-que-bloquea-comandos-peligrosos]]).
+
+## La fatiga de aprobación
+
+Pedir confirmación parece la defensa definitiva y tiene un límite humano. Anthropic contó que en sus productos los usuarios aprobaban alrededor del **93 %** de las peticiones de permiso ([*How we contain Claude across products*](https://www.anthropic.com/engineering/how-we-contain-claude), 25 may. 2026). Cuando casi todo se aprueba, la persona deja de leer, y la aprobación pasa a ser un clic más. Tres consecuencias de diseño:
+
+- **Pide menos y mejor.** Reserva la confirmación para lo irreversible, lo externo y lo que ocurre en contexto contaminado; lo demás se resuelve con permisos y sandbox, sin preguntar.
+- **Muestra los argumentos reales**, cortos y con lo peligroso resaltado (el destinatario, el importe, la ruta).
+- **Mide la tasa de aprobación.** `permisos.jsonl` ya tiene los datos: si una regla se aprueba siempre, sobra la pregunta o falta un control automático; si una persona aprueba todo en segundos, la confirmación no está protegiendo nada.
+
+La alternativa que ha aparecido en 2026 es delegar parte de la decisión en un clasificador. Anthropic describió el del modo `auto` de Claude Code, que desde agosto de 2026 es el modo por defecto en los planes Pro, Max y Team ([*How we built Claude Code auto mode*](https://www.anthropic.com/engineering/claude-code-auto-mode), 25 mar. 2026): revisa la transcripción en dos etapas (un filtro rápido que tiende a bloquear y un razonamiento más caro si marca algo), no ve la prosa del agente ni los resultados de herramientas para que no lo puedan convencer, deniega y deja seguir al agente, y escala a una persona tras 3 denegaciones seguidas o 20 en total. Publicaron sus tasas: un 0,4 % de falsos positivos en 10.000 acciones de tráfico real, y un 17 % de falsos negativos en 52 acciones excesivas reales (5,7 % en exfiltraciones sintéticas). Es decir, deja pasar una de cada seis acciones excesivas, y ellos mismos dicen que no sustituye una revisión humana cuidadosa en infraestructura crítica. Úsalo como capa, con la frontera determinista por debajo.
 
 ## Credenciales acotadas
 
@@ -148,13 +159,19 @@ def ejecutar_aislado(codigo: str, timeout_s: int = 20) -> dict:
 
 Por qué cada opción:
 
-- `--network none` corta el canal de salida más directo. Si el código necesita descargar paquetes, prepara una imagen con ellos; si necesita red, pasa por un proxy con lista de dominios permitidos.
+- `--network none` corta el canal de salida más directo. Si el código necesita descargar paquetes, prepara una imagen con ellos; si necesita red, pasa por un proxy con lista de dominios permitidos, sabiendo que **una lista blanca de dominios es una capacidad**: Anthropic cuenta que permitir `api.anthropic.com` bastaría para exfiltrar datos a una cuenta del atacante con su propia clave. Cada dominio permitido es un sitio adonde pueden salir datos.
 - `--read-only`, `--tmpfs` y el volumen en `:ro` impiden que el código modifique nada fuera de `/tmp`.
 - `--cap-drop ALL`, `no-new-privileges` y un usuario sin privilegios reducen lo que se puede hacer incluso con una vulnerabilidad.
 - Límites de procesos, memoria, CPU y tiempo frenan bucles y bombas de procesos.
 - Los comandos se pasan como lista, sin shell: el código del agente nunca se interpreta como comando del anfitrión.
 
 Un contenedor comparte el núcleo con el anfitrión. Para código de origen desconocido a escala, valora aislamientos más fuertes (máquinas virtuales ligeras o servicios de ejecución gestionados). Para el uso del ordenador y del navegador, el aislamiento es obligatorio: ver [[cursos/uso-del-ordenador/04-seguridad-y-aislamiento]].
+
+## Un caso real: el sandbox de Claude Code
+
+Claude Code aísla los comandos de Bash con mecanismos del sistema operativo (Seatbelt en macOS, bubblewrap en Linux): el proceso solo escribe donde lo permitas (`filesystem.allowWrite`) y la red está denegada salvo los dominios de `network.allowedDomains`. Según Anthropic, eso redujo un 84 % las peticiones de permiso ([*Beyond permission prompts*](https://www.anthropic.com/engineering/claude-code-sandboxing), 20 oct. 2025): al acotar lo que puede pasar, hace falta preguntar mucho menos, que es el antídoto contra la fatiga. Ojo a su alcance: el sandbox cubre Bash (y PowerShell), no las herramientas de archivos, los servidores MCP ni los hooks, que se controlan con reglas de permisos. La configuración está en [[docs/claude-code/06-permisos-y-sandbox]].
+
+El principio que Anthropic extrae de todos sus productos sirve para cualquier agente: diseña primero la contención en el entorno y después orienta el comportamiento en el modelo, y ajusta la fuerza del aislamiento a cuánto puede supervisar el usuario. Cuando todo lo probabilístico falla, lo que frena el ataque es la frontera determinista. Para los secretos en concreto, mira [[recetas/proteger-secretos-del-agente]].
 
 ## Auditoría
 
@@ -167,6 +184,8 @@ Registra cada decisión de permisos (permitida o no, con motivo) y cada ejecuci�
 - **Ejecutar código del agente en la máquina del desarrollador** o en el servidor de la aplicación.
 - **Contenedores con red abierta** y credenciales montadas.
 - **Política implícita** repartida en `if` por el código en lugar de una tabla revisable.
+- **Confirmar todo.** Con un 93 % de aprobaciones, la confirmación deja de ser un control.
+- **Listas blancas de dominios amplias**, como si permitir un dominio conocido fuera inocuo.
 
 ## Ejercicio
 
@@ -183,11 +202,13 @@ Registra cada decisión de permisos (permitida o no, con motivo) y cada ejecuci�
 - Mínimo privilegio en tres niveles: herramientas, credenciales y entorno.
 - Una política explícita por niveles decide qué se ejecuta, qué se confirma y qué no existe.
 - Credenciales del usuario, acotadas y fuera del contexto; la identidad sale de la sesión.
-- Ejecuta código en un contenedor sin red, sin privilegios y con límites.
+- Pide confirmación solo donde aporta y mide la tasa de aprobación: la fatiga anula el control.
+- Ejecuta código en un contenedor sin red, sin privilegios y con límites; cada dominio permitido es una capacidad.
 - Audita cada decisión para poder responder qué pasó y quién lo autorizó.
 
 ## Para seguir
 
 - [[docs/seguridad/02-permisos-y-minimo-privilegio]]
+- [[docs/claude-code/06-permisos-y-sandbox]]
 - [[cursos/uso-del-ordenador/04-seguridad-y-aislamiento]]
 - [[disciplinas/seguridad]]

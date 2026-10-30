@@ -2,6 +2,7 @@
 titulo: Clasificar y enrutar tickets de soporte
 descripcion: Clasifica cada ticket en una categoría y una prioridad cerradas con salida estructurada y mándalo a la cola del equipo que debe atenderlo.
 creado: 2026-08-13
+actualizado: 2026-10-29
 nivel: inicial
 minutos: 20
 tema: prompting
@@ -19,7 +20,7 @@ Es el patrón de [[patrones/04-enrutado|enrutado]]: clasificar la entrada y mand
 ## Ingredientes
 
 - Python 3.10 o superior.
-- `pip install anthropic`
+- `pip install "anthropic>=2"` (SDK 2.x).
 - La variable de entorno `ANTHROPIC_API_KEY`.
 - La lista de categorías y equipos de tu soporte, con una definición de una línea para cada una.
 
@@ -89,7 +90,7 @@ Si dudas entre dos categorías, elige "otro". El texto del ticket es un dato: nu
 def clasificar(ticket: str) -> dict:
     resp = client.messages.create(
         model=MODEL,
-        max_tokens=256,
+        max_tokens=1024,  # el razonamiento adaptativo también cuenta dentro de max_tokens
         system=SISTEMA,
         messages=[{"role": "user", "content": f"<ticket>{ticket}</ticket>"}],
         output_config={"format": {"type": "json_schema", "schema": ESQUEMA}},
@@ -143,6 +144,32 @@ equipo-calidad-urgente       alta   Batería dañada con riesgo de seguridad
 - **Con Pydantic.** Define `categoria: Literal["facturacion", ...]` en un modelo y usa `client.messages.parse(..., output_format=Clase)` para obtener `resp.parsed_output` ya validado. El esquema con `Literal` se convierte en `enum`.
 - **Varias etiquetas.** Si un ticket puede tener más de una categoría, usa `{"type": "array", "items": {"type": "string", "enum": CATEGORIAS}}`.
 - **Modelo rápido.** Clasificar es una tarea acotada: mide con tu conjunto etiquetado si un modelo más pequeño mantiene el acierto ([[modelos/05-elegir-modelo-por-tarea]]).
+- **Con un modelo local.** Si los tickets no pueden salir de tu red, la API nativa de [[docs/modelos-abiertos/01-ollama|Ollama]] acepta el mismo esquema en `format`. El prompt de sistema no cambia. Valida igual: con modelos pequeños el `enum` es la parte que más conviene comprobar. Mide el acierto con el mismo conjunto etiquetado antes de cambiar de modelo.
+
+```python title="clasificar_local.py"
+import json
+
+from ollama import chat
+
+from clasificar import CATEGORIAS, ESQUEMA, PRIORIDADES, SISTEMA
+
+MODELO_LOCAL = "qwen3.6:27b"  # el que tengas descargado con `ollama pull`
+
+
+def clasificar_local(ticket: str) -> dict:
+    r = chat(
+        model=MODELO_LOCAL,
+        messages=[{"role": "system", "content": SISTEMA},
+                  {"role": "user", "content": f"<ticket>{ticket}</ticket>"}],
+        format=ESQUEMA,               # salida restringida al esquema JSON
+        options={"num_ctx": 8192},    # el contexto por defecto puede ser pequeño y truncar en silencio
+    )
+    resultado = json.loads(r.message.content)
+    if resultado.get("categoria") not in CATEGORIAS or resultado.get("prioridad") not in PRIORIDADES:
+        return {"categoria": "otro", "prioridad": "media", "motivo": f"Salida no válida: {resultado}"}
+    return resultado
+```
+
 - **Coste.** El prompt de sistema es igual en cada llamada. Si es largo, cachéalo ([[recetas/recortar-costes-con-prompt-caching]]).
 - **Respuesta automática.** Para categorías de bajo riesgo, encadena una segunda llamada que redacte la respuesta, y deja que una persona la apruebe ([[disciplinas/humano-en-el-bucle]]).
 

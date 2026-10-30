@@ -2,6 +2,7 @@
 titulo: El coste de multiplicar agentes
 descripcion: Por qué un sistema multiagente multiplica los tokens, cómo medir el gasto por rol con usage y qué palancas lo reducen sin perder calidad.
 creado: 2026-09-23
+actualizado: 2026-10-29
 orden: 5
 minutos: 30
 tipo: practica
@@ -20,7 +21,7 @@ Al terminar esta lección sabrás de dónde sale el gasto de un sistema multiage
 
 El coste de un modelo se mide en [[glosario/token|tokens]] de entrada y de salida. En un chat, cada turno manda el historial y recibe una respuesta. En un agente, cada paso del [[glosario/bucle-agentico]] vuelve a mandar todo: el [[glosario/prompt-de-sistema]], las definiciones de herramientas, la tarea y todos los resultados de herramientas acumulados. **La entrada de un agente crece con cada paso**, y lo que pagas es la suma de todas esas entradas.
 
-En un sistema multiagente esto se repite en cada subagente y se añaden dos capas: el orquestador, que lee los informes, y la síntesis. Por eso el gasto se multiplica. Anthropic lo dice sin rodeos en [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system): su sistema gasta muchos más tokens que una conversación normal y solo tiene sentido en tareas de valor suficiente.
+En un sistema multiagente esto se repite en cada subagente y se añaden dos capas: el orquestador, que lee los informes, y la síntesis. Por eso el gasto se multiplica. Anthropic lo dice sin rodeos en [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system): un agente gasta unas 4 veces los tokens de un chat, su sistema multiagente unas 15 veces, y solo tiene sentido en tareas de valor suficiente. En su análisis sobre BrowseComp, el uso de tokens explicaba por sí solo el 80 % de la varianza del rendimiento: gastar más era, en buena medida, la razón de que respondiera mejor.
 
 ```mermaid
 flowchart TD
@@ -90,9 +91,9 @@ def informe() -> None:
     print(f"{'TOTAL':12} ${total:.4f}")
 ```
 
-Llama a `registrar("orquestador", resp)`, `registrar("subagente", resp)` o `registrar("sintesis", resp)` justo después de cada `messages.create`. Con subagentes en paralelo no hay problema de concurrencia: `asyncio` ejecuta un solo hilo y las sumas no se pisan.
+Llama a `registrar("orquestador", resp)`, `registrar("subagente", resp)` o `registrar("sintesis", resp)` justo después de cada `messages.create`. Si quieres el detalle por subagente concreto (cuál de los cinco se disparó), usa como rol `f"subagente:{tarea_id}"`; la receta [[recetas/coste-por-subagente]] lo lleva a una tabla y a las trazas. Con subagentes en paralelo no hay problema de concurrencia: `asyncio` ejecuta un solo hilo y las sumas no se pisan.
 
-`input_tokens` cuenta la entrada que no se leyó de caché ni se escribió en ella. Las otras dos columnas cubren esa parte, y por eso hay que sumar las tres para saber cuánta entrada procesó el modelo en total.
+`input_tokens` cuenta la entrada que no se leyó de caché ni se escribió en ella. Y en los modelos 5.x el razonamiento adaptativo está activo por defecto: sus tokens se cobran como salida y van dentro de `output_tokens` (el desglose, en `usage.output_tokens_details`), así que un subagente que «piensa» mucho cuesta más aunque su informe sea corto. Las otras dos columnas cubren esa parte, y por eso hay que sumar las tres para saber cuánta entrada procesó el modelo en total.
 
 ```text
 # salida de ejemplo
@@ -115,7 +116,8 @@ Ordenadas de más a menos fáciles de aplicar:
 3. **Menos pasos por subagente.** Un criterio de terminado claro en la tarea ([[roadmap/60-multiagente/03-pasar-contexto-entre-agentes]]) y un `max_pasos` bajo.
 4. **[[glosario/prompt-caching]] del prefijo.** Todos los subagentes comparten sistema y herramientas. Cachearlo hace que las lecturas posteriores cuesten mucho menos. Lo verás con código en [[roadmap/100-produccion/02-costes-y-prompt-caching]].
 5. **Un modelo más rápido y barato en los subagentes.** Mide si la calidad aguanta con [[roadmap/80-evals/index|evals]] antes de cambiar.
-6. **`max_tokens` y [[glosario/esfuerzo]] ajustados** a lo que cada rol necesita. El informe de un subagente no necesita tanto margen de salida como la síntesis.
+6. **`max_tokens` y [[glosario/esfuerzo]] ajustados** a lo que cada rol necesita. El informe de un subagente no necesita tanto margen de salida como la síntesis, y un subagente que solo busca puede ir con `output_config={"effort": "low"}`.
+7. **Un tope de gasto por ejecución.** Además de medir, corta: suma el coste en `registrar` y para cuando pase de un umbral, como el presupuesto de [[roadmap/40-primer-agente/03-condiciones-de-parada]]. Si usas el [[herramientas/claude-agent-sdk|Claude Agent SDK]], `max_budget_usd` hace eso por ti.
 
 > [!consejo] Compara con la misma vara
 > La pregunta que importa es cuánto cuesta una respuesta buena. Si la versión multiagente cuesta el triple y acierta lo mismo que el agente único, pierdes. Si acierta claramente más en preguntas de valor alto, puede compensar. Necesitas las dos medidas: gasto y calidad.
@@ -151,3 +153,4 @@ Ordenadas de más a menos fáciles de aplicar:
 - [[roadmap/80-evals/index]]
 - [[roadmap/100-produccion/02-costes-y-prompt-caching]]
 - [[docs/produccion/02-costes-y-limites]]
+- [[recetas/coste-por-subagente]]

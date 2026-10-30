@@ -2,6 +2,7 @@
 titulo: Orquestador y trabajadores
 descripcion: Un modelo central decide en cada caso en qué subtareas dividir el trabajo, las delega a trabajadores y sintetiza sus resultados en una respuesta.
 creado: 2026-07-29
+actualizado: 2026-10-29
 tags: [patrones, workflows, orquestacion, multiagente]
 aliases: [Orchestrator-workers, Orquestador-trabajadores]
 orden: 6
@@ -127,6 +128,84 @@ async def orquestar(tarea: str) -> str:
 
 > [!consejo] Delegar bien es medio patrón
 > Un trabajador solo sabe lo que el orquestador le escribe. Pide en el plan objetivo, contexto, límites y formato de respuesta. El artículo de Anthropic sobre su [sistema de investigación multiagente](https://www.anthropic.com/engineering/multi-agent-research-system) cuenta que instrucciones de delegación vagas producían trabajo duplicado y huecos. Lo desarrolla [[roadmap/60-multiagente/03-pasar-contexto-entre-agentes]].
+
+## Con LangGraph
+
+El orquestador encaja con `Send` de LangGraph (MIT): el plan decide cuántas ramas se lanzan, y cada trabajador recibe solo su subtarea. Es un *map-reduce* con un modelo en cada extremo. Necesitas `pip install langgraph langchain langchain-anthropic`.
+
+```python title="orquestador_langgraph.py"
+import operator
+from typing import Annotated, TypedDict
+
+from langchain.chat_models import init_chat_model
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Send
+from pydantic import BaseModel
+
+MODEL = "anthropic:claude-sonnet-5-5"
+MAX_SUBTAREAS = 6
+
+
+class Subtarea(BaseModel):
+    objetivo: str
+    contexto: str
+    formato_respuesta: str
+
+
+class Plan(BaseModel):
+    subtareas: list[Subtarea]
+
+
+class Estado(TypedDict, total=False):
+    tarea: str
+    subtareas: list[Subtarea]
+    resultados: Annotated[list[str], operator.add]   # cada trabajador añade el suyo
+    respuesta: str
+
+
+def construir(modelo=None):
+    llm = modelo or init_chat_model(MODEL, max_tokens=2048)
+    planificador = llm.with_structured_output(Plan, method="json_schema")
+
+    def planificar(state: Estado):
+        plan = planificador.invoke(f"Divide la tarea en como mucho {MAX_SUBTAREAS} subtareas independientes, "
+                                   f"con el contexto y el formato de cada una.\n<tarea>\n{state['tarea']}\n</tarea>")
+        return {"subtareas": plan.subtareas[:MAX_SUBTAREAS]}      # el límite lo impone tu código
+
+    def repartir(state: Estado):                                  # tantas ramas como diga el plan
+        return [Send("trabajador", {"subtarea": s}) for s in state["subtareas"]]
+
+    def trabajador(state: dict):
+        s: Subtarea = state["subtarea"]
+        r = llm.invoke(f"Resuelve solo esta subtarea.\nObjetivo: {s.objetivo}\n"
+                       f"<contexto>\n{s.contexto}\n</contexto>\nFormato de respuesta: {s.formato_respuesta}")
+        return {"resultados": [f"<resultado objetivo='{s.objetivo}'>\n{r.text}\n</resultado>"]}
+
+    def sintetizar(state: Estado):
+        r = llm.invoke(f"<tarea>\n{state['tarea']}\n</tarea>\n" + "\n\n".join(state["resultados"])
+                       + "\nSintetiza los resultados en una respuesta final.")
+        return {"respuesta": r.text}
+
+    g = StateGraph(Estado)
+    g.add_node("planificar", planificar)
+    g.add_node("trabajador", trabajador)
+    g.add_node("sintetizar", sintetizar)
+    g.add_edge(START, "planificar")
+    g.add_conditional_edges("planificar", repartir, ["trabajador"])
+    g.add_edge("trabajador", "sintetizar")                        # espera a todos los trabajadores
+    g.add_edge("sintetizar", END)
+    return g.compile()
+
+
+if __name__ == "__main__":
+    out = construir().invoke({"tarea": "Compara las condiciones de teletrabajo de los convenios de A, B y C."},
+                             {"max_concurrency": 4})                # tope de trabajadores a la vez
+    print(out["respuesta"])
+```
+
+El plan usa `method="json_schema"` por la misma razón que en el [[patrones/04-enrutado|enrutado]]: con Claude Sonnet 5.5 no se puede forzar una herramienta. Si un trabajador debe ser un agente con herramientas, sustituye el nodo por un subgrafo o por `create_agent`.
+
+**Qué esconde el framework**: el reparto en paralelo, la espera a todos los trabajadores y la unión de resultados con el reductor `operator.add`. A diferencia del `return_exceptions=True` de arriba, aquí un trabajador que lanza una excepción detiene el grafo: captúrala dentro del nodo o configura una `RetryPolicy`. Para trabajadores que son agentes completos, mira [[docs/frameworks/10-deep-agents]] y [[cursos/langchain-y-langgraph/08-multiagente-con-langgraph]].
 
 ## Coste y latencia
 

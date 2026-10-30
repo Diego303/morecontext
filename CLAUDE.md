@@ -14,6 +14,8 @@ Memoria del proyecto para Claude Code. Léela entera al empezar cada sesión.
 - `MAPA-CONTENIDO.md`: árbol canónico del contenido.
 - `referencia/landing-indice.html`: portada aprobada; `referencia/componentes.css`: componentes ya diseñados.
 - `codigo-verificado/`: código probado en build real; se copia tal cual en la fase 1.
+- `integracion/`: integración del paquete de contenido v2 (`INVENTARIO.md`: reglas, mapeo de campos, plan y registro por fase).
+- `investigacion/`: informes de investigación (vanguardia y open source) en los que se basa el contenido v2, con sus ejemplos. No se publican.
 
 ## Comandos
 
@@ -32,7 +34,7 @@ Node ≥ 22.23.4 (CI en Node 24). Gestor: pnpm.
 
 ## Arquitectura en una pantalla
 
-- `contenido/<seccion>/…md` → colección (`src/content.config.ts`, 17 colecciones, Zod de `astro/zod`, loader `glob`).
+- `contenido/<seccion>/…md` → colección (`src/content.config.ts`, 22 colecciones, Zod de `astro/zod`, loader `glob`).
 - **Una sola regla de URLs**: `src/lib/rutas.mjs` (`normalizarId`, `urlDeArchivo`, `generarId`) y `urlDe()` en `src/lib/contenido.ts`. Nunca construyas URLs a mano. Todas acaban en `/`.
 - Markdown con `unified()` de `@astrojs/markdown-remark` (Astro 7 usa Sätteri por defecto; aquí no):
   `remark-wikilinks` (`[[ruta|texto]]`, `![[img]]`, enlaces `.md`), `remark-callouts` (`> [!consejo]`), `remark-bloques-codigo` (marco `.code`, pestañas `tab="…"`, Mermaid), `rehype-enlaces-externos`.

@@ -2,6 +2,7 @@
 titulo: Qué medir en un agente
 descripcion: Resultado, trayectoria, eficiencia y seguridad como cuatro ejes de evaluación, comprobación del estado final y medición de la consistencia con pass@k y pass^k.
 creado: 2026-10-07
+actualizado: 2026-10-29
 orden: 1
 minutos: 45
 tipo: teoria
@@ -10,7 +11,7 @@ objetivos:
   - Explicar por qué comprobar el estado final del entorno es más fiable que juzgar el texto de la respuesta.
   - Calcular pass@k y pass^k a partir de varias ejecuciones de la misma tarea.
 requiere: ["[[roadmap/80-evals/04-evals-de-trayectoria]]"]
-relacionados: ["[[glosario/trayectoria]]", "[[glosario/evals]]", "[[docs/evals/01-disenar-evals]]", "[[disciplinas/evals]]"]
+relacionados: ["[[glosario/trayectoria]]", "[[glosario/evals]]", "[[docs/evals/01-disenar-evals]]", "[[disciplinas/evals]]", "[[glosario/pass-k]]", "[[biblioteca/demystifying-evals]]"]
 tags: [evals, agentes, metricas]
 ---
 
@@ -50,7 +51,7 @@ La [[glosario/trayectoria|trayectoria]] es la secuencia de pasos: qué herramien
 2. **Diagnosticar fallos.** El resultado es malo porque la primera búsqueda usó términos pobres.
 3. **Comprobar reglas de proceso.** «Antes de modificar un pedido, consulta su estado.»
 
-Evita exigir una trayectoria exacta. Los agentes encuentran caminos válidos que no previste, y una eval que penaliza todo lo que no es tu camino castiga la mejora. Comprueba **restricciones**: herramientas obligatorias, herramientas prohibidas, orden entre dos pasos concretos, número máximo de pasos.
+Evita exigir una trayectoria exacta. Los agentes encuentran caminos válidos que no previste, y una eval que penaliza todo lo que no es tu camino castiga la mejora. Comprueba **restricciones**: herramientas obligatorias, herramientas prohibidas, orden entre dos pasos concretos, número máximo de pasos. Anthropic lo resume en su guía de evals de agentes ([*Demystifying evals for AI agents*](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents), 9 ene. 2026): califica lo que el agente produjo, no el camino exacto, y da crédito parcial cuando tenga sentido.
 
 ## Eje 3: eficiencia
 
@@ -71,8 +72,8 @@ Lo que el agente no debe hacer nunca, sea cual sea el resultado: llamar a una he
 
 Los agentes no son deterministas. La misma tarea puede salir bien cuatro veces y mal la quinta. Por eso cada tarea se ejecuta **n veces** y se resume de dos formas:
 
-- **pass@k**: probabilidad de que al menos una de k ejecuciones tenga éxito. Útil cuando hay un verificador y puedes reintentar (por ejemplo, un agente de código con tests).
-- **pass^k**: probabilidad de que las k ejecuciones tengan éxito. Útil cuando cada ejecución llega a un usuario y la fiabilidad es lo que importa.
+- **pass@k**: probabilidad de que al menos una de k ejecuciones tenga éxito. Útil cuando hay un verificador y puedes reintentar (por ejemplo, un agente de código con tests). La métrica y su estimador sin sesgo vienen de la evaluación de modelos de código de Chen et al. (2021), [*Evaluating Large Language Models Trained on Code*](https://arxiv.org/abs/2107.03374).
+- **pass^k** («pass hat k»): probabilidad de que las k ejecuciones tengan éxito. Útil cuando cada ejecución llega a un usuario y la fiabilidad es lo que importa. La propuso τ-bench (Yao et al., 2024, [*τ-bench*](https://arxiv.org/abs/2406.12045)) para agentes que hablan con usuarios y usan herramientas.
 
 Con n ejecuciones y c éxitos, ambos se estiman con combinatoria:
 
@@ -94,11 +95,12 @@ print(round(pass_at_k(10, 7, 3), 3), round(pass_hat_k(10, 7, 3), 3))
 ```
 
 ```text
-# salida de ejemplo
 0.992 0.292
 ```
 
-El ejemplo muestra por qué importa elegir: el mismo agente parece casi perfecto con pass@3 y poco fiable con pass^3. Para un agente que atiende clientes, la segunda cifra es la honesta.
+El ejemplo muestra por qué importa elegir: el mismo agente parece casi perfecto con pass@3 y poco fiable con pass^3. Para un agente que atiende clientes, la segunda cifra es la honesta. Anthropic da una referencia fácil de recordar: con un 75 % de éxito por ensayo, la probabilidad de acertar tres veces seguidas es 0,75³ ≈ 42 %. Ver también [[glosario/pass-k]].
+
+Con pocas ejecuciones, las diferencias pequeñas son ruido. Anthropic midió en evals agénticas de código que solo cambiar los recursos de la máquina movía el resultado varios puntos ([*Quantifying infrastructure noise in agentic coding evals*](https://www.anthropic.com/engineering/infrastructure-noise), 5 feb. 2026) y recomienda desconfiar de ventajas de menos de 3 puntos. Lo mismo vale para tus comparaciones internas.
 
 ## Ponerlo en código
 
@@ -166,7 +168,7 @@ Rellenas `Ejecucion` dentro de tu bucle agéntico: cada `tool_use` añade un `Pa
 - Cuatro ejes: resultado, trayectoria, eficiencia y seguridad.
 - Mide el resultado sobre el estado final del entorno, no sobre lo que el agente dice.
 - En trayectoria, comprueba restricciones en vez de un camino exacto.
-- Ejecuta cada tarea varias veces y elige entre pass@k y pass^k según el uso.
+- Ejecuta cada tarea varias veces y elige entre pass@k (Chen et al., 2021) y pass^k (τ-bench) según el uso.
 - Las reglas de seguridad son binarias y bloquean el despliegue.
 
 ## Para seguir

@@ -5,6 +5,7 @@ import { resolverWikilink } from './indice-contenido.mjs';
 import { COLECCIONES, indiceTags, urlDeTag } from './etiquetas';
 import { numNivel, temarioCursos, temarioDocs, temarioRoadmap } from './navegacion';
 import { apendicesVisibles, datoDe } from './apendices';
+import { CATEGORIA_GLOSARIO as CATEGORIAS, CATEGORIA_HERRAMIENTA, TEMA, TIPO_PLANTILLA, TIPO_TEXTO } from './nombres';
 
 export type Linea = { n: string; t: string; href: string; d?: string; dots?: { valor: number; etiqueta: string }; nuevo?: boolean; k?: string };
 export type Capitulo = { n: string; t: string; href: string; d: string; lineas: Linea[]; nota?: string };
@@ -49,6 +50,11 @@ export async function datosPortada() {
   const radar = (await publicados('radar')).sort(porFechaDesc);
   const blog = (await publicados('blog')).sort(porFechaDesc);
   const boletin = (await publicados('boletin')).sort((a, b) => b.data.numero - a.data.numero);
+  const tiposPlantilla = Object.keys(TIPO_PLANTILLA);
+  const plantillas = (await publicados('plantillas')).sort((a, b) => tiposPlantilla.indexOf(a.data.tipo) - tiposPlantilla.indexOf(b.data.tipo) || porTitulo(a, b));
+  const herramientas = (await publicados('herramientas')).sort(porTitulo);
+  const biblioteca = (await publicados('biblioteca')).sort((a, b) => a.data.anio - b.data.anio || porTitulo(a, b));
+  const problemas = (await publicados('problemas')).sort(porTitulo);
   const lecciones = roadmap.reduce((n, t) => n + t.lecciones.length, 0);
   const horas = roadmap.reduce((n, t) => n + t.nivel.data.horas, 0);
 
@@ -79,7 +85,6 @@ export async function datosPortada() {
 
   // ---------- Partes I–V ----------
   const nombreNivel = (t: string) => t.replace(/^Nivel \d+ · /, '');
-  const CATEGORIAS: Record<string, string> = { fundamentos: 'Fundamentos', prompting: 'Prompting', herramientas: 'Herramientas', contexto: 'Contexto', agentes: 'Agentes', evals: 'Evals', produccion: 'Producción', seguridad: 'Seguridad' };
   const TIPO_BLOG: Record<string, string> = { ensayo: 'ensayo', analisis: 'análisis', 'nota-de-campo': 'nota de campo', tutorial: 'tutorial' };
   const disc = disciplinas.filter((e) => e.data.tipo === 'disciplina');
   const formas = disciplinas.filter((e) => e.data.tipo === 'forma-de-trabajar');
@@ -90,14 +95,14 @@ export async function datosPortada() {
       texto: 'De cero a construir con criterio, en orden. Cada nivel acaba en un proyecto que funciona.',
       capitulos: [
         {
-          n: '1', t: 'Empieza aquí', href: urlDe(empieza), d: `${rutas.length + 1} entradas`,
+          n: '', t: 'Empieza aquí', href: urlDe(empieza), d: `${rutas.length + 1} entradas`,
           lineas: [
-            { n: '1.1', t: 'Test de nivel', href: urlTest, d: '3 preguntas', k: 'nivel test examen' },
-            ...rutas.map((r, i) => ({ n: `1.${i + 2}`, t: r.titulo, href: r.href, d: `ruta ${r.letra}`, k: 'ruta empezar' })),
+            { n: '.1', t: 'Test de nivel', href: urlTest, d: '3 preguntas', k: 'nivel test examen' },
+            ...rutas.map((r, i) => ({ n: `.${i + 2}`, t: r.titulo, href: r.href, d: `ruta ${r.letra}`, k: 'ruta empezar' })),
           ],
         },
         {
-          n: '2', t: 'Roadmap 0→100', href: '/roadmap/', d: `${lecciones} lec · ~${horas} h`,
+          n: '', t: 'Roadmap 0→100', href: '/roadmap/', d: `${lecciones} lec · ~${horas} h`,
           nota: 'no te saltes el 20: todo lo que viene después son herramientas',
           lineas: roadmap.map(({ nivel, lecciones: l }) => ({
             n: numNivel(nivel.data.nivel), t: nombreNivel(nivel.data.titulo), href: urlDe(nivel),
@@ -105,9 +110,9 @@ export async function datosPortada() {
           })),
         },
         {
-          n: '3', t: 'Cursos específicos', href: '/cursos/', d: `${cursos.length} cursos`,
+          n: '', t: 'Cursos específicos', href: '/cursos/', d: `${cursos.length} cursos`,
           lineas: cursos.map(({ curso, lecciones: l }, i) => ({
-            n: `3.${i + 1}`, t: curso.data.titulo, href: urlDe(curso), d: `${l.length} lec · ${curso.data.horas} h`, nuevo: esNuevo(curso), k: claves(curso),
+            n: `.${i + 1}`, t: curso.data.titulo, href: urlDe(curso), d: `${l.length} lec · ${curso.data.horas} h`, nuevo: esNuevo(curso), k: claves(curso),
           })),
         },
       ],
@@ -117,36 +122,52 @@ export async function datosPortada() {
       texto: 'Referencia para volver cuando te haga falta. No se lee de corrido: se busca.',
       capitulos: [
         {
-          n: '4', t: 'Documentación', href: '/docs/', d: `${docs.length} temas`,
-          lineas: docs.map(({ grupo, docs: d }, i) => ({ n: `4.${i + 1}`, t: grupo.data.titulo, href: urlDe(grupo), d: `${d.length} artículos`, nuevo: esNuevo(grupo), k: claves(grupo) })),
+          n: '', t: 'Documentación', href: '/docs/', d: `${docs.length} temas`,
+          lineas: docs.map(({ grupo, docs: d }, i) => ({ n: `.${i + 1}`, t: grupo.data.titulo, href: urlDe(grupo), d: `${d.length} artículos`, nuevo: esNuevo(grupo), k: claves(grupo) })),
         },
         {
-          n: '5', t: 'Guía de modelos', href: '/modelos/', d: `${modelos.length} guías`,
-          lineas: modelos.map((e, i) => ({ n: `5.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: `${minutosLectura(e.body)} min`, nuevo: esNuevo(e), k: claves(e) })),
+          n: '', t: 'Guía de modelos', href: '/modelos/', d: `${modelos.length} guías`,
+          lineas: modelos.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: `${minutosLectura(e.body)} min`, nuevo: esNuevo(e), k: claves(e) })),
         },
         {
-          n: '6', t: 'Glosario', href: '/glosario/', d: `${glosario.length} términos`,
+          n: '', t: 'Glosario', href: '/glosario/', d: `${glosario.length} términos`,
           lineas: Object.entries(CATEGORIAS)
-            .map(([c, nombre], i) => ({ n: `6.${i + 1}`, t: nombre, href: `/glosario/#cat-${c}`, d: `${glosario.filter((g) => g.data.categoria === c).length} términos`, k: glosario.filter((g) => g.data.categoria === c).map((g) => g.data.titulo).join(' ').toLowerCase() }))
+            .map(([c, nombre], i) => ({ n: `.${i + 1}`, t: nombre, href: `/glosario/#cat-${c}`, d: `${glosario.filter((g) => g.data.categoria === c).length} términos`, k: glosario.filter((g) => g.data.categoria === c).map((g) => g.data.titulo).join(' ').toLowerCase() }))
             .filter((l) => !l.d.startsWith('0 ')),
+        },
+        {
+          n: '', t: 'Biblioteca', href: '/biblioteca/', d: `${biblioteca.length} textos`,
+          lineas: biblioteca.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: TIPO_TEXTO[e.data.tipo], nuevo: esNuevo(e), k: `${claves(e)} ${e.data.autores.toLowerCase()}` })),
+        },
+        {
+          n: '', t: 'Problemas frecuentes', href: '/problemas/', d: `${problemas.length} problemas`,
+          lineas: problemas.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: TEMA[e.data.tema].toLowerCase(), nuevo: esNuevo(e), k: `${claves(e)} ${e.data.sintoma.toLowerCase()}` })),
         },
       ],
     },
     {
       id: 'parte-3', num: 'III', titulo: 'Construir',
-      texto: `Arquitecturas completas, los ${patrones.length} patrones de agentes y recetas con código para copiar.`,
+      texto: `Arquitecturas completas, los ${patrones.length} patrones de agentes, recetas con código, plantillas para copiar y un directorio de herramientas.`,
       capitulos: [
         {
-          n: '7', t: 'Sistemas de referencia', href: '/sistemas/', d: `${sistemas.length} arquitecturas`,
-          lineas: sistemas.map((e, i) => ({ n: `7.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: e.data.tiempo, dots: { valor: e.data.complejidad, etiqueta: 'Complejidad' }, nuevo: esNuevo(e), k: claves(e) })),
+          n: '', t: 'Sistemas de referencia', href: '/sistemas/', d: `${sistemas.length} arquitecturas`,
+          lineas: sistemas.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: e.data.tiempo, dots: { valor: e.data.complejidad, etiqueta: 'Complejidad' }, nuevo: esNuevo(e), k: claves(e) })),
         },
         {
-          n: '8', t: 'Patrones de agentes', href: '/patrones/', d: `${patrones.length} patrones`,
-          lineas: patrones.map((e, i) => ({ n: `8.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: e.data.tipo, nuevo: esNuevo(e), k: claves(e) })),
+          n: '', t: 'Patrones de agentes', href: '/patrones/', d: `${patrones.length} patrones`,
+          lineas: patrones.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: e.data.tipo, nuevo: esNuevo(e), k: claves(e) })),
         },
         {
-          n: '9', t: 'Recetas', href: '/recetas/', d: `${recetas.length} recetas`,
-          lineas: recetas.map((e, i) => ({ n: `9.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: `${e.data.minutos} min`, nuevo: esNuevo(e), k: claves(e) })),
+          n: '', t: 'Recetas', href: '/recetas/', d: `${recetas.length} recetas`,
+          lineas: recetas.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: `${e.data.minutos} min`, nuevo: esNuevo(e), k: claves(e) })),
+        },
+        {
+          n: '', t: 'Plantillas', href: '/plantillas/', d: `${plantillas.length} plantillas`,
+          lineas: plantillas.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: `.${e.data.formato}`, nuevo: esNuevo(e), k: `${claves(e)} ${e.data.archivo.toLowerCase()}` })),
+        },
+        {
+          n: '', t: 'Herramientas', href: '/herramientas/', d: `${herramientas.length} herramientas`,
+          lineas: herramientas.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: (CATEGORIA_HERRAMIENTA[e.data.categoria] ?? e.data.categoria).toLowerCase(), nuevo: esNuevo(e), k: claves(e) })),
         },
       ],
     },
@@ -155,12 +176,12 @@ export async function datosPortada() {
       texto: 'Las disciplinas que separan una demo de un sistema, y formas de trabajar con un agente al lado.',
       capitulos: [
         {
-          n: '10', t: 'Disciplinas', href: '/disciplinas/#h-disciplina', d: `${disc.length} disciplinas`,
-          lineas: disc.map((e, i) => ({ n: `10.${i + 1}`, t: e.data.titulo, href: urlDe(e), nuevo: esNuevo(e), k: claves(e) })),
+          n: '', t: 'Disciplinas', href: '/disciplinas/#h-disciplina', d: `${disc.length} disciplinas`,
+          lineas: disc.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), nuevo: esNuevo(e), k: claves(e) })),
         },
         {
-          n: '11', t: 'Formas de trabajar', href: '/disciplinas/#h-forma-de-trabajar', d: `${formas.length} formas`,
-          lineas: formas.map((e, i) => ({ n: `11.${i + 1}`, t: e.data.titulo, href: urlDe(e), nuevo: esNuevo(e), k: claves(e) })),
+          n: '', t: 'Formas de trabajar', href: '/disciplinas/#h-forma-de-trabajar', d: `${formas.length} formas`,
+          lineas: formas.map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), nuevo: esNuevo(e), k: claves(e) })),
         },
       ],
     },
@@ -169,20 +190,26 @@ export async function datosPortada() {
       texto: 'Solo lo que cambia cómo construyes. Qué es, qué cambia y qué hacer.',
       capitulos: [
         {
-          n: '12', t: 'Radar', href: '/radar/', d: `${radar.length} notas`,
-          lineas: radar.slice(0, 5).map((e, i) => ({ n: `12.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: fechaCorta(e.data.creado), nuevo: esNuevo(e), k: claves(e) })),
+          n: '', t: 'Radar', href: '/radar/', d: `${radar.length} notas`,
+          lineas: radar.slice(0, 5).map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: fechaCorta(e.data.creado), nuevo: esNuevo(e), k: claves(e) })),
         },
         {
-          n: '13', t: 'Blog y ensayos', href: '/blog/', d: `${blog.length} entradas`,
-          lineas: blog.slice(0, 5).map((e, i) => ({ n: `13.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: `${fechaCorta(e.data.creado)} · ${TIPO_BLOG[e.data.tipo]}`, nuevo: esNuevo(e), k: claves(e) })),
+          n: '', t: 'Blog y ensayos', href: '/blog/', d: `${blog.length} entradas`,
+          lineas: blog.slice(0, 5).map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: `${fechaCorta(e.data.creado)} · ${TIPO_BLOG[e.data.tipo]}`, nuevo: esNuevo(e), k: claves(e) })),
         },
         {
-          n: '14', t: 'Boletín', href: '/boletin/', d: `${boletin.length} envíos`,
-          lineas: boletin.slice(0, 3).map((e, i) => ({ n: `14.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: `n.º ${e.data.numero} · ${fechaCorta(e.data.creado)}`, nuevo: esNuevo(e), k: 'boletin correo newsletter' })),
+          n: '', t: 'Boletín', href: '/boletin/', d: `${boletin.length} envíos`,
+          lineas: boletin.slice(0, 3).map((e, i) => ({ n: `.${i + 1}`, t: e.data.titulo, href: urlDe(e), d: `n.º ${e.data.numero} · ${fechaCorta(e.data.creado)}`, nuevo: esNuevo(e), k: 'boletin correo newsletter' })),
         },
       ],
     },
   ];
+  // Numeración correlativa: capítulos 1, 2, 3… y sus entradas «.i» → «capítulo.i» (las del roadmap llevan su nivel).
+  let numero = 0;
+  for (const parte of partes) for (const c of parte.capitulos) {
+    c.n = String(++numero);
+    c.lineas = c.lineas.map((l) => (l.n.startsWith('.') ? { ...l, n: `${c.n}${l.n}` } : l));
+  }
 
   // ---------- Apéndices: solo páginas que existen ----------
   const secciones = async (id: string) => {
@@ -191,7 +218,7 @@ export async function datosPortada() {
     const { headings: hs } = await render(e);
     return { e, hs: hs.filter((h) => h.depth === 2) };
   };
-  const apendicesPaginas = (await Promise.all(['manifiesto', 'contribuir', 'sobre', 'licencia'].map(secciones))).filter((x) => x !== null);
+  const apendicesPaginas = (await Promise.all(['manifiesto', 'contribuir', 'sobre', 'fuentes', 'licencia'].map(secciones))).filter((x) => x !== null);
   const tags = [...(await indiceTags())].sort((a, b) => b[1].entradas.length - a[1].entradas.length);
   const visibles = await apendicesVisibles();
   let notas = 0;

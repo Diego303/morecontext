@@ -2,6 +2,7 @@
 titulo: Resumen de reuniones con acciones y responsables
 descripcion: Convierte la transcripción de una reunión en un JSON con resumen, decisiones y acciones con responsable, fecha y la cita que las respalda, y comprueba cada acción en código.
 creado: 2026-10-15
+actualizado: 2026-10-29
 nivel: inicial
 minutos: 20
 tema: prompting
@@ -19,7 +20,7 @@ El riesgo de pedírselo a un modelo es que rellene huecos: asignar una tarea a a
 ## Ingredientes
 
 - Python 3.10 o superior.
-- `pip install anthropic pydantic`
+- `pip install "anthropic>=2" pydantic` (SDK 2.x).
 - La variable de entorno `ANTHROPIC_API_KEY`.
 - Una transcripción con el nombre de quien habla en cada intervención (`reunion.txt`) y la lista de asistentes.
 
@@ -148,6 +149,29 @@ Ejecuta `python reunion.py reunion.txt`.
 - **Responsable como `enum`.** Construye el modelo en tiempo de ejecución con los asistentes de cada reunión: `create_model("Accion", responsable=(Literal[tuple(asistentes)] | None, ...), ...)`. Así el esquema impide nombres fuera de la lista.
 - **Reuniones largas.** Para transcripciones de horas, pon la transcripción al principio y las instrucciones al final, o trocea por bloques de tiempo y fusiona las acciones ([[modelos/07-documentos-largos]]).
 - **Enviar las tareas.** Crea las tareas en tu gestor con una herramienta, y pide confirmación antes de asignarlas a otras personas ([[recetas/aprobacion-humana-antes-de-actuar]]).
+- **Con LangChain.** El mismo modelo `Resumen` sirve con `with_structured_output`. Pasa siempre `method="json_schema"`: así LangChain envía el esquema en `output_config.format`. Sin ese argumento, `ChatAnthropic` fuerza una herramienta con `tool_choice`, y eso da 400 en Opus 5.5 y Sonnet 5.5. Las comprobaciones de la cita y del responsable siguen siendo tuyas.
+
+```python title="reunion_langchain.py"
+from datetime import date
+
+from langchain.chat_models import init_chat_model
+
+from reunion import SISTEMA, Resumen
+
+MODEL = "anthropic:claude-sonnet-5-5"
+
+# method="json_schema" usa output_config.format; sin él, LangChain fuerza una herramienta (400 en los 5.5)
+llm = init_chat_model(MODEL, max_tokens=4096).with_structured_output(Resumen, method="json_schema")
+
+
+def resumir_lc(transcripcion: str, asistentes: list[str], fecha: date) -> Resumen:
+    return llm.invoke([
+        ("system", SISTEMA),
+        ("user", f"Fecha de la reunión: {fecha.isoformat()}\nAsistentes: {', '.join(asistentes)}\n\n"
+                 f"<transcripcion>\n{transcripcion}\n</transcripcion>"),
+    ])
+```
+
 - **Sin nombres en la transcripción.** Si solo tienes «Hablante 1, Hablante 2», pide que el responsable sea ese identificador y mapea a personas después.
 
 ## Errores típicos

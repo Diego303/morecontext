@@ -2,6 +2,7 @@
 titulo: Antipatrones
 descripcion: Ocho errores habituales al trabajar con modelos de lenguaje, por qué fallan y cómo arreglarlos, con ejemplos antes y después.
 creado: 2026-10-15
+actualizado: 2026-10-29
 orden: 8
 tags: [prompting, antipatrones, modelos, buenas-practicas]
 relacionados: ["[[modelos/01-principios-de-prompting]]", "[[modelos/09-checklist-produccion]]", "[[patrones/01-workflows-vs-agentes]]"]
@@ -25,7 +26,7 @@ porque la documentación cambia a menudo y tu conocimiento puede estar desactual
 Para saludos o preguntas generales, responde directamente.
 ```
 
-**Arreglo**: tono normal y el porqué de la regla ([[modelos/01-principios-de-prompting]]).
+**Arreglo**: tono normal y el porqué de la regla ([[modelos/01-principios-de-prompting]]). En agentes, obligar a usar una herramienta tampoco se arregla en la API: en los modelos actuales de Claude, `tool_choice` forzado devuelve 400.
 
 ## 2. El prompt de parches
 
@@ -65,11 +66,11 @@ Pedir «responde en JSON» y hacer `json.loads()` sobre la respuesta. Funciona c
 + errores = validar_reglas_de_negocio(datos)
 ```
 
-**Arreglo**: salidas estructuradas por esquema y validación del contenido en código ([[modelos/03-formato-y-salidas-estructuradas]]).
+**Arreglo**: salidas estructuradas por esquema y validación del contenido en código ([[modelos/03-formato-y-salidas-estructuradas]]). Si ya te pasa en producción, sigue [[problemas/json-invalido-del-modelo]].
 
 ## 6. Pedir que no alucine
 
-«No te inventes nada», «sé preciso», temperatura a cero. Ninguna de estas cosas le da al modelo la información que le falta. Si no sabe la respuesta y nadie le ha dicho que puede decir «no lo sé», tenderá a completar.
+«No te inventes nada», «sé preciso», temperatura a cero (en la API de Claude ya ni existe: ver [[modelos/06-parametros]]). Ninguna de estas cosas le da al modelo la información que le falta. Si no sabe la respuesta y nadie le ha dicho que puede decir «no lo sé», tenderá a completar.
 
 ```text title="Antes"
 Responde con precisión y NO te inventes nada.
@@ -97,7 +98,7 @@ Workflow en código: leer → extraer (llamada al modelo con esquema) → valida
 El modelo solo interviene en el paso que necesita lenguaje.
 ```
 
-**Arreglo**: si conoces los pasos, escríbelos en código. Reserva los agentes para tareas donde los pasos dependen de lo que se va encontrando ([[patrones/01-workflows-vs-agentes]]).
+**Arreglo**: si conoces los pasos, escríbelos en código. Reserva los agentes para tareas donde los pasos dependen de lo que se va encontrando ([[patrones/01-workflows-vs-agentes]]). Lo mismo vale para los frameworks: un encadenado de tres llamadas no necesita un grafo de LangGraph ([[docs/frameworks/01-elegir-framework]]).
 
 ## 8. Iterar a ojo
 

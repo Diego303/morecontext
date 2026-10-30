@@ -2,6 +2,7 @@
 titulo: "Iterar con casos de prueba"
 descripcion: "Cómo mejorar un prompt con datos: un conjunto de casos etiquetados, un script que mide el acierto, un cambio cada vez y un registro de versiones."
 creado: 2026-09-18
+actualizado: 2026-10-29
 orden: 5
 minutos: 50
 tipo: proyecto
@@ -72,7 +73,7 @@ def clasificar(ticket: str, sistema: str) -> Ticket | None:
     try:
         resp = client.messages.parse(
             model=MODEL,
-            max_tokens=300,
+            max_tokens=1024,
             system=sistema,
             messages=[{"role": "user", "content": f"<ticket>\n{ticket}\n</ticket>"}],
             output_format=Ticket,
@@ -111,7 +112,7 @@ Fíjate en que el script compara campos cerrados (categoría y prioridad) con c�
 El bucle es siempre el mismo:
 
 1. Ejecuta la evaluación y apunta el resultado de partida.
-2. **Lee los fallos uno a uno.** Este paso es el que más enseña. Agrupa los fallos por causa: ¿una regla ambigua, una categoría que se solapa, un formato de entrada raro?
+2. **Lee los fallos uno a uno.** Este paso es el que más enseña. Agrupa los fallos por causa: ¿una regla ambigua, una categoría que se solapa, un formato de entrada raro? A esto se le llama [[glosario/analisis-de-errores|análisis de errores]], y es la práctica que más rinde en evals.
 3. Formula una hipótesis y haz **un solo cambio** que la ataque: aclarar una regla, añadir un ejemplo, reordenar secciones.
 4. Guarda el cambio como versión nueva y vuelve a evaluar.
 5. Si mejora sin romper otros casos, quédatelo. Si no, descártalo y apunta por qué.
@@ -132,6 +133,8 @@ Ese registro vale tanto como el prompt final: explica por qué cada línea está
 ## Cuánto cuesta evaluar
 
 Cada evaluación hace una llamada por caso. Con 30 casos y el registro de [[roadmap/00-fundamentos/05-coste-y-latencia]], sabrás exactamente cuánto cuesta cada pasada: normalmente poco comparado con el coste de un error en producción. Si el conjunto crece mucho, puedes paralelizar las llamadas con cuidado de no superar los límites de uso.
+
+Cuando el script se te quede corto (varios prompts, varios modelos, informes), no hace falta escribir más infraestructura: [[herramientas/promptfoo|promptfoo]] (open source, MIT) hace esta misma comparación desde un archivo YAML y funciona también con modelos locales. Lo tienes paso a paso en [[recetas/evals-con-promptfoo]].
 
 ## Errores frecuentes
 
@@ -164,3 +167,4 @@ Cada evaluación hace una llamada por caso. Con 30 casos y el registro de [[road
 - [[roadmap/10-prompting/index]]: repasa la lista de comprobación del proyecto.
 - [[roadmap/20-herramientas/index]]: el siguiente nivel.
 - [[roadmap/80-evals/02-conjunto-de-prueba]]: cómo construir conjuntos de prueba más serios.
+- [[recetas/evals-con-promptfoo]]: la misma evaluación con una herramienta abierta.

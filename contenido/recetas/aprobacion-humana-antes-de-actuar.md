@@ -2,6 +2,7 @@
 titulo: Aprobación humana antes de actuar
 descripcion: Intercepta las llamadas a herramientas peligrosas de tu agente, pide confirmación a una persona con los argumentos exactos y devuelve el rechazo al modelo como tool_result.
 creado: 2026-10-08
+actualizado: 2026-10-29
 nivel: intermedio
 minutos: 30
 tema: agentes
@@ -19,7 +20,7 @@ Necesitas que tu código, no el modelo, decida qué herramientas requieren confi
 ## Ingredientes
 
 - Python 3.10 o superior.
-- `pip install anthropic`
+- `pip install "anthropic>=2"` (SDK 2.x).
 - La variable de entorno `ANTHROPIC_API_KEY`.
 - Conocer el ciclo `tool_use` → `tool_result` ([[roadmap/20-herramientas/01-ciclo-tool-use]]).
 
@@ -191,6 +192,78 @@ He solicitado un reembolso de 50 € para el pedido P-1001.
 - **Editar en lugar de rechazar.** Deja que la persona cambie el importe antes de aprobar y ejecuta con los argumentos editados. Indícalo en el `tool_result` para que el agente sepa qué se hizo.
 - **Umbrales.** Aprobación solo por encima de cierto importe: `if bloque.name == "reembolsar" and bloque.input["importe"] > 20`. Ajusta el umbral con datos reales.
 - **Registro.** Guarda cada decisión (aprobada, rechazada, editada, quién y cuándo) junto a la traza de la tarea ([[disciplinas/observabilidad]]). Los rechazos son casos de eval de primera.
+- **Con LangChain.** `HumanInTheLoopMiddleware` hace lo mismo que `ejecutar()`: pausa antes de las herramientas que marques en `interrupt_on` y deja aprobar, editar o rechazar (el rechazo vuelve al modelo como `ToolMessage` de error). La pausa es un `interrupt` de [[docs/frameworks/05-langgraph|LangGraph]]: el estado se guarda en un *checkpointer* con un `thread_id` y se reanuda con `Command(resume=…)`, así que la variante web de arriba viene hecha. Lo que no te da es el límite en la herramienta ni que el error vuelva al modelo: para eso, `ToolErrorMiddleware`.
+
+```python title="agente_langchain.py"
+from langchain.agents import create_agent
+from langchain.agents.middleware import HumanInTheLoopMiddleware, ToolErrorMiddleware
+from langchain.chat_models import init_chat_model
+from langchain.tools import tool
+from langgraph.checkpoint.memory import InMemorySaver  # en producción: SqliteSaver o PostgresSaver
+from langgraph.types import Command
+
+import agente as base  # reutiliza PEDIDOS y las funciones de agente.py
+
+MODEL = "anthropic:claude-sonnet-5-5"
+
+
+@tool
+def buscar_pedido(pedido_id: str) -> dict:
+    """Devuelve cliente, importe, estado e importe ya reembolsado de un pedido (formato P-NNNN)."""
+    return base.buscar_pedido(pedido_id)
+
+
+@tool
+def reembolsar(pedido_id: str, importe: float, motivo: str) -> dict:
+    """Reembolsa un importe en euros de un pedido. Busca antes el pedido para conocer el máximo."""
+    return base.reembolsar(pedido_id, importe, motivo)
+
+
+def error_para_el_modelo(exc: Exception, request) -> str | None:
+    if isinstance(exc, ValueError):  # los errores de negocio de tus funciones vuelven al modelo
+        return f"Error: {exc}"
+    return None  # cualquier otra excepción se propaga y detiene el agente
+
+
+def crear_agente(model=None):
+    return create_agent(
+        model or init_chat_model(MODEL, max_tokens=1024),
+        tools=[buscar_pedido, reembolsar],
+        system_prompt="Eres un agente de soporte. Usa las herramientas para resolver la petición.",
+        middleware=[
+            HumanInTheLoopMiddleware(interrupt_on={
+                "reembolsar": {"allowed_decisions": ["approve", "edit", "reject"]},
+                "buscar_pedido": False,  # solo lectura: sin pausa
+            }),
+            ToolErrorMiddleware(on_error=error_para_el_modelo),  # sin él, un ValueError rompe el agente
+        ],
+        checkpointer=InMemorySaver(),  # la pausa es un interrupt: necesita checkpointer y thread_id
+    )
+
+
+def revisar(peticion: dict) -> dict:
+    """Tu interfaz de aprobación: una decisión por acción, en el mismo orden."""
+    decisiones = []
+    for accion in peticion["action_requests"]:
+        print(f"¿Aprobar {accion['name']}({accion['args']})? [s/N]")
+        if input().strip().lower() == "s":
+            decisiones.append({"type": "approve"})
+        else:
+            decisiones.append({"type": "reject", "message": input("Motivo del rechazo: ") or "Rechazado"})
+    return {"decisions": decisiones}
+
+
+if __name__ == "__main__":
+    agente = crear_agente()
+    config = {"configurable": {"thread_id": "ticket-1001"}}  # el mismo thread_id para reanudar
+    salida = agente.invoke({"messages": [("user", "El pedido P-1001 llegó roto. Quiero mi dinero.")]},
+                           config, version="v2")
+    while salida.interrupts:  # en pausa hasta que alguien decida
+        salida = agente.invoke(Command(resume=revisar(salida.interrupts[0].value)), config, version="v2")
+    print(salida.value["messages"][-1].content)
+```
+
+Con un `SqliteSaver` o un `PostgresSaver` en lugar de `InMemorySaver`, la aprobación puede llegar horas después y en otro proceso. El grafo a mano, con `interrupt()` y sus trampas, está en [[recetas/aprobacion-humana-con-langgraph]].
 - **Varias acciones a la vez.** Si el modelo pide dos reembolsos en el mismo turno, cada uno pasa por su propia aprobación y cada uno recibe su `tool_result`.
 
 ## Errores típicos
@@ -200,4 +273,4 @@ He solicitado un reembolso de 50 € para el pedido P-1001.
 - **Cortar la tarea al rechazar.** Si no devuelves un `tool_result`, la siguiente llamada falla porque cada `tool_use` necesita su resultado. Y el agente pierde la ocasión de corregirse.
 - **Aprobar todo por inercia.** Si la persona aprueba decenas de acciones seguidas sin mirar, el control es decorativo. Pide aprobación solo donde importa ([[disciplinas/ux-de-agentes]]).
 - **Validar solo con la aprobación.** Una persona cansada aprueba un importe imposible. El límite en la herramienta es la red de seguridad.
-- **No tratar `max_tokens` u otras paradas.** Si el bucle solo mira `tool_use` y `end_turn`, una respuesta cortada se trata como final. Decide qué hacer con cada `stop_reason`.
+- **No tratar `max_tokens` u otras paradas.** Si el bucle solo mira `tool_use` y `end_turn`, una respuesta cortada o un `refusal` se tratan como final. Decide qué hacer con cada `stop_reason`; aquí cualquier otra parada sale del bucle con un aviso.

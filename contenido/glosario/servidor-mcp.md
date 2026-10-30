@@ -2,6 +2,7 @@
 titulo: Servidor MCP
 descripcion: Programa que expone herramientas, recursos y prompts a través del protocolo MCP para que cualquier aplicación compatible los use.
 creado: 2026-07-23
+actualizado: 2026-10-29
 categoria: herramientas
 ingles: MCP server
 aliases: [MCP server, servidores MCP]
@@ -29,7 +30,9 @@ if __name__ == "__main__":
     mcp.run()  # stdio por defecto
 ```
 
-En local se comunica por `stdio`; en remoto, por *Streamable HTTP*. Aplica [[glosario/minimo-privilegio]]: un servidor expone acciones reales y cualquier contenido que devuelva llega al modelo.
+En local se comunica por `stdio`; en remoto, por *Streamable HTTP* (`mcp.run(transport="streamable-http")`). Los errores que el modelo debe leer se lanzan con `ToolError`. En TypeScript, el SDK v2 es `@modelcontextprotocol/server` (`new McpServer(...)` y `registerTool`).
+
+Desde la revisión `2026-07-28` el protocolo no tiene sesiones: si tu servidor necesita estado entre llamadas, créalo tú y devuelve un identificador (un *handle*) que el modelo pase en la siguiente. Aplica [[glosario/minimo-privilegio]]: un servidor expone acciones reales y cualquier contenido que devuelva llega al modelo. Si instalas servidores de terceros, revisa sus descripciones ([[glosario/envenenamiento-de-herramientas]]) y fija la versión ([[glosario/rug-pull]]).
 
 ## Ver también
 
@@ -37,3 +40,5 @@ En local se comunica por `stdio`; en remoto, por *Streamable HTTP*. Aplica [[glo
 - [[recetas/servidor-mcp-de-solo-lectura]]
 - [[sistemas/asistente-de-datos-con-mcp]]
 - [[cursos/mcp-de-cero-a-servidor/04-seguridad-y-despliegue]]
+- [[recetas/servidor-mcp-sin-estado-con-handles]]
+- [[herramientas/mcp-sdks]]

@@ -2,6 +2,7 @@
 titulo: Latencia
 descripcion: Tiempo que tarda el sistema en responder, desde que envías la petición hasta el primer token o la respuesta completa.
 creado: 2026-10-05
+actualizado: 2026-10-29
 categoria: produccion
 ingles: latency
 aliases: [latency, tiempo de respuesta, tiempo hasta el primer token]
@@ -13,7 +14,7 @@ La latencia es el tiempo de espera entre que envías una petición y obtienes la
 
 ## En la práctica
 
-Mide antes de optimizar, por percentiles y no solo con la media. Las palancas, de más a menos impacto habitual: menos pasos y menos llamadas encadenadas, menos tokens de salida, un modelo más rápido para las tareas sencillas, [[glosario/prompt-caching]] para prefijos largos y llamadas en paralelo cuando no dependen entre sí. El [[glosario/streaming]] no reduce el tiempo total, pero hace que la espera se perciba mucho menor. El [[glosario/razonamiento-extendido]] añade latencia: actívalo donde aporte.
+Mide antes de optimizar, por percentiles y no solo con la media. Las palancas, de más a menos impacto habitual: menos pasos y menos llamadas encadenadas, menos tokens de salida, un modelo más rápido para las tareas sencillas, [[glosario/prompt-caching]] para prefijos largos y llamadas en paralelo cuando no dependen entre sí. El [[glosario/streaming]] no reduce el tiempo total, pero hace que la espera se perciba mucho menor. El [[glosario/razonamiento-extendido]] añade latencia; en los modelos 5.x de Claude es adaptativo por defecto, así que regúlalo bajando el [[glosario/esfuerzo]] en tareas sencillas. Con un modelo abierto en local, la latencia depende sobre todo de tu hardware, de la [[glosario/cuantizacion]] y del tamaño de contexto que cargues.
 
 ## Ver también
 
@@ -21,3 +22,4 @@ Mide antes de optimizar, por percentiles y no solo con la media. Las palancas, d
 - [[roadmap/00-fundamentos/05-coste-y-latencia]]
 - [[docs/produccion/03-latencia]]
 - [[glosario/observabilidad]]
+- [[glosario/inferencia-local]]

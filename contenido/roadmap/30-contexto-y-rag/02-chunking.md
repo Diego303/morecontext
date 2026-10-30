@@ -2,6 +2,7 @@
 titulo: "Chunking: cortar sin romper el sentido"
 descripcion: Cómo trocear documentos para recuperarlos bien, con tamaño razonable, solapamiento, respeto a la estructura y metadatos útiles.
 creado: 2026-08-21
+actualizado: 2026-10-29
 orden: 2
 minutos: 45
 tipo: practica
@@ -12,7 +13,7 @@ objetivos:
   - Comparar dos configuraciones de troceado con un conjunto de preguntas.
 requiere: ["[[roadmap/30-contexto-y-rag/01-embeddings]]"]
 tags: [chunking, rag, indexacion]
-relacionados: ["[[glosario/chunking]]", "[[recetas/trocear-documentos]]", "[[glosario/recuperacion-contextual]]", "[[cursos/rag-a-fondo/02-indexar-bien]]"]
+relacionados: ["[[glosario/chunking]]", "[[recetas/trocear-documentos]]", "[[glosario/recuperacion-contextual]]", "[[cursos/rag-a-fondo/02-indexar-bien]]", "[[recetas/chunks-padre-hijo]]"]
 ---
 
 Al terminar esta lección sabrás convertir documentos largos en fragmentos que se recuperan bien: del tamaño adecuado, sin cortar ideas por la mitad y con la información necesaria para citarlos después. Es la decisión que más influye en la calidad de un RAG y la que más se descuida.
@@ -36,8 +37,9 @@ No hay un número correcto. Depende del tipo de documento y del tipo de pregunta
 | Vector muy específico, búsqueda precisa | Vector difuso, búsqueda imprecisa |
 | Pierden el contexto que los rodea | Conservan el contexto |
 | Muchos fragmentos por respuesta | Pocos fragmentos, pero mucho texto irrelevante |
+| Frases aisladas, referencias rotas («como se indica arriba») | Más tokens y más coste en cada llamada al modelo |
 
-Un punto de partida razonable para documentación y políticas internas es entre uno y tres párrafos, del orden de unos cientos de [[glosario/token|tokens]]. Después lo ajustas midiendo, como en el ejercicio. Si tus documentos son preguntas frecuentes, un fragmento por pregunta suele ser lo natural.
+Un punto de partida razonable para documentación y políticas internas es entre uno y tres párrafos, del orden de unos cientos de [[glosario/token|tokens]]. Muchas bibliotecas lo expresan como `chunk_size=500` tokens con `overlap=50`: es un valor de arranque, no una recomendación universal. El tamaño bueno depende del tipo de documento, de su estructura, de lo largas que sean las preguntas, del modelo de *embeddings* (y de su límite de entrada) y de cuánto contexto quieras pasar al modelo. Después lo ajustas midiendo, como en el ejercicio. Si tus documentos son preguntas frecuentes, un fragmento por pregunta suele ser lo natural.
 
 ## Respeta la estructura
 
@@ -133,7 +135,26 @@ export function trocear(texto: string, maxChars = 1500, solape = 1): string[] {
 }
 ```
 
-Usa caracteres como aproximación porque es rápido. Si necesitas precisión, mide en tokens con el [[glosario/tokenizador|tokenizador]] de tu modelo de embeddings, que es quien tiene el límite de entrada.
+Usa caracteres como aproximación porque es rápido. Si necesitas precisión, mide en tokens con el [[glosario/tokenizador|tokenizador]] de tu modelo de embeddings, que es quien tiene el límite de entrada: basta con cambiar `len(...)` por una función que cuente tokens. Ojo: el tokenizador de Claude no sirve para esto, porque el modelo que vectoriza es otro.
+
+## Troceado semántico
+
+El troceador de arriba sigue la estructura que el autor escribió. Cuando el documento no la tiene (una transcripción, un correo largo, un PDF convertido sin encabezados), puedes cortar donde **cambia el tema**: vectorizas cada frase, comparas cada una con la siguiente y cortas cuando la similitud cae por debajo de un umbral. Se llama troceado semántico.
+
+Tiene un coste: vectorizas el documento dos veces (frases para decidir los cortes y fragmentos para el índice), y el umbral hay que ajustarlo con tus datos. Úsalo cuando los cortes por estructura no funcionen; si el documento tiene encabezados, casi siempre ganan los encabezados. Una variante más reciente, el [[glosario/late-chunking|late chunking]], vectoriza el documento entero y trocea después, para que cada fragmento conserve algo del contexto global.
+
+## Fragmentos padre e hijo
+
+El dilema del tamaño tiene una salida elegante: **buscar con fragmentos pequeños y responder con fragmentos grandes**. Troceas cada sección en dos niveles: un fragmento «padre» amplio (la sección entera, o varios párrafos) y varios «hijos» pequeños dentro de él. Vectorizas solo los hijos, que dan una búsqueda precisa, y cuando un hijo sale en los resultados, pasas al modelo su padre, que trae el contexto completo.
+
+```mermaid
+flowchart LR
+  Q[Pregunta] --> H[Busca entre hijos]
+  H --> P[Sube al padre]
+  P --> M[Contexto del modelo]
+```
+
+El campo `posicion` de la sección siguiente es la versión mínima de esta idea (recuperar los vecinos). La implementación completa, con deduplicación de padres repetidos, está en [[recetas/chunks-padre-hijo]].
 
 ## Metadatos: el fragmento debe saber de dónde viene
 
@@ -154,7 +175,7 @@ def fragmentos_de(ruta: Path) -> list[dict]:
             salida.append({
                 "id": f"{ruta.stem}#{len(salida)}",
                 "fuente": str(ruta),
-                "seccion": titulo_seccion.strip(),
+                "seccion": titulo_seccion.strip().lstrip("# "),
                 "posicion": i,
                 "texto": trozo,
             })
@@ -166,7 +187,7 @@ En el primer bloque (lo que va antes del primer `##`) la primera línea hace de 
 Hay una mejora sencilla y eficaz: **vectoriza el fragmento con su contexto**. En lugar de vectorizar solo `trozo`, vectoriza `f"{titulo_documento} > {seccion}\n\n{trozo}"`. Anthropic llevó la idea más lejos con la [[glosario/recuperacion-contextual|recuperación contextual]]: usar un modelo para escribir una o dos frases que sitúan cada fragmento dentro del documento y anteponerlas antes de indexar ([*Introducing Contextual Retrieval*](https://www.anthropic.com/news/contextual-retrieval)).
 
 > [!aviso] Limpia antes de trocear
-> Menús de navegación, pies de página, avisos legales repetidos y tablas convertidas a texto sin formato ensucian los vectores y aparecen en los resultados. Quítalos antes de trocear.
+> Menús de navegación, pies de página, avisos legales repetidos y tablas convertidas a texto sin formato ensucian los vectores y aparecen en los resultados. Quítalos antes de trocear. Si partes de PDF, convertirlos antes a Markdown conserva encabezados y tablas: [[recetas/pdf-a-markdown-con-docling]].
 
 ## Errores frecuentes
 
@@ -199,3 +220,5 @@ Hay una mejora sencilla y eficaz: **vectoriza el fragmento con su contexto**. En
 - [[recetas/trocear-documentos]]
 - [[cursos/rag-a-fondo/02-indexar-bien]]
 - [[modelos/07-documentos-largos]]
+- [[recetas/chunks-padre-hijo]]: buscar en pequeño y responder en grande.
+- [[cursos/rag-a-fondo/06-el-corpus-manda]]: PDF, tablas y documentos sin estructura.

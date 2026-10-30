@@ -2,6 +2,7 @@
 titulo: Vector store
 descripcion: Base de datos que guarda embeddings y permite buscar rápidamente los vectores más parecidos a una consulta.
 creado: 2026-08-05
+actualizado: 2026-10-29
 categoria: contexto
 aliases: [base de datos vectorial, vector database, índice vectorial]
 tags: [rag, contexto]
@@ -12,7 +13,7 @@ Un *vector store* es un almacén especializado en [[glosario/embeddings]]: guard
 
 ## En la práctica
 
-Para buscar rápido en colecciones grandes, usa índices de vecinos aproximados: sacrifican algo de exactitud a cambio de velocidad. Elige según volumen y operación: una extensión vectorial en tu base de datos actual suele bastar para empezar, y un servicio dedicado tiene sentido cuando crece el corpus o la carga. Aprovecha los filtros por metadatos (cliente, fecha, tipo de documento) para no recuperar fragmentos que el usuario no debería ver. Si combinas con [[glosario/bm25|BM25]], asegúrate de que el sistema lo admite o de que puedes fusionar resultados tú.
+Para buscar rápido en colecciones grandes, usa índices de vecinos aproximados ([[glosario/ann|ANN]], como [[glosario/hnsw|HNSW]]): sacrifican algo de exactitud a cambio de velocidad. Elige según volumen y operación: una extensión vectorial en tu base de datos actual (como [[herramientas/pgvector]] en PostgreSQL) suele bastar para empezar, y un servicio dedicado (Qdrant, LanceDB, Chroma, todos con versión open source) tiene sentido cuando crece el corpus o la carga. Aprovecha los filtros por metadatos (cliente, fecha, tipo de documento) para no recuperar fragmentos que el usuario no debería ver; en un sistema [[glosario/multi-tenant]] es obligatorio. Si combinas con [[glosario/bm25|BM25]], asegúrate de que el sistema lo admite o de que puedes fusionar resultados tú (en Chroma, por ejemplo, la búsqueda híbrida es solo de su servicio en la nube).
 
 ## No confundir con
 
@@ -24,3 +25,4 @@ Para buscar rápido en colecciones grandes, usa índices de vecinos aproximados:
 - [[docs/contexto/03-rag]]
 - [[cursos/rag-a-fondo/02-indexar-bien]]
 - [[glosario/similitud-coseno]]
+- [[docs/modelos-abiertos/05-bases-vectoriales]]

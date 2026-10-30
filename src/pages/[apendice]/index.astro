@@ -23,7 +23,7 @@ const { Content } = await render(s);
         <li>
           <div class="meta"><span>{datoDe(e)}</span>{e.data.estado === 'borrador' && <span class="tag r">borrador</span>}</div>
           <h3><a href={urlDe(e)}>{e.data.titulo}</a></h3>
-          <p>{e.collection === 'problemas' ? (e.data as { sintoma: string }).sintoma : e.data.descripcion}</p>
+          <p>{e.data.descripcion}</p>
         </li>
       ))}
     </ol>

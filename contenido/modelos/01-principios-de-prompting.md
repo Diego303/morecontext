@@ -2,6 +2,7 @@
 titulo: Principios de prompting
 descripcion: Ocho principios para escribir prompts que funcionan con los modelos actuales, cada uno con su porqué y un ejemplo antes y después.
 creado: 2026-10-08
+actualizado: 2026-10-29
 orden: 1
 tags: [prompting, modelos, buenas-practicas]
 relacionados: ["[[glosario/prompt]]", "[[roadmap/10-prompting/01-instrucciones-claras]]", "[[docs/prompting/01-prompt-de-sistema]]", "[[modelos/08-antipatrones]]"]
@@ -162,3 +163,5 @@ Llamada 3: Con esa tabla, escribe un plan de acción de cinco puntos, priorizado
 ## Y siempre: comprueba con casos
 
 Ningún principio garantiza nada por sí solo. Prepara un puñado de entradas reales, ejecuta el prompt, lee las salidas y ajusta. Cuando el prompt importe, conviértelo en una eval: [[roadmap/10-prompting/05-iterar-con-casos-de-prueba]].
+
+Los ocho principios valen también con modelos abiertos, aunque los modelos pequeños siguen peor las instrucciones largas y dependen más de los ejemplos y de su plantilla de chat: lo explica [[modelos/11-modelos-abiertos]]. Si el modelo sigue sin hacer caso, repasa [[problemas/el-modelo-ignora-instrucciones]]. Para un agente con herramientas tienes un punto de partida en [[plantillas/prompt-de-sistema-de-agente]].

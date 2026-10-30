@@ -2,6 +2,7 @@
 titulo: Datasets de evaluación
 descripcion: De dónde salen las tareas de evaluación de un agente, cómo se describen con su entorno y criterio de éxito, cuántas hacen falta y cómo se versionan sin que pierdan valor.
 creado: 2026-10-09
+actualizado: 2026-10-29
 orden: 2
 minutos: 50
 tipo: practica
@@ -11,7 +12,7 @@ objetivos:
   - Validar y versionar un dataset en JSONL con un esquema de Pydantic.
   - Mantener un conjunto reservado para evitar sobreajustar el agente al dataset.
 requiere: ["[[cursos/evals-para-agentes/01-que-medir]]", "[[roadmap/80-evals/02-conjunto-de-prueba]]"]
-relacionados: ["[[glosario/conjunto-de-evaluacion]]", "[[docs/evals/01-disenar-evals]]", "[[recetas/evals-de-regresion-en-ci]]", "[[disciplinas/evals]]"]
+relacionados: ["[[glosario/conjunto-de-evaluacion]]", "[[docs/evals/01-disenar-evals]]", "[[recetas/evals-de-regresion-en-ci]]", "[[disciplinas/evals]]", "[[recetas/analisis-de-errores-de-trazas]]"]
 tags: [evals, datasets, agentes]
 ---
 
@@ -42,16 +43,18 @@ flowchart LR
 Por orden de valor:
 
 - **Consultas reales.** De tus registros o de las primeras semanas de uso interno. Reflejan cómo pide las cosas la gente de verdad: con erratas, sin contexto, con dos peticiones a la vez.
-- **Fallos conocidos.** Cada error que alguien reporta y arreglas se convierte en tarea. Así no vuelve.
+- **Fallos conocidos.** Cada error que alguien reporta y arreglas se convierte en tarea. Así no vuelve. Para encontrarlos de forma sistemática, lee trazas: anota a mano el primer fallo de cada una y agrupa las notas en una taxonomía con su recuento. Es el *análisis de errores* que defienden Hamel Husain y Shreya Shankar ([*AI Evals FAQ*](https://hamel.dev/blog/posts/evals-faq/)); la receta [[recetas/analisis-de-errores-de-trazas]] lo hace paso a paso.
 - **Casos límite deliberados.** Peticiones ambiguas (¿pregunta o actúa?), datos que faltan, herramientas que fallan, peticiones fuera de alcance que debe rechazar.
 - **Casos adversarios.** Intentos de saltarse políticas o inyecciones en los datos; los tomas del curso de [[cursos/seguridad-y-prompt-injection/02-inyeccion-directa-e-indirecta|seguridad]].
 - **Tareas sintéticas.** Un modelo puede generar variantes de una tarea real (otro cliente, otro producto). Úsalas para ampliar cobertura, nunca sin revisión humana: suelen ser más limpias y fáciles que las reales.
 
-Cuida el **equilibrio**. Si el 80 % de tus tareas son consultas de estado de pedido, el éxito medio describe sobre todo eso. Etiqueta cada tarea con una categoría y reporta por categoría.
+Cuida el **equilibrio**. Si el 80 % de tus tareas son consultas de estado de pedido, el éxito medio describe sobre todo eso. Etiqueta cada tarea con una categoría y reporta por categoría. Equilibra también lo que debe ocurrir con lo que no: si solo pruebas que el agente crea reembolsos cuando toca, no sabrás si los crea también cuando no toca.
 
 ## Cuántas tareas
 
-No hay una cifra universal; depende de qué diferencias quieras detectar. Con 20 a 30 tareas bien elegidas ya ves cambios grandes y rompes la costumbre de evaluar a ojo. Para distinguir mejoras pequeñas necesitas más tareas o más ejecuciones por tarea. Una regla práctica: **si una diferencia entre dos versiones depende de una o dos tareas, mira esas tareas antes de concluir nada**.
+No hay una cifra universal; depende de qué diferencias quieras detectar. Anthropic recomienda empezar pronto con 20 a 50 tareas sacadas de fallos reales ([*Demystifying evals for AI agents*](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)): con eso ya ves cambios grandes y rompes la costumbre de evaluar a ojo. Para distinguir mejoras pequeñas necesitas más tareas o más ejecuciones por tarea. Una regla práctica: **si una diferencia entre dos versiones depende de una o dos tareas, mira esas tareas antes de concluir nada**.
+
+Cada tarea debe ser inequívoca: dos personas que conocen el dominio tendrían que llegar al mismo veredicto, y conviene tener una solución de referencia que demuestre que se puede resolver. Si una tarea da 0 % en muchas ejecuciones, sospecha antes de la tarea (o de su comprobación) que del agente.
 
 ## El formato
 
@@ -121,7 +124,7 @@ Lo importante es que el agente use **las mismas definiciones de herramientas** q
 
 Si iteras el prompt mirando siempre las mismas tareas, acabas ajustando el agente a ellas. Marca un 20–30 % como `reservada` y no las mires al iterar: solo las ejecutas antes de aprobar un cambio. Si las reservadas empeoran mientras las visibles mejoran, has sobreajustado.
 
-El dataset envejece. Revísalo cuando cambien tus herramientas, tus políticas o tu producto. Retira tareas que ya no reflejan el uso real (en un commit con su motivo) y añade las que trae producción, como verás en la [[cursos/evals-para-agentes/04-evals-en-el-dia-a-dia|lección 4]]. Si todas las tareas pasan siempre, el dataset ya no informa: añade casos más difíciles.
+El dataset envejece. Revísalo cuando cambien tus herramientas, tus políticas o tu producto. Retira tareas que ya no reflejan el uso real (en un commit con su motivo) y añade las que trae producción, como verás en la [[cursos/evals-para-agentes/04-evals-en-el-dia-a-dia|lección 4]]. Si todas las tareas pasan siempre, el dataset ya no informa (está saturado): añade casos más difíciles. Y dale un dueño claro: un dataset que es de todos acaba sin mantener.
 
 ## Errores frecuentes
 
@@ -151,5 +154,5 @@ El dataset envejece. Revísalo cuando cambien tus herramientas, tus políticas o
 ## Para seguir
 
 - [[cursos/evals-para-agentes/03-graders]]
-- [[glosario/conjunto-de-evaluacion]]
+- [[recetas/analisis-de-errores-de-trazas]]
 - [[docs/evals/01-disenar-evals]]

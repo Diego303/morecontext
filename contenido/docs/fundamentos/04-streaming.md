@@ -2,6 +2,7 @@
 titulo: Streaming
 descripcion: Cómo recibir la respuesta del modelo por fragmentos mientras se genera, qué eventos llegan y cuándo compensa usarlo.
 creado: 2026-07-17
+actualizado: 2026-10-29
 orden: 4
 nivel: inicial
 tags: [api, streaming, latencia]
@@ -63,6 +64,22 @@ console.log();
 console.log(final.stop_reason, final.usage.output_tokens);
 ```
 
+```python tab="LangGraph" title="stream_lg.py"
+from langchain.agents import create_agent
+from langchain.chat_models import init_chat_model
+
+MODEL = "anthropic:claude-sonnet-5-5"
+agente = create_agent(init_chat_model(MODEL, max_tokens=1024), tools=[])
+
+for chunk, meta in agente.stream(
+    {"messages": [{"role": "user", "content": "Explica qué es un embedding en cinco frases."}]},
+    stream_mode="messages",  # fragmentos de mensaje según se generan
+):
+    if meta["langgraph_node"] == "model" and chunk.text:  # solo lo que escribe el modelo
+        print(chunk.text, end="", flush=True)
+print()
+```
+
 `get_final_message()` / `finalMessage()` devuelve el mismo objeto que una llamada sin streaming. Úsalo para guardar el mensaje en el historial y para comprobar `stop_reason`: **que el texto haya dejado de llegar no significa que la respuesta esté completa**.
 
 ## Eventos del flujo
@@ -92,9 +109,9 @@ flowchart LR
 
 ### Herramientas y razonamiento en streaming
 
-Con `tools`, el `input` de cada `tool_use` llega como **JSON parcial en varios deltas**. No intentes parsearlo hasta el `content_block_stop` de ese bloque; o, más sencillo, espera al mensaje final y ejecuta las herramientas desde ahí.
+Con `tools`, el `input` de cada `tool_use` llega como **JSON parcial en varios deltas**. No intentes parsearlo hasta el `content_block_stop` de ese bloque; o, más sencillo, espera al mensaje final y ejecuta las herramientas desde ahí. Si quieres los argumentos sin que el servidor los agrupe, marca la herramienta con `eager_input_streaming: true`: llegan antes, pero el JSON puede estar incompleto o ser inválido, así que valídalo y, si falla, devuélvelo como `tool_result` con `is_error: true`.
 
-Con `thinking` activado llegan deltas de razonamiento antes del texto. Decide si los muestras: en una interfaz suelen ir plegados o resumidos.
+En los modelos 5.x el razonamiento es adaptativo y, por defecto, su contenido se omite (`display: "omitted"`): el bloque `thinking` llega con su firma pero sin texto. Si pides `thinking={"type": "adaptive", "display": "summarized"}`, llegan deltas de razonamiento antes del texto. Decide si los muestras: en una interfaz suelen ir plegados. Ver [[docs/prompting/04-razonamiento]].
 
 ### Recorrer los eventos
 
@@ -136,6 +153,9 @@ El streaming acepta **los mismos parámetros** que `messages.create`. No hay opc
 | Solo texto | `stream.text_stream` | `stream.on("text", ...)` |
 | Mensaje final | `stream.get_final_message()` | `await stream.finalMessage()` |
 | Eventos crudos | iterar `stream` | `for await (const ev of stream)` |
+| Con LangGraph | `agente.stream(..., stream_mode="messages")` | ver [[docs/frameworks/11-agentes-en-typescript]] |
+
+En LangGraph, `stream_mode="messages"` da los fragmentos del modelo token a token junto con metadatos (`langgraph_node` dice qué nodo los produjo); `"updates"` da el estado tras cada paso, útil para un agente en segundo plano. Más modos en [[docs/frameworks/05-langgraph]].
 
 ## Errores frecuentes
 
@@ -150,4 +170,5 @@ El streaming acepta **los mismos parámetros** que `messages.create`. No hay opc
 - [[recetas/streaming-de-respuestas]]: llevar el flujo hasta un navegador.
 - [[roadmap/100-produccion/03-latencia]]: streaming, modelo adecuado y menos pasos.
 - [[docs/fundamentos/02-tu-primera-llamada]]: forma del mensaje final.
+- [[docs/fundamentos/06-motivos-de-parada-y-rechazos]]: qué hacer con el `stop_reason` del final del flujo.
 - [[glosario/streaming]].

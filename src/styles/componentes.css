@@ -408,7 +408,7 @@ details.faq .a { padding: 0 0 18px; color: var(--text-muted); }
   align-items: center;
   gap: 5px;
   position: relative;
-  padding: 6px 9px;
+  padding: 6px 7px; /* 7 px: con «Herramientas», los 10 enlaces caben desde 1181 px */
   font-size: 13.5px;
   color: var(--text-muted);
   white-space: nowrap;
@@ -422,8 +422,8 @@ details.faq .a { padding: 0 0 18px; color: var(--text-muted); }
 .nav > a[aria-current="page"]::after, .nav .dd > button.is-actual::after {
   content: "";
   position: absolute;
-  left: 9px;
-  right: 9px;
+  left: 7px;
+  right: 7px;
   bottom: -1px;
   height: 2px;
   background: var(--accent-yellow);
@@ -915,3 +915,14 @@ dl.datos > .ancho { flex-basis: 100%; }
   .side-nav li a, .toc li a { padding-block: 9px; }
   .editar a { padding-block: 9px; }
 }
+
+/* Plantillas, herramientas, biblioteca y problemas (contenido v2) */
+.ficha-datos a.ext { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent-cyan) 35%, transparent); text-underline-offset: 3px; overflow-wrap: anywhere; }
+.ficha-datos a.ext::after { content: "↗"; margin-left: 2px; font-size: .8em; text-decoration: none; display: inline-block; }
+.enlaces-ficha { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.sintoma { margin: 4px 0 0; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; color: var(--text-2); overflow-wrap: anywhere; }
+.ficha-datos .sintoma { margin: 2px 0 0; font-size: 15px; color: var(--text); }
+.entradas .sintoma + p { margin-top: 6px; }
+.sobre-titulo .tag { margin-left: 8px; vertical-align: 1px; }
+.fila-leccion .tag { margin-left: 6px; }
+.revisado-enlaces { margin: 10px 0 0; font-family: var(--font-mono); font-size: 12px; color: var(--text-faint); }

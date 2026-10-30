@@ -2,6 +2,7 @@
 titulo: "Paralelismo: lanzar y recoger"
 descripcion: Lanza subagentes a la vez con asyncio.gather, limita la concurrencia con un semáforo y decide qué hacer cuando falla uno de cinco.
 creado: 2026-09-21
+actualizado: 2026-10-29
 orden: 4
 minutos: 35
 tipo: practica
@@ -10,6 +11,7 @@ objetivos:
   - Limitar la concurrencia con un semáforo y acotar cada subagente con un timeout.
   - Manejar fallos parciales con una política explícita (quórum, huecos declarados, reintento).
   - Ejecutar en paralelo varios tool_use de una misma respuesta devolviendo un tool_result por cada uno.
+  - Reconocer el mismo patrón en Send de LangGraph y en agentes de código aislados en worktrees.
 requiere: ["[[roadmap/60-multiagente/02-orquestador-y-subagentes]]", "[[roadmap/60-multiagente/03-pasar-contexto-entre-agentes]]"]
 tags: [agentes, multiagente, python, asyncio]
 relacionados: ["[[patrones/05-paralelizacion]]", "[[recetas/reintentos-y-limites-de-tasa]]", "[[sistemas/investigacion-multiagente]]"]
@@ -169,6 +171,61 @@ mensajes.append({"role": "user", "content": [
 
 Con `is_error: True` el orquestador sabe que esa delegación falló y puede reintentarla con otra formulación o seguir sin ella. Si prefieres que el modelo pida una sola herramienta por turno, existe la opción `disable_parallel_tool_use` dentro de [[glosario/tool-choice]].
 
+## Con LangGraph: `Send`
+
+En [[roadmap/60-multiagente/02-orquestador-y-subagentes]] viste el orquestador con `Send` de [[herramientas/langgraph|LangGraph]]. Allí el paralelismo ya venía hecho: todos los nodos lanzados con `Send` en el mismo paso corren a la vez, y `{"max_concurrency": N}` en la configuración hace de semáforo. Lo que no viene hecho es la política de fallos. **Si un trabajador lanza una excepción, falla la ejecución entera del grafo**, como un `TaskGroup`. Para un quórum, captura el error dentro del nodo y devuélvelo como dato:
+
+```python tab="LangGraph" title="quorum_langgraph.py"
+import operator
+from typing import Annotated, TypedDict
+
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Send
+
+from orquestador_langchain import investigador
+
+class Estado(TypedDict):
+    tareas: list[str]
+    informes: Annotated[list[str], operator.add]
+    fallidas: Annotated[list[str], operator.add]    # los huecos también se acumulan
+
+def repartir(state: Estado):
+    return [Send("investigar", {"tarea": t}) for t in state["tareas"]]
+
+def investigar(state: dict):
+    try:
+        r = investigador.invoke({"messages": [("user", state["tarea"])]}, {"recursion_limit": 17})
+        return {"informes": [r["messages"][-1].text]}
+    except Exception as e:                           # sin esto, un fallo tumba a todos
+        return {"fallidas": [f"{state['tarea']}: {e!r}"]}
+
+g = StateGraph(Estado)
+g.add_node("investigar", investigar)
+g.add_conditional_edges(START, repartir, ["investigar"])
+g.add_edge("investigar", END)
+grafo = g.compile()
+
+# out = grafo.invoke({"tareas": tareas}, {"max_concurrency": 3})
+# if len(out["informes"]) < quorum: ...
+```
+
+Para el reintento selectivo, LangGraph tiene `add_node(..., retry_policy=RetryPolicy(max_attempts=2))`, pero solo actúa sobre excepciones que salen del nodo: relanza las transitorias (un error de red) y captura solo las definitivas. El tiempo máximo por trabajador sigue siendo cosa tuya, con el tiempo de espera del cliente del modelo. La receta completa está en [[recetas/map-reduce-con-send]].
+
+## Agentes de código en paralelo: *worktrees*
+
+Todo lo anterior paraleliza **lecturas**: los subagentes buscan y resumen, y uno solo escribe la respuesta. Con agentes de código el reto es otro, porque cada uno **escribe** archivos. Dos agentes editando la misma carpeta se pisan: uno cambia un archivo mientras el otro ejecuta los tests sobre una versión a medias.
+
+La solución habitual es darle a cada agente su propia copia de trabajo con un [[glosario/worktree|worktree]] de git: varias carpetas que comparten el mismo repositorio, cada una en su rama.
+
+```bash title="worktrees.sh"
+git worktree add ../tienda-feat-cupones -b feat/cupones     # una carpeta y una rama por agente
+git worktree add ../tienda-feat-envios -b feat/envios
+# en cada carpeta, una sesión de agente distinta; al terminar, integras rama a rama
+git worktree remove ../tienda-feat-cupones
+```
+
+Es el mismo patrón de lanzar y recoger, con la escritura aislada: el semáforo es cuántas sesiones abres a la vez, el timeout es el presupuesto de cada sesión y la política de fallos parciales es qué ramas integras. Claude Code lo trae para subagentes con `isolation: worktree` en su definición ([[docs/claude-code/02-subagentes]]). La parte difícil es la integración: tareas que tocan los mismos archivos acaban en conflictos, así que reparte por zonas del código que no se solapan. Las prácticas están en [[disciplinas/trabajo-en-paralelo-con-agentes]] y el paso a paso en [[recetas/features-en-paralelo-con-worktrees]]; Simon Willison describe cómo trabaja así en [*Embracing the parallel coding agent lifestyle*](https://simonwillison.net/2025/Oct/5/parallel-coding-agents/) (oct. 2025).
+
 ## Errores frecuentes
 
 - Usar el cliente síncrono dentro de corrutinas: el código parece paralelo pero se ejecuta en serie.
@@ -176,6 +233,8 @@ Con `is_error: True` el orquestador sabe que esa delegación falló y puede rein
 - No poner timeout y dejar que un subagente colgado bloquee la respuesta.
 - Olvidar un `tool_result` cuando una de las delegaciones falla.
 - Ocultar los huecos en la síntesis.
+- Dejar que una excepción en un trabajador de `Send` tumbe todo el grafo.
+- Poner a dos agentes de código a escribir en la misma carpeta.
 
 ## Ejercicio
 
@@ -194,9 +253,11 @@ Con `is_error: True` el orquestador sabe que esa delegación falló y puede rein
 - `return_exceptions=True` te permite recoger éxitos y fallos; `TaskGroup` sirve cuando un fallo invalida todo.
 - Decide antes la política de fallos parciales y declara los huecos en la respuesta.
 - Varios `tool_use` en una respuesta se ejecutan a la vez y se responden en un solo mensaje, uno por cada uno.
+- En LangGraph, `Send` paraleliza y `max_concurrency` limita, pero la política de fallos la escribes tú; los agentes que escriben código, cada uno en su *worktree*.
 
 ## Para seguir
 
 - [[roadmap/60-multiagente/05-coste-de-multiplicar-agentes]]
 - [[patrones/05-paralelizacion]]
 - [[recetas/reintentos-y-limites-de-tasa]]
+- [[disciplinas/trabajo-en-paralelo-con-agentes]]

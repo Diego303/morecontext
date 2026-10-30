@@ -2,6 +2,7 @@
 titulo: Agente de código
 descripcion: Arquitectura de un agente que lee un repositorio, propone cambios acotados, ejecuta los tests en un sandbox y abre una propuesta revisable por una persona.
 creado: 2026-09-23
+actualizado: 2026-10-29
 tags: [sistemas, agentes, codigo, sandbox]
 orden: 4
 complejidad: 3
@@ -9,7 +10,7 @@ tiempo: "3–5 días"
 stack: [Python, API de Claude, contenedor aislado, git, sistema de pull requests]
 componentes: [Entrada de la tarea, Sandbox con el repositorio, Herramientas de lectura, Herramienta de edición, Ejecutor de tests, Apertura de la propuesta]
 patrones: ["[[patrones/08-agente-autonomo]]", "[[patrones/07-evaluador-optimizador]]", "[[patrones/06-orquestador-trabajadores]]"]
-relacionados: ["[[cursos/agentes-de-codigo/index]]", "[[disciplinas/explorar-planificar-implementar-verificar]]", "[[disciplinas/cambios-pequenos-y-revisables]]", "[[glosario/sandbox]]"]
+relacionados: ["[[cursos/agentes-de-codigo/index]]", "[[disciplinas/explorar-planificar-implementar-verificar]]", "[[disciplinas/cambios-pequenos-y-revisables]]", "[[glosario/sandbox]]", "[[sistemas/harness-sdd-claude-code]]"]
 ---
 
 ## Qué problema resuelve
@@ -45,7 +46,7 @@ flowchart LR
 
 ## Flujo paso a paso
 
-1. **Preparar**. Se crea el sandbox, se clona el repo y se crea una rama. Se carga un archivo de contexto del proyecto (convenciones, cómo ejecutar tests, qué no tocar) si existe. Ver [[cursos/agentes-de-codigo/02-contexto-del-repositorio]].
+1. **Preparar**. Se crea el sandbox, se clona el repo y se crea una rama. Se carga un archivo de contexto del proyecto (convenciones, cómo ejecutar tests, qué no tocar) si existe; el formato abierto más extendido es [[glosario/agents-md|`AGENTS.md`]], que Claude Code ya lee de forma nativa cuando no hay `CLAUDE.md`. Ver [[cursos/agentes-de-codigo/02-contexto-del-repositorio]] y [[plantillas/agents-md]].
 2. **Explorar**. El agente busca dónde vive el código relevante y lee solo lo necesario. Explorar antes de editar reduce cambios en el sitio equivocado.
 3. **Planificar**. Escribe un plan corto: qué archivos tocará y cómo comprobará el resultado. El plan queda en la traza y en la descripción de la PR.
 4. **Implementar**. Edita con reemplazos precisos. Si la tarea trae un test que falla, primero lo ejecuta para ver el fallo.
@@ -73,6 +74,7 @@ Es el ciclo de [[disciplinas/explorar-planificar-implementar-verificar]], automa
 Las herramientas que más importan: edición segura y ejecución de tests con límites. El bucle es el de [[patrones/08-agente-autonomo]].
 
 ```python title="herramientas_codigo.py"
+import os
 import subprocess
 from pathlib import Path
 
@@ -112,9 +114,10 @@ def editar(ruta: str, buscar: str, reemplazo: str) -> str:
     return f"Editado {p.relative_to(RAIZ)}"
 
 def ejecutar_tests(filtro: str = "") -> str:
-    comando = ["python", "-m", "pytest", "-x", "-q"] + (["-k", filtro] if filtro else [])
+    comando = ["python", "-m", "pytest", "-x", "-q", "-p", "no:cacheprovider"] + (["-k", filtro] if filtro else [])
+    sin_rastro = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}     # ni .pyc ni caché en el diff
     try:
-        r = subprocess.run(comando, cwd=RAIZ, capture_output=True, text=True, timeout=300)
+        r = subprocess.run(comando, cwd=RAIZ, capture_output=True, text=True, timeout=300, env=sin_rastro)
     except subprocess.TimeoutExpired:
         raise ErrorHerramienta("Los tests superaron 300 s. Acota con un filtro.")
     salida = (r.stdout + r.stderr)[-MAX_SALIDA:]              # el final es lo que importa
@@ -134,7 +137,7 @@ def comprobar_antes_de_proponer() -> list[str]:
     return problemas
 ```
 
-Cada `ErrorHerramienta` vuelve al modelo como `tool_result` con `is_error: true` y un mensaje que le dice cómo corregir. Los mensajes de error son parte de la interfaz: escríbelos para el modelo. Lo practicas en [[roadmap/20-herramientas/03-errores-e-is-error]].
+Cada `ErrorHerramienta` vuelve al modelo como `tool_result` con `is_error: true` y un mensaje que le dice cómo corregir. Los tests corren sin escribir `.pyc` ni la caché de pytest: si no, `git add -A` los recoge y la comprobación final ve archivos protegidos cambiados que nadie tocó. Los mensajes de error son parte de la interfaz: escríbelos para el modelo. Lo practicas en [[roadmap/20-herramientas/03-errores-e-is-error]].
 
 > [!peligro] El sandbox es parte del diseño
 > El agente ejecuta código que él mismo escribe y código del repositorio, que puede incluir instrucciones maliciosas en comentarios o issues. Contenedor efímero, sin credenciales de producción, red restringida a lo necesario y límites de CPU y memoria. Ver [[cursos/seguridad-y-prompt-injection/04-permisos-y-sandbox]].
@@ -163,8 +166,71 @@ Cada `ErrorHerramienta` vuelve al modelo como `tool_result` con `is_error: true`
 
 - **Agente local en pareja**: en lugar de abrir PR, trabaja en tu máquina contigo al lado. Ver [[disciplinas/pair-programming-con-agentes]].
 - **Revisor automático**: el mismo esqueleto con herramientas de solo lectura comenta PR humanas.
-- **Disparado por CI**: cuando un test falla en la rama principal, el agente intenta un arreglo y abre una PR.
+- **Disparado por CI**: cuando un test falla en la rama principal, el agente intenta un arreglo y abre una PR. Con Claude Code, el modo *headless* (`claude -p`) sirve para esto ([[docs/claude-code/08-modo-headless-y-ci]]).
+- **Con un arnés completo**: en lugar de escribir el bucle, usa Claude Code o el [[herramientas/claude-agent-sdk|Claude Agent SDK]] y pon tus reglas en *hooks*, subagentes y permisos. [[sistemas/harness-sdd-claude-code]] lo lleva al extremo, con spec, puerta humana y revisor; [[sistemas/agente-de-larga-duracion]] cubre las tareas de horas.
 - **Herramientas por MCP**: expón el acceso al repo, al gestor de issues o a la documentación como servidores MCP. Ver [[cursos/mcp-de-cero-a-servidor/index]].
+
+### Con open source: LangChain y un modelo servido con vLLM
+
+Las herramientas de arriba no dependen del proveedor. Envueltas como `@tool` de [[herramientas/langchain|LangChain]] (MIT), el mismo agente corre contra un modelo de pesos abiertos servido con [[herramientas/vllm|vLLM]] en tu red, sin que el código del repositorio salga de ella.
+
+```python title="agente_codigo_abierto.py"
+from langchain.agents import create_agent
+from langchain.agents.middleware import ModelCallLimitMiddleware, ToolErrorMiddleware
+from langchain.tools import tool
+from langchain_openai import ChatOpenAI
+
+import herramientas_codigo as h                        # las funciones de arriba, sin cambios
+
+MODEL = "Qwen/Qwen3.6-35B-A3B"                         # el que sirva tu vLLM
+llm = ChatOpenAI(model=MODEL, base_url="http://localhost:8000/v1", api_key="local", max_tokens=4096)
+
+@tool
+def leer(ruta: str, desde: int = 1, hasta: int = 200) -> str:
+    """Lee un archivo del repositorio por rango de líneas. Usa rutas absolutas."""
+    return h.leer(ruta, desde, hasta)
+
+@tool
+def editar(ruta: str, buscar: str, reemplazo: str) -> str:
+    """Reemplaza un fragmento exacto y único de un archivo. Lee el archivo antes."""
+    return h.editar(ruta, buscar, reemplazo)
+
+@tool
+def ejecutar_tests(filtro: str = "") -> str:
+    """Ejecuta los tests del proyecto; con filtro, solo los que coinciden."""
+    return h.ejecutar_tests(filtro)
+
+def error_para_el_modelo(exc: Exception, request) -> str:
+    if isinstance(exc, (h.ErrorHerramienta, OSError)):   # p. ej. un archivo que no existe
+        return f"Error: {exc}"                         # vuelve como ToolMessage(status="error")
+    raise exc                                          # un fallo de tu código no se le pasa al modelo
+
+agente = create_agent(llm, [leer, editar, ejecutar_tests],
+    system_prompt="Eres un agente de código. Explora, planifica, edita con reemplazos precisos y "
+                  "no des la tarea por terminada sin ejecutar los tests.",
+    middleware=[ToolErrorMiddleware(on_error=error_para_el_modelo),
+                ModelCallLimitMiddleware(run_limit=40, exit_behavior="end")])
+
+def resolver(tarea: str) -> list[str]:
+    agente.invoke({"messages": [("user", tarea)]}, {"recursion_limit": 120})
+    return h.comprobar_antes_de_proponer()             # la misma puerta final, en tu código
+```
+
+Lo probé con un modelo simulado sobre un repositorio de prueba: una ruta relativa y un fragmento inexistente vuelven al modelo como errores que puede corregir, la edición buena pasa y la comprobación final queda limpia. Un error de tu propio código, en cambio, se propaga y para el agente, que es lo que quieres. El servidor tiene que arrancar con las herramientas activadas y el *parser* que indique la *model card*; si no, las llamadas llegan como texto ([[problemas/modelo-local-no-llama-herramientas]]):
+
+```bash
+vllm serve Qwen/Qwen3.6-35B-A3B --enable-auto-tool-choice --tool-call-parser qwen3_coder --reasoning-parser qwen3
+```
+
+| Qué | Con el SDK de Claude | Con LangChain y vLLM |
+|---|---|---|
+| Bucle | El de [[patrones/08-agente-autonomo]] | `create_agent`, con `ModelCallLimitMiddleware` como tope |
+| Errores de herramienta | `is_error: true` | `ToolErrorMiddleware`: sin él, cualquier excepción corta el agente |
+| Contexto | 1M de tokens y *prompt caching* del prefijo | `--max-model-len` del servidor; sin caché del lado del proveedor, cada vuelta paga el historial |
+| Calidad en tareas largas | La de los modelos de la familia actual | Depende mucho del modelo abierto: mídelo con tus tareas antes de confiarle PR |
+| Sandbox y puerta final | Tu contenedor y `comprobar_antes_de_proponer` | Exactamente lo mismo |
+
+Si no quieres escribir el bucle, hay agentes de código abiertos que ya lo traen: `deepagents-code` (MIT, de LangChain), [[herramientas/opencode|OpenCode]], [[herramientas/aider|Aider]] u [[herramientas/openhands|OpenHands]], comparados en [[docs/modelos-abiertos/10-agentes-de-codigo-abiertos]]. `CodeAgent` de smolagents hace que el modelo actúe escribiendo Python, pero su ejecutor local por defecto no es un sandbox de seguridad según su propio README: úsalo solo con un ejecutor aislado. Con un modelo en local, [[recetas/agente-de-codigo-con-modelo-local]].
 
 ## Por dónde empezar
 
@@ -172,4 +238,4 @@ Cada `ErrorHerramienta` vuelve al modelo como `tool_result` con `is_error: true`
 2. Construye el bucle con [[roadmap/40-primer-agente/05-agente-con-varias-herramientas]] usando las herramientas de arriba.
 3. Empieza con tareas que traen un test que falla: el criterio de éxito es inequívoco.
 4. Monta el conjunto de evaluación con diez fallos ya resueltos de tu repo.
-5. Sigue con [[cursos/agentes-de-codigo/03-explorar-planificar-implementar-verificar]].
+5. Sigue con [[cursos/agentes-de-codigo/03-explorar-planificar-implementar-verificar]] y, antes de fiarte de un «ya está», con [[disciplinas/verificar-antes-de-dar-por-hecho]].

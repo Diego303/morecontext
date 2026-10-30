@@ -2,6 +2,7 @@
 titulo: Nivel 40 · Tu primer agente
 descripcion: Construye un agente de verdad, con su bucle, límites de pasos y de gasto, un plan previo, varias herramientas bien descritas y trazas para depurarlo.
 creado: 2026-09-15
+actualizado: 2026-10-29
 nivel: 40
 horas: 6
 objetivo: Escribir desde cero un agente con varias herramientas que sabe cuándo parar, planifica antes de actuar y deja una traza legible de cada ejecución.
@@ -36,6 +37,8 @@ Un agente de soporte sobre pedidos con datos simulados. Simulados a propósito: 
 > [!consejo] Empieza por la lección 1 aunque tengas prisa
 > Muchos problemas que parecen pedir un agente se resuelven mejor con un workflow. Decidirlo bien al principio te ahorra trabajo, coste y sustos.
 
+Cuando lo tengas funcionando a mano, puedes rehacerlo con un framework abierto en [[cursos/langchain-y-langgraph/03-tu-primer-agente-con-create-agent]]: verás qué te ahorra y qué te esconde.
+
 ## Después de este nivel
 
-Con un agente fiable, el siguiente paso es coordinar varios: [[roadmap/60-multiagente/index]]. Para medir si tu agente mejora o empeora con cada cambio, salta a [[roadmap/80-evals/04-evals-de-trayectoria]]. Y si quieres un sistema completo como referencia, mira [[sistemas/soporte-con-aprobacion-humana]].
+El siguiente nivel es [[roadmap/50-skills/index]]: en lugar de meter todos los procedimientos en el prompt de sistema, los empaquetas en skills que el agente carga solo cuando le hacen falta. Después llega coordinar varios agentes en [[roadmap/60-multiagente/index]]. Para medir si tu agente mejora o empeora con cada cambio, salta a [[roadmap/80-evals/04-evals-de-trayectoria]]. Y si quieres un sistema completo como referencia, mira [[sistemas/soporte-con-aprobacion-humana]].

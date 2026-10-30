@@ -2,18 +2,21 @@
 titulo: Context engineering
 descripcion: Cómo decidir qué entra en el contexto de un modelo o agente, cuánto ocupa, cuándo compactarlo y cómo mantener agentes que trabajan durante horas.
 creado: 2026-10-05
+actualizado: 2026-10-29
 orden: 7
 nivel: intermedio
 horas: 4
 objetivo: Medir y gestionar el contexto de un agente como un presupuesto, seleccionando lo que entra, compactando el historial y usando notas persistentes para tareas largas.
 requiere: ["[[roadmap/00-fundamentos/index]]", "[[roadmap/30-contexto-y-rag/index]]", "[[roadmap/40-primer-agente/index]]"]
-relacionados: ["[[disciplinas/context-engineering]]", "[[modelos/02-ingenieria-de-contexto]]", "[[docs/contexto/01-ventana-de-contexto]]", "[[blog/2026-09-28-el-contexto-es-un-presupuesto]]"]
+relacionados: ["[[disciplinas/context-engineering]]", "[[modelos/02-ingenieria-de-contexto]]", "[[docs/contexto/01-ventana-de-contexto]]", "[[blog/2026-09-28-el-contexto-es-un-presupuesto]]", "[[biblioteca/context-engineering-anthropic]]"]
 tags: [contexto, agentes, memoria]
 ---
 
 El *context engineering* es la práctica de decidir qué información ve el modelo en cada llamada: instrucciones, herramientas, documentos, historial y resultados. Con una llamada suelta se parece mucho al prompting. Con un agente que da cincuenta pasos se convierte en el problema principal, porque el contexto crece en cada paso y lo que entra condiciona todo lo que sale.
 
-Este curso trata el contexto como lo que es: un recurso finito. Aprenderás a medirlo, a llenarlo con lo que aporta, a vaciarlo cuando estorba y a construir agentes que trabajan más allá de lo que cabe en una sola [[glosario/ventana-de-contexto|ventana de contexto]]. La referencia de fondo es *[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 2025).
+Este curso trata el contexto como lo que es: un recurso finito. Aprenderás a medirlo, a llenarlo con lo que aporta, a vaciarlo cuando estorba y a construir agentes que trabajan más allá de lo que cabe en una sola [[glosario/ventana-de-contexto|ventana de contexto]]. La referencia de fondo es *[Effective context engineering for AI agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)* (Anthropic, 29 sept. 2025), comentado en [[biblioteca/context-engineering-anthropic]]. Lo completan la medición de *[Context Rot](https://www.trychroma.com/research/context-rot)* de Chroma (jul. 2025, en [[biblioteca/context-rot]]) y las lecciones de producción de Manus (*[Context Engineering for AI Agents: Lessons from Building Manus](https://manus.im/blog/Context-Engineering-for-AI-Agents-Lessons-from-Building-Manus)*, jul. 2025).
+
+Los modelos actuales de Claude tienen una ventana de un millón de tokens. Eso cambia el límite duro, no el problema: la calidad cae mucho antes de llenarla, y cada token se paga en cada paso. Por eso el curso enseña primero las técnicas a mano, que valen con cualquier proveedor y con modelos abiertos, y después la gestión de contexto que ya ofrece la API (compactación y limpieza en el servidor, mensajes de sistema a mitad de conversación).
 
 ## Para quién
 
@@ -29,8 +32,8 @@ Para quien ya tiene un agente o un RAG funcionando y nota que empeora con conver
 
 1. [[cursos/context-engineering/01-el-contexto-como-presupuesto]]. Por qué más contexto no siempre es mejor, qué dice *Lost in the Middle* y cómo medir cuánto ocupa cada componente.
 2. [[cursos/context-engineering/02-que-meter-y-que-no]]. Prompt de sistema, herramientas, ejemplos y resultados de herramientas: cómo dejar solo lo que aporta señal y cargar el resto bajo demanda.
-3. [[cursos/context-engineering/03-compactacion-y-memoria]]. Limpiar resultados antiguos, resumir el historial sin romper pares `tool_use`/`tool_result` y tomar notas fuera del contexto.
-4. [[cursos/context-engineering/04-contexto-para-agentes-largos]]. Combinar compactación, notas y subagentes, con puntos de control para reanudar.
+3. [[cursos/context-engineering/03-compactacion-y-memoria]]. Limpiar resultados antiguos, resumir el historial sin romper pares `tool_use`/`tool_result`, tomar notas fuera del contexto y cuándo dejarle todo eso al servidor.
+4. [[cursos/context-engineering/04-contexto-para-agentes-largos]]. Combinar compactación, notas y subagentes, con puntos de control para reanudar, archivos de progreso, traspasos de sesión y un canario que avisa cuando el contexto se satura.
 
 ## Qué construyes
 

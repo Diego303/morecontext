@@ -2,6 +2,7 @@
 titulo: Zero-shot
 descripcion: Pedir al modelo una tarea solo con instrucciones, sin incluir ningún ejemplo resuelto en el prompt.
 creado: 2026-07-14
+actualizado: 2026-10-29
 categoria: prompting
 aliases: [zero-shot prompting, sin ejemplos]
 tags: [prompting]
@@ -12,7 +13,7 @@ relacionados: ["[[glosario/few-shot]]", "[[roadmap/10-prompting/01-instrucciones
 
 ## En la práctica
 
-Es el punto de partida: rápido de escribir y barato en tokens. Si la salida no tiene el formato o el criterio que buscas, primero mejora las instrucciones (contexto, formato, casos límite) y, si sigue fallando, añade ejemplos y pasa a [[glosario/few-shot]]. Para tareas de clasificación con categorías ambiguas o formatos muy específicos, los ejemplos suelen ganar a cualquier instrucción.
+Es el punto de partida: rápido de escribir y barato en tokens. Si la salida no tiene el formato o el criterio que buscas, primero mejora las instrucciones (contexto, formato, casos límite) y, si sigue fallando, añade ejemplos y pasa a [[glosario/few-shot]]. Para tareas de clasificación con categorías ambiguas o formatos muy específicos, los ejemplos suelen ganar a cualquier instrucción. Con un [[glosario/modelo-de-razonamiento]] ya no hace falta añadir «piensa paso a paso»: el razonamiento lo hace el modelo por su cuenta.
 
 ## No confundir con
 
@@ -24,3 +25,4 @@ Es el punto de partida: rápido de escribir y barato en tokens. Si la salida no 
 - [[roadmap/10-prompting/01-instrucciones-claras]]
 - [[modelos/01-principios-de-prompting]]
 - [[glosario/prompt]]
+- [[plantillas/prompt-de-sistema-de-agente]]

@@ -2,6 +2,7 @@
 titulo: Latencia
 descripcion: De qué se compone el tiempo de respuesta de un sistema con modelos, cómo medirlo y qué técnicas lo reducen sin sacrificar calidad.
 creado: 2026-10-22
+actualizado: 2026-10-29
 orden: 3
 nivel: intermedio
 tags: [produccion, latencia, streaming, rendimiento]
@@ -44,6 +45,7 @@ Registra en cada llamada la latencia total y, con streaming, el tiempo hasta el 
 | Menos pasos en el agente | Tiempo total, de forma notable. | Diseñar mejor las herramientas o pasar a un workflow. |
 | Herramientas en paralelo | Tiempo de pasos con varias herramientas independientes. | Solo para herramientas sin dependencias entre sí. |
 | Modelo más rápido | Todo. | Puede bajar la calidad: mídelo con evals. |
+| Modo rápido (`speed: "fast"`) | Más tokens de salida por segundo en Opus 5.5 (hasta 2,5 veces). | Precio *premium*; no funciona con lotes. |
 | Menos razonamiento | Tiempo hasta la respuesta. | `effort` más bajo; peor en tareas difíciles. |
 | Prompt caching | Procesar la entrada con prefijos largos repetidos. | Ninguno si el prefijo es estable. |
 
@@ -94,7 +96,27 @@ const final = await stream.finalMessage();
 console.log(`\nPrimer token: ${primerToken}ms · total: ${performance.now() - inicio}ms · ${final.stop_reason}`);
 ```
 
-Aunque uses streaming, sigue comprobando `stop_reason` en el mensaje final. Una respuesta que llegó fluida puede estar cortada por `max_tokens`. Más detalle en [[docs/fundamentos/04-streaming]].
+Con razonamiento adaptativo, el primer token de texto llega después de que el modelo termine de pensar. Si el pensamiento está activo y quieres ver señales de vida antes, tu interfaz puede mostrar el progreso mientras tanto (el bloque `thinking` llega vacío por defecto en estos modelos). Aunque uses streaming, sigue comprobando `stop_reason` en el mensaje final. Una respuesta que llegó fluida puede estar cortada por `max_tokens`. Más detalle en [[docs/fundamentos/04-streaming]].
+
+Con LangChain, `model.stream(...)` da el mismo efecto sobre cualquier proveedor, también un modelo local servido por Ollama o vLLM:
+
+```python title="streaming_langchain.py"
+import time
+from langchain.chat_models import init_chat_model
+
+MODEL = "anthropic:claude-sonnet-5-5"
+model = init_chat_model(MODEL, max_tokens=1024)
+
+inicio = time.perf_counter()
+primer_token = None
+for trozo in model.stream("Explica en tres frases qué es un índice invertido."):
+    if primer_token is None:
+        primer_token = time.perf_counter() - inicio
+    print(trozo.text, end="", flush=True)
+print(f"\nPrimer token: {primer_token:.2f}s · total: {time.perf_counter() - inicio:.2f}s")
+```
+
+Los tiempos dependen de tu red y de la carga. El framework solo esconde el bucle de eventos del SDK: la latencia sigue siendo la del modelo. En un servidor local, el primer token incluye cargar el modelo en memoria si estaba descargado, y el tiempo total depende de tu hardware ([[docs/modelos-abiertos/01-ollama]]).
 
 ### Menos pasos
 

@@ -2,6 +2,7 @@
 titulo: Anatomía de un RAG
 descripcion: Las dos tuberías de un RAG, qué decide cada etapa, cómo falla cada una y cómo instrumentarlas para saber dónde se rompe.
 creado: 2026-09-14
+actualizado: 2026-10-29
 orden: 1
 minutos: 40
 tipo: teoria
@@ -39,18 +40,20 @@ Cada etapa toma una decisión que limita a las siguientes. Si un fragmento no en
 
 | Etapa | Decide | Fallo típico |
 |---|---|---|
-| Ingesta y limpieza | qué texto existe para el sistema | tablas convertidas en sopa de números, menús de navegación repetidos en cada página |
+| Ingesta y limpieza | qué texto existe para el sistema | tablas convertidas en sopa de números, menús de navegación repetidos en cada página (lección 6) |
 | Troceado | qué unidad se recupera | la respuesta queda partida entre dos fragmentos |
 | Metadatos | qué se puede filtrar y citar | no sabes de qué versión del manual sale un dato |
-| Indexado | cómo se puede encontrar | un código de producto no aparece por búsqueda vectorial |
-| Reescritura de consulta | qué se busca de verdad | «¿y en Francia?» se busca sin el contexto de la conversación |
+| Indexado | cómo se puede encontrar | un código de producto no aparece por búsqueda vectorial; el índice aproximado pierde vecinos (lección 4) |
+| Reescritura de consulta | qué se busca de verdad | «¿y en Francia?» se busca sin el contexto de la conversación (lección 5) |
 | Recuperación | qué candidatos entran | el fragmento correcto está en la posición 40 y cortas en 20 |
 | Reranking | qué candidatos llegan al modelo | el reranker premia fragmentos largos y genéricos |
 | Ensamblado del contexto | orden, formato y cantidad | demasiados fragmentos y el dato clave queda en medio |
 | Generación | qué se afirma y con qué cita | el modelo completa con lo que «sabe» en vez de con lo recuperado |
 | Verificación | qué se entrega al usuario | una cita apunta a un fragmento que no respalda la frase |
 
-El problema del ensamblado tiene un nombre en la literatura: Liu et al. (2023) mostraron en [*Lost in the Middle*](https://arxiv.org/abs/2307.03172) que los modelos usan peor la información situada en mitad de contextos largos. Por eso más fragmentos no siempre es mejor, aunque tengas [[glosario/contexto-largo|contexto largo]] disponible.
+El problema del ensamblado tiene un nombre en la literatura: Liu et al. (2023) mostraron en [*Lost in the Middle*](https://arxiv.org/abs/2307.03172) que los modelos usan peor la información situada en mitad de contextos largos. Por eso más fragmentos no siempre es mejor, aunque tengas [[glosario/contexto-largo|contexto largo]] disponible (ver [[glosario/lost-in-the-middle]]).
+
+La pregunta previa es si necesitas un RAG. Los modelos actuales tienen ventanas de un millón de tokens, y Anthropic recomienda meter la base entera en el prompt (con caché) si ocupa menos de unos 200.000 tokens. Las comparativas publicadas no dan un ganador fijo: depende del modelo, del tamaño del corpus y del tipo de pregunta (Li et al., 2024, [*Retrieval Augmented Generation or Long-Context LLMs?*](https://arxiv.org/abs/2407.16833)). Lo tratas en [[cursos/rag-a-fondo/09-cuando-el-rag-vectorial-no-basta]].
 
 ## Recuperación o generación: la primera pregunta al depurar
 
@@ -136,6 +139,8 @@ def responder(indice: IndiceMemoria, pregunta: str, k_rec=20, k_ctx=5) -> Traza:
     t.respuesta = "".join(b.text for b in resp.content if b.type == "text")
     if resp.stop_reason == "max_tokens":
         t.respuesta += "\n[respuesta truncada]"
+    elif resp.stop_reason == "refusal":
+        t.respuesta = "[el modelo rechazó responder]"
     return t
 
 def guardar(traza: Traza, ruta="trazas.jsonl"):
@@ -143,18 +148,18 @@ def guardar(traza: Traza, ruta="trazas.jsonl"):
         f.write(json.dumps(asdict(traza), ensure_ascii=False) + "\n")
 ```
 
-Fíjate en tres detalles. Los fragmentos van dentro de etiquetas con su id, para que el modelo cite algo comprobable. La traza guarda **dos listas** (candidatos y contexto), que te dicen si el fallo está antes o después del corte. Y se comprueba `stop_reason`: una respuesta truncada por `max_tokens` parece una respuesta incompleta del modelo si no lo registras (ver [[glosario/stop-reason]]).
+Fíjate en tres detalles. Los fragmentos van dentro de etiquetas con su id, para que el modelo cite algo comprobable. La traza guarda **dos listas** (candidatos y contexto), que te dicen si el fallo está antes o después del corte. Y se comprueba `stop_reason`: una respuesta truncada por `max_tokens` parece una respuesta incompleta del modelo si no lo registras, y un rechazo (`refusal`) llega con HTTP 200 (ver [[glosario/stop-reason]]).
 
 Con este archivo de trazas, depurar es una consulta: «para las preguntas mal respondidas, ¿estaba el fragmento correcto en `candidatos`? ¿y en `contexto`?».
 
 ## RAG como herramienta de un agente
 
-En un [[glosario/agente|agente]], la recuperación suele ser una herramienta (`buscar_docs`) que el modelo invoca cuando lo necesita, a veces varias veces con consultas distintas. Las etapas son las mismas; cambia quién decide la consulta. Eso añade un modo de fallo: el modelo no busca cuando debería o busca con términos pobres. La traza tiene que guardar también las consultas que generó el modelo. El patrón base está en [[patrones/02-llamada-aumentada]].
+En un [[glosario/agente|agente]], la recuperación suele ser una herramienta (`buscar_docs`) que el modelo invoca cuando lo necesita, a veces varias veces con consultas distintas. Las etapas son las mismas; cambia quién decide la consulta. Eso añade un modo de fallo: el modelo no busca cuando debería o busca con términos pobres. La traza tiene que guardar también las consultas que generó el modelo. El patrón base está en [[patrones/02-llamada-aumentada]]; cuando el agente decide qué y cuántas veces buscar hablamos de [[glosario/rag-agentico|RAG agéntico]].
 
 ## Errores frecuentes
 
 - **Optimizar la generación primero.** Cambiar de modelo o de prompt cuando el fragmento correcto nunca llegó al contexto.
-- **Un solo número de «calidad».** Sin métricas por etapa no sabes qué arreglar. La lección 4 lo resuelve.
+- **Un solo número de «calidad».** Sin métricas por etapa no sabes qué arreglar. La [[cursos/rag-a-fondo/10-evaluar-un-rag|lección 10]] lo resuelve.
 - **No guardar la versión del índice.** Si reindexas y cambian los resultados, necesitas saber con qué índice se generó cada traza.
 - **Meter más fragmentos para «asegurar».** Sube el coste, la [[glosario/latencia|latencia]] y el riesgo de que el dato clave se pierda en medio.
 
@@ -181,3 +186,4 @@ En un [[glosario/agente|agente]], la recuperación suele ser una herramienta (`b
 - [[cursos/rag-a-fondo/02-indexar-bien]]
 - [[roadmap/40-primer-agente/06-depurar-con-trazas]]
 - [[docs/contexto/03-rag]]
+- [[recetas/depurar-un-rag]]

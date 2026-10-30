@@ -1,0 +1,4118 @@
+[
+ {
+  "ruta": "_plantillas/herramienta.md",
+  "estado_paquete": "NUEVO",
+  "accion": "CONFLICTO",
+  "nota": "ya existe un archivo propio en esta ruta: fusiona a mano (conserva lo tuyo y añade lo del paquete)"
+ },
+ {
+  "ruta": "_plantillas/paper.md",
+  "estado_paquete": "NUEVO",
+  "accion": "CONFLICTO",
+  "nota": "ya existe un archivo propio en esta ruta: fusiona a mano (conserva lo tuyo y añade lo del paquete)"
+ },
+ {
+  "ruta": "_plantillas/plantilla.md",
+  "estado_paquete": "NUEVO",
+  "accion": "CONFLICTO",
+  "nota": "ya existe un archivo propio en esta ruta: fusiona a mano (conserva lo tuyo y añade lo del paquete)"
+ },
+ {
+  "ruta": "_plantillas/problema.md",
+  "estado_paquete": "NUEVO",
+  "accion": "CONFLICTO",
+  "nota": "ya existe un archivo propio en esta ruta: fusiona a mano (conserva lo tuyo y añade lo del paquete)"
+ },
+ {
+  "ruta": "biblioteca/atencion-bahdanau.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/attention-is-all-you-need.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/backpropagation.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/building-effective-agents.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/camel.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/chain-of-thought.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/constitutional-ai.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/context-engineering-anthropic.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/context-rot.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/deepseek-r1.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/demystifying-evals.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/ears.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/effective-harnesses.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/el-perceptron.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/gpt-3-few-shot.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/harness-engineering-openai.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "CONFLICTO",
+  "nota": "ya existe un archivo propio en esta ruta: fusiona a mano (conserva lo tuyo y añade lo del paquete)"
+ },
+ {
+  "ruta": "biblioteca/instructgpt.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/inyeccion-indirecta-greshake.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/leyes-de-escalado-y-chinchilla.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/llm-as-a-judge.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/lost-in-the-middle.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/lstm.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/multi-agent-research-system.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/patrones-contra-inyeccion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/rag-lewis-2020.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "biblioteca/react.md",
+  "estado_paquete": "NUEVO",
+  "accion": "CONFLICTO",
+  "nota": "ya existe un archivo propio en esta ruta: fusiona a mano (conserva lo tuyo y añade lo del paquete)"
+ },
+ {
+  "ruta": "biblioteca/toolformer.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-07-01-por-que-morecontext.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-07-30-por-que-mcp-importa.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-08-22-dejar-un-agente-trabajando-horas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-12-tu-primer-agente-deberia-ser-un-workflow.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-14-mi-ruta-para-aprender-ia-con-videos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-15-la-respuesta-mas-probable.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-16-cuanto-saber-de-redes-neuronales.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-18-del-autocompletado-al-agente.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-19-haz-que-funcione-no-es-una-instruccion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-21-treinta-minutos-al-dia.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-22-de-codex-a-claude-code.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-23-una-sola-puerta-humana.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-25-tres-cosas-que-se-rompen-sin-worktrees.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-26-auditar-tu-propio-harness.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-27-el-arnes-importa-y-cuesta.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/2026-10-28-sdk-o-framework.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "blog/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "boletin/002.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-con-modelos-abiertos/01-pesos-abiertos-y-licencias.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-con-modelos-abiertos/02-tu-primer-modelo-en-local.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-con-modelos-abiertos/03-servir-modelos-en-produccion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-con-modelos-abiertos/04-herramientas-con-modelos-abiertos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-con-modelos-abiertos/05-rag-cien-por-cien-local.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-con-modelos-abiertos/06-local-o-api.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-con-modelos-abiertos/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-de-codigo/01-como-trabaja-un-agente-de-codigo.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-de-codigo/02-contexto-del-repositorio.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-de-codigo/03-explorar-planificar-implementar-verificar.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-de-codigo/04-revisar-y-confiar.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/agentes-de-codigo/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/context-engineering/01-el-contexto-como-presupuesto.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/context-engineering/02-que-meter-y-que-no.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/context-engineering/03-compactacion-y-memoria.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/context-engineering/04-contexto-para-agentes-largos.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/context-engineering/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/evals-para-agentes/01-que-medir.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/evals-para-agentes/02-datasets-de-evaluacion.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/evals-para-agentes/03-graders.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/evals-para-agentes/04-evals-en-el-dia-a-dia.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/evals-para-agentes/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/01-del-prompt-al-harness.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/02-los-problemas-que-resuelve.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/03-las-quince-piezas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/04-patrones-y-principios.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/05-agentes-y-orquestador.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/06-el-flujo-como-maquina-de-estados.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/07-spec-congelada-y-aceptacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/08-veredictos-y-reparacion-acotada.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/09-seguridad-en-profundidad.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/10-coste-y-presupuesto.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/11-sesiones-largas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/12-probar-y-evolucionar-el-harness.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/13-features-en-paralelo-con-olas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/14-especializa-el-harness.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/harness-engineering/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ia-en-la-empresa/01-lo-que-un-modelo-no-sabe-de-tu-empresa.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ia-en-la-empresa/02-la-piramide-de-personalizacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ia-en-la-empresa/03-donde-esta-el-valor.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ia-en-la-empresa/04-medir-el-valor.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ia-en-la-empresa/05-errores-tipicos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ia-en-la-empresa/06-de-la-idea-al-piloto.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ia-en-la-empresa/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/la-ia-por-dentro/01-ia-machine-learning-y-deep-learning.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/la-ia-por-dentro/02-aprendizaje-supervisado-y-no-supervisado.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/la-ia-por-dentro/03-de-las-reglas-a-las-probabilidades.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/la-ia-por-dentro/04-la-neurona-y-la-red.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/la-ia-por-dentro/05-como-aprende-una-red.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/la-ia-por-dentro/06-sobreajuste-y-generalizacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/la-ia-por-dentro/07-de-las-rnn-al-transformer.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/la-ia-por-dentro/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/01-cuando-usar-un-framework.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/02-modelos-mensajes-y-herramientas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/03-tu-primer-agente-con-create-agent.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/04-middleware.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/05-langgraph-estado-nodos-y-aristas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/06-memoria-y-persistencia.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/07-humano-en-el-bucle-con-interrupt.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/08-multiagente-con-langgraph.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/09-deep-agents.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/10-mcp-en-langchain.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/11-observar-y-evaluar.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/langchain-y-langgraph/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/mcp-de-cero-a-servidor/01-que-resuelve-mcp.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/mcp-de-cero-a-servidor/02-usar-servidores-existentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/mcp-de-cero-a-servidor/03-tu-primer-servidor.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/mcp-de-cero-a-servidor/04-seguridad-y-despliegue.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/mcp-de-cero-a-servidor/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/01-anatomia-de-un-rag.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/02-indexar-bien.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/03-recuperar-bien.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/04-bases-vectoriales-por-dentro.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/05-tecnicas-avanzadas-de-recuperacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/06-el-corpus-manda.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/07-permisos-y-multi-tenant.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/08-mantener-el-indice.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/09-cuando-el-rag-vectorial-no-basta.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/10-evaluar-un-rag.md",
+  "estado_paquete": "RENOMBRADO",
+  "accion": "MOVER+FUSIONAR",
+  "nota": "desde cursos/rag-a-fondo/04-evaluar-un-rag.md"
+ },
+ {
+  "ruta": "cursos/rag-a-fondo/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/01-fase-0-que-es-la-ia.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/02-fase-1-redes-neuronales.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/03-fase-2-de-las-rnn-a-los-transformers.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/04-fase-3-llms-tokens-y-contexto.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/05-fase-3-5-ia-en-la-empresa.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/06-fase-3-5-rag.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/07-fase-4-herramientas-para-programar.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/08-fase-5-que-es-un-agente.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/09-fase-6-mcp.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/10-fase-7-agent-skills.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/11-fase-8-multiagente-y-sdd.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/12-fase-9-harness-engineering.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/13-fase-10-sistemas-y-plataformas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/14-ecosistema-y-estar-al-dia.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/ruta-en-video/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/seguridad-y-prompt-injection/01-modelo-de-amenazas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/seguridad-y-prompt-injection/02-inyeccion-directa-e-indirecta.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/seguridad-y-prompt-injection/03-defensas-en-capas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/seguridad-y-prompt-injection/04-permisos-y-sandbox.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/seguridad-y-prompt-injection/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/sistemas-multiagente/01-arquitecturas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/sistemas-multiagente/02-disenar-subagentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/sistemas-multiagente/03-coordinacion-y-estado.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/sistemas-multiagente/04-depurar-sistemas-multiagente.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/sistemas-multiagente/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/uso-del-ordenador/01-como-funciona.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/uso-del-ordenador/02-navegador-o-api.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/uso-del-ordenador/03-fiabilidad.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/uso-del-ordenador/04-seguridad-y-aislamiento.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "cursos/uso-del-ordenador/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/cambios-pequenos-y-revisables.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/context-engineering.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/diseno-de-herramientas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/evals.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/explorar-planificar-implementar-verificar.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/harness-engineering.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/humano-en-el-bucle.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/observabilidad.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/orquestador-y-subagentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/pair-programming-con-agentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/seguridad.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/spec-primero.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/trabajo-en-paralelo-con-agentes.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/ux-de-agentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "disciplinas/verificar-antes-de-dar-por-hecho.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/agentes/01-el-bucle-agentico.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/agentes/02-subagentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/agentes/03-humano-en-el-bucle.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/agentes/04-managed-agents.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/agentes/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/01-memoria-claude-md-y-agents-md.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/02-subagentes.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/03-skills.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/04-hooks.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/05-comandos-y-plugins.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/06-permisos-y-sandbox.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/07-mcp-en-claude-code.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/08-modo-headless-y-ci.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/09-workflows-equipos-y-segundo-plano.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/claude-code/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/contexto/01-ventana-de-contexto.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/contexto/02-prompt-caching.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/contexto/03-rag.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/contexto/04-memoria.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/contexto/05-compactacion-y-limpieza-en-el-servidor.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/contexto/06-mensajes-de-sistema-a-mitad-de-conversacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/contexto/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/estandares/01-mcp-2026-07-28.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/estandares/02-extensiones-mcp.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/estandares/03-a2a.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/estandares/04-agent-skills-y-agents-md.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/estandares/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/evals/01-disenar-evals.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/evals/02-modelo-como-juez.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/evals/03-benchmarks-publicos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/evals/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/01-elegir-framework.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/02-equivalencias.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/03-claude-agent-sdk.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/04-langchain.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/05-langgraph.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/06-openai-agents-sdk.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/07-pydantic-ai.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/08-llamaindex.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/09-otros-frameworks.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/10-deep-agents.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/11-agentes-en-typescript.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/frameworks/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/fundamentos/01-introduccion.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/fundamentos/02-tu-primera-llamada.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/fundamentos/03-api-de-mensajes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/fundamentos/04-streaming.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/fundamentos/05-versiones-de-api-y-sdks.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/fundamentos/06-motivos-de-parada-y-rechazos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/fundamentos/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/herramientas/01-uso-de-herramientas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/herramientas/02-mcp.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/herramientas/03-herramientas-del-servidor.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/herramientas/04-uso-del-ordenador.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/herramientas/05-busqueda-y-carga-diferida.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/herramientas/06-llamada-programatica.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/herramientas/07-mcp-desde-la-api.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/herramientas/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/01-ollama.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/02-vllm-y-llama-cpp.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/03-apis-compatibles-y-litellm.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/04-embeddings-y-rerankers.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/05-bases-vectoriales.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/06-ingesta-de-documentos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/07-observabilidad-abierta.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/08-evals-abiertas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/09-guardrails-y-sandbox.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/10-agentes-de-codigo-abiertos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/modelos-abiertos/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/produccion/01-observabilidad.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/produccion/02-costes-y-limites.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/produccion/03-latencia.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/produccion/04-opentelemetry-genai.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/produccion/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/prompting/01-prompt-de-sistema.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/prompting/02-ejemplos-few-shot.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/prompting/03-salida-estructurada.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/prompting/04-razonamiento.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/prompting/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/seguridad/01-prompt-injection.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/seguridad/02-permisos-y-minimo-privilegio.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/seguridad/03-patrones-contra-inyeccion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/seguridad/04-mcp-y-skills-de-terceros.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "docs/seguridad/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/a2a.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/aceptacion-ejecutable.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/agent-card.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/agente.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/agents-md.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/alucinacion.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/analisis-de-errores.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/ann.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/aprendizaje-automatico.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/aprendizaje-no-supervisado.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/aprendizaje-por-refuerzo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/aprendizaje-profundo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/aprendizaje-supervisado.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/atencion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/backpropagation.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/bi-encoder.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/bm25.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/bucle-agentico.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/bucle-ralph.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/busqueda-hibrida.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/cadena-de-pensamiento.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/canario-de-contexto.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/carga-diferida-de-herramientas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/checkpointer.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/chunking.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/claude-md.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/compactacion.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/conjunto-de-evaluacion.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/contaminacion-de-benchmark.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/context-rot.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/contexto-largo.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/convenciones-genai-otel.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/cross-encoder.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/cuantizacion-de-producto.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/cuantizacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/decodificacion-restringida.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/descenso-del-gradiente.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/destilacion.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/deteccion-de-turno.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/divulgacion-progresiva.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/ears.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/ejecucion-duradera.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/embeddings.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/envenenamiento-de-herramientas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/esfuerzo.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/evals.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/fallback-de-modelo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/fallo-en-cerrado.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/few-shot.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/fidelidad.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/fine-tuning.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/framework-de-agentes.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/funcion-de-activacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/funcion-de-perdida.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/function-calling.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/gguf.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/grafo-de-estado.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/graphrag.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/grounding.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/guardrails.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/guias-y-sensores.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/handoff.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/harness-engineering.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/harness.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/hnsw.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/hook.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/humano-en-el-bucle.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/hyde.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/inferencia-local.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/interaccion-tardia.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/inyeccion-de-prompt.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/ivf.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/kv-cache.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/late-chunking.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/latencia.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/leyes-de-escalado.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/llamada-programatica.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/llm.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/lost-in-the-middle.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/managed-agents.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/max-tokens.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/mcp.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/memoria.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/mensaje-de-sistema-intermedio.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/metadatos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/mezcla-de-expertos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/middleware.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/minimo-privilegio.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/modelo-de-razonamiento.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/modelo-fundacional.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/modelo-juez.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/modelo-simulado.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/mrr.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/mrtr.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/multi-hop.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/multi-tenant.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/ndcg.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/observabilidad.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/ola.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/open-source-ai.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/orquestador.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/parametros.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/pass-k.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/perceptron.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/pesos-abiertos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/plantilla-de-chat.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/preentrenamiento.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/presupuesto-de-tarea.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/prompt-caching.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/prompt-de-sistema.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/prompt.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/puerta-humana.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/rag-agentico.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/rag.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/razonamiento-extendido.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/react.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/recall-at-k.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/rechazo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/recuperacion-contextual.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/red-neuronal.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/reescritura-de-consulta.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/regla-de-dos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/reranking.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/rlhf.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/rrf.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/rug-pull.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/salida-estructurada.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/sandbox.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/sdd.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/servidor-mcp.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/similitud-coseno.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/skill.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/sobreajuste.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/stop-reason.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/streaming.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/subagente.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/temperatura.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/tipos-de-memoria.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/token.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/tokenizador.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/tool-choice.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/tool-result.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/tool-use.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/toolset.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/top-p.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/transformer.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/traspaso-de-sesion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/trayectoria.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/trifecta-letal.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/uso-del-ordenador.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/vector-store.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/ventana-de-contexto.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/veredicto.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/voz-a-voz.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/workflow.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/worktree.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "glosario/zero-shot.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/aider.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/anthropic-sdk.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/arize-phoenix.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/chroma.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/claude-agent-sdk.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/claude-code.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/cline.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/crewai.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/deepagents.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/deepeval.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/docling.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/dspy.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/google-adk.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/goose.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/haystack.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "CONFLICTO",
+  "nota": "ya existe un archivo propio en esta ruta: fusiona a mano (conserva lo tuyo y añade lo del paquete)"
+ },
+ {
+  "ruta": "herramientas/inspect-ai.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/lancedb.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/langchain.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/langfuse.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/langgraph.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/litellm.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/llama-cpp.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/llama-guard.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/llamaindex.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/lm-studio.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/mastra.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/mcp-sdks.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/microsoft-agent-framework.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/ollama.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/open-webui.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/openai-agents-sdk.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/opencode.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/openhands.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/pgvector.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/promptfoo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/pydantic-ai.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/qdrant.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/ragas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/smolagents.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/strands-agents.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/vercel-ai-sdk.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "herramientas/vllm.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/01-principios-de-prompting.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/02-ingenieria-de-contexto.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/03-formato-y-salidas-estructuradas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/04-dejar-pensar-al-modelo.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/05-elegir-modelo-por-tarea.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/06-parametros.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/07-documentos-largos.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/08-antipatrones.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/09-checklist-produccion.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/10-prompting-rag-o-fine-tuning.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/11-modelos-abiertos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/12-inferencia-local.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "modelos/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "paginas/contribuir.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "paginas/empieza-aqui.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "paginas/fuentes.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "paginas/manifiesto.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "paginas/sobre.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/01-workflows-vs-agentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/02-llamada-aumentada.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/03-encadenado.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/04-enrutado.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/05-paralelizacion.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/06-orquestador-trabajadores.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/07-evaluador-optimizador.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/08-agente-autonomo.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/09-elegir-patron.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/10-inicializador-y-agente-de-trabajo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/11-planificador-generador-evaluador.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/12-bucle-ralph.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/13-ejecutor-y-asesor.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "patrones/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/agents-md.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/checklist-de-rag.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/claude-md.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/criterios-de-aceptacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/estado-de-feature.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "CONFLICTO",
+  "nota": "ya existe un archivo propio en esta ruta: fusiona a mano (conserva lo tuyo y añade lo del paquete)"
+ },
+ {
+  "ruta": "plantillas/peticion-de-reparacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/plan-de-olas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/prompt-apuntes-de-video.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/prompt-de-sistema-de-agente.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/prompt-plan-de-implementacion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/skill.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/spec-con-ears.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/subagente.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "plantillas/veredicto-de-revision.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/conflictos-al-integrar-en-paralelo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/contexto-saturado-en-sesiones-largas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/el-agente-no-para.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/el-agente-repite-la-misma-herramienta.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/el-hook-bloquea-todo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/el-modelo-ignora-instrucciones.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/el-rag-encuentra-pero-responde-mal.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/el-rag-no-encuentra-el-documento.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/error-429-limite-de-tasa.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "CONFLICTO",
+  "nota": "ya existe un archivo propio en esta ruta: fusiona a mano (conserva lo tuyo y añade lo del paquete)"
+ },
+ {
+  "ruta": "problemas/json-invalido-del-modelo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/la-cache-no-se-aprovecha.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/langgraph-no-reanuda-tras-interrupt.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/modelo-local-no-llama-herramientas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/respuesta-cortada-por-max-tokens.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/servidor-mcp-no-aparece.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "problemas/tool-result-sin-tool-use.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-07-02-uso-del-ordenador-en-sandbox.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-07-21-prompt-caching-palanca-de-coste.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-07-28-agentes-de-larga-duracion.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-08-11-salidas-estructuradas-garantizadas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-08-25-razonamiento-adaptativo.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-09-08-mcp-forma-estandar.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-22-arnes-de-codex-en-abierto.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-22-harness-engineering.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-23-api-2026-10-21-sin-temperatura.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-23-no-se-puede-forzar-herramienta.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-24-owasp-top-10-agentico.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-24-swe-bench-verified-retirado.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-25-mcp-sin-estado.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-26-otel-genai-repositorio-propio.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-26-skills-cadena-de-suministro.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-27-agent-skills-en-la-aaif.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-28-ai-act-aplaza-alto-riesgo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-28-apis-anthropic-en-local.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-28-multiagente-un-solo-escritor.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-29-harness-alojado-managed-agents.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-29-licencias-model-as-a-service.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/2026-10-29-tgi-archivado-y-llama-cpp-semver.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "radar/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/agente-con-claude-agent-sdk.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/agente-de-codigo-con-modelo-local.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/agente-local-con-ollama.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/analisis-de-errores-de-trazas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/aprobacion-humana-antes-de-actuar.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/aprobacion-humana-con-langgraph.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/apuntes-de-video-con-ia.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/busqueda-hibrida-con-bm25.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/busqueda-hibrida-con-qdrant.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/canario-de-contexto.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/carga-diferida-de-herramientas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/chunks-padre-hijo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/clasificar-y-enrutar-tickets.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/compactacion-en-el-servidor.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/congelar-la-spec-con-un-hash.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/coste-por-subagente.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/criterios-de-aceptacion-ejecutables.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/depurar-un-rag.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/diagnosticar-fallos-de-cache.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/entregar-resultado-sin-forzar-herramienta.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/evals-con-promptfoo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/evals-de-regresion-en-ci.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/extraer-facturas-a-json.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/fallback-ante-rechazos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/features-en-paralelo-con-worktrees.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/fusionar-rankings-con-rrf.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/herramientas-mcp-en-un-agente-langchain.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/hook-que-bloquea-comandos-peligrosos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/integrar-features-en-paralelo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/map-reduce-con-send.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/maquina-de-estados-con-guards.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/modelo-juez-con-rubrica.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/pdf-a-markdown-con-docling.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/probar-agentes-sin-api.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/proteger-secretos-del-agente.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/puerta-humana-con-comandos.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/rag-local-con-pgvector.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/rag-minimo-viable.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/reanudar-un-agente-tras-un-reinicio.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/recortar-costes-con-prompt-caching.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/reindexado-incremental.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/reintentos-y-limites-de-tasa.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/resumen-de-reuniones-con-acciones.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/servidor-mcp-de-solo-lectura.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/servidor-mcp-sin-estado-con-handles.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/servir-un-modelo-con-vllm.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/streaming-de-respuestas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/trazas-con-langfuse.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/trocear-documentos.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/un-verify-para-toda-la-regresion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "recetas/validar-un-modelo-juez.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/00-fundamentos/01-que-es-un-llm.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/00-fundamentos/02-tokens.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/00-fundamentos/03-ventana-de-contexto.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/00-fundamentos/04-primera-llamada-api.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/00-fundamentos/05-coste-y-latencia.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/00-fundamentos/06-como-se-entrena-un-llm.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/00-fundamentos/07-empresa-modelo-herramienta.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/00-fundamentos/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/10-prompting/01-instrucciones-claras.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/10-prompting/02-ejemplos-few-shot.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/10-prompting/03-formato-de-salida.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/10-prompting/04-prompt-de-sistema.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/10-prompting/05-iterar-con-casos-de-prueba.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/10-prompting/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/100-produccion/01-observabilidad-y-trazas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/100-produccion/02-costes-y-prompt-caching.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/100-produccion/03-latencia.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/100-produccion/04-seguridad-y-prompt-injection.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/100-produccion/05-humano-en-el-bucle.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/100-produccion/06-despliegue.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/100-produccion/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/20-herramientas/01-ciclo-tool-use.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/20-herramientas/02-definir-herramientas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/20-herramientas/03-errores-e-is-error.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/20-herramientas/04-tool-choice.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/20-herramientas/05-mcp-conectar-un-servidor.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/20-herramientas/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/30-contexto-y-rag/01-embeddings.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/30-contexto-y-rag/02-chunking.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/30-contexto-y-rag/03-busqueda-hibrida.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/30-contexto-y-rag/04-reranking.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/30-contexto-y-rag/05-respuestas-con-citas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/30-contexto-y-rag/06-memoria-entre-sesiones.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/30-contexto-y-rag/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/40-primer-agente/01-que-es-un-agente.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/40-primer-agente/02-el-bucle-agentico.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/40-primer-agente/03-condiciones-de-parada.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/40-primer-agente/04-planificar-antes-de-actuar.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/40-primer-agente/05-agente-con-varias-herramientas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/40-primer-agente/06-depurar-con-trazas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/40-primer-agente/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/50-skills/01-que-es-una-skill.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/50-skills/02-anatomia-de-una-skill.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/50-skills/03-carga-bajo-demanda.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/50-skills/04-escribir-tu-primera-skill.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/50-skills/05-skills-en-equipo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/50-skills/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/60-multiagente/01-cuando-no-usar-multiagente.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/60-multiagente/02-orquestador-y-subagentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/60-multiagente/03-pasar-contexto-entre-agentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/60-multiagente/04-paralelismo.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/60-multiagente/05-coste-de-multiplicar-agentes.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/60-multiagente/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/70-flujos-con-especificacion/01-de-improvisar-a-especificar.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/70-flujos-con-especificacion/02-requisitos-en-ears.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/70-flujos-con-especificacion/03-plan-y-tareas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/70-flujos-con-especificacion/04-aceptacion-ejecutable.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/70-flujos-con-especificacion/05-una-sola-puerta-humana.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/70-flujos-con-especificacion/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/80-evals/01-por-que-evals.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/80-evals/02-conjunto-de-prueba.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/80-evals/03-codigo-o-modelo-juez.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/80-evals/04-evals-de-trayectoria.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/80-evals/05-regresiones-en-ci.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/80-evals/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/90-harness/01-que-es-un-harness.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/90-harness/02-las-piezas-de-un-harness.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/90-harness/03-permisos-y-hooks.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/90-harness/04-estado-coste-y-contexto.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/90-harness/05-un-harness-minimo.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/90-harness/index.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "roadmap/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/agente-de-codigo.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/agente-de-larga-duracion.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/agente-de-voz.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/asistente-100-local.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/asistente-de-datos-con-mcp.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/extraccion-documental.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/harness-sdd-claude-code.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/harness-sdd-olas.md",
+  "estado_paquete": "NUEVO",
+  "accion": "COPIAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/index.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/investigacion-multiagente.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/rag-con-citas.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ },
+ {
+  "ruta": "sistemas/soporte-con-aprobacion-humana.md",
+  "estado_paquete": "MODIFICADO",
+  "accion": "FUSIONAR",
+  "nota": ""
+ }
+]

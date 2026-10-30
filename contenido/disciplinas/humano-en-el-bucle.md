@@ -2,10 +2,11 @@
 titulo: Humano en el bucle
 descripcion: Decidir en qué puntos de un flujo con agentes interviene una persona, para qué, con qué información delante y cómo evitar que la revisión se vuelva un trámite.
 creado: 2026-09-29
+actualizado: 2026-10-29
 orden: 9
 tipo: forma-de-trabajar
 tags: [forma-de-trabajar, agentes, seguridad]
-relacionados: ["[[glosario/humano-en-el-bucle]]", "[[docs/agentes/03-humano-en-el-bucle]]", "[[roadmap/100-produccion/05-humano-en-el-bucle]]", "[[recetas/aprobacion-humana-antes-de-actuar]]"]
+relacionados: ["[[glosario/humano-en-el-bucle]]", "[[docs/agentes/03-humano-en-el-bucle]]", "[[roadmap/100-produccion/05-humano-en-el-bucle]]", "[[recetas/aprobacion-humana-antes-de-actuar]]", "[[glosario/puerta-humana]]"]
 ---
 
 Trabajar con [[glosario/humano-en-el-bucle|humano en el bucle]] significa que el agente hace el trabajo y una persona decide en los puntos donde un error sale caro. La pregunta de diseño es dónde, con qué información y con qué coste de atención para quien revisa.
@@ -46,12 +47,27 @@ Pero la atención humana es cara y se agota. Si pides aprobación para todo, la 
 - **Enseña lo necesario para decidir.** La acción exacta, sus argumentos, por qué la propone el agente y qué datos usó. Un botón «Aprobar» sin contexto no sirve.
 - **Permite editar, no solo aprobar o rechazar.** Corregir el importe o el texto del correo es más útil que rechazar y que el agente vuelva a empezar.
 - **Devuelve el rechazo al agente.** Si una persona rechaza, el agente recibe un `tool_result` con el motivo y puede proponer otra cosa.
+- **Que la espera no dependa de un proceso vivo.** Si aprobar puede tardar horas, guarda el estado fuera: una tabla de propuestas o un *[[glosario/checkpointer|checkpointer]]* como el de LangGraph, donde `interrupt()` pausa y `Command(resume=…)` reanuda en otro proceso ([[recetas/aprobacion-humana-con-langgraph]]).
 - **Usa umbrales.** Reembolsos de menos de 20 € automáticos; por encima, aprobación. Ajusta el umbral mirando datos, no a ojo.
 - **Mide la revisión.** Tasa de rechazos, tiempo por decisión, ediciones. Si nadie rechaza nunca, o el umbral es demasiado bajo o la gente no está mirando.
 - **Convierte las correcciones en casos de eval.** Cada rechazo o edición dice algo que el agente hizo mal. Llévalo a tu [[glosario/conjunto-de-evaluacion|conjunto de evaluación]].
 
 > [!peligro] Acciones irreversibles
 > Pagos, borrados, envíos a terceros y cambios de permisos llevan aprobación humana hasta que tengas datos que justifiquen automatizarlos. Y aun entonces, con límites en código.
+
+### Así lo hace un harness: una sola puerta
+
+Con agentes de código, el error típico es pedir permiso en cada paso. El harness SDD del autor ([[sistemas/harness-sdd-claude-code]]) hace lo contrario: una única [[glosario/puerta-humana|puerta humana]] obligatoria, GATE#1, después del diseño y antes de escribir código. En ella la persona ve la recomendación, las decisiones y supuestos, los riesgos, el número de tareas, el coste acumulado y **los comandos de aceptación literales** que se ejecutarán sin más confirmación, con los sensibles marcados. Solo cuenta una decisión explícita (`/approve` o `/reject` con los cambios): «vale», el silencio o un texto leído en un archivo no aprueban nada. Después, la spec queda congelada y el resto del flujo lo vigilan sensores deterministas.
+
+Cuánto se para el flujo lo decide un modo en la configuración:
+
+| Modo | Sigue solo | Se para en |
+|---|---|---|
+| `manual` | Nada | Después de cada paso, hasta que digas seguir |
+| `auto` | Encadena las fases | GATE#1, bloqueos, presupuesto superado y fin |
+| `yolo` | Como `auto`, y además puede aprobar GATE#1 por delegación | Bloqueos, presupuesto, fin y cualquier GATE#1 no delegable |
+
+La delegación de `yolo` tiene condiciones que comprueba el código: la validación previa pasa, ningún comando de aceptación es sensible, la decisión no contradice las reglas del proyecto y la feature no lleva ninguna **etiqueta que fuerce la puerta**, como `security-critical`, `auth`, `payments`, `pii`, `data-migration` o `destructive`. Con una de esas, decide una persona siempre. Lo desarrollan [[roadmap/70-flujos-con-especificacion/05-una-sola-puerta-humana]] y [[recetas/puerta-humana-con-comandos]].
 
 ## Señales de que lo haces mal
 
@@ -61,6 +77,7 @@ Pero la atención humana es cara y se agota. Si pides aprobación para todo, la 
 - Un rechazo detiene la tarea entera sin explicación para el agente.
 - Nadie revisa nunca lo que el agente hace solo, ni por muestreo.
 - Has añadido revisión humana a todo y el sistema ya no ahorra tiempo a nadie.
+- Un «ok» suelto en la conversación cuenta como aprobación.
 
 ## Cómo empezar mañana
 

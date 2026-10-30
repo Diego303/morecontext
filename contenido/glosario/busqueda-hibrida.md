@@ -2,6 +2,7 @@
 titulo: Búsqueda híbrida
 descripcion: Combinar búsqueda por palabras clave y búsqueda vectorial y fusionar sus resultados para recuperar mejor.
 creado: 2026-08-06
+actualizado: 2026-10-29
 categoria: contexto
 ingles: hybrid search
 aliases: [hybrid search, búsqueda mixta, recuperación híbrida]
@@ -13,7 +14,7 @@ La búsqueda híbrida lanza la misma consulta contra dos índices, uno léxico (
 
 ## En la práctica
 
-Las puntuaciones de BM25 y de similitud vectorial no están en la misma escala, así que no se suman sin más. Lo habitual es fusionar por posición con *Reciprocal Rank Fusion* (RRF): cada documento suma `1 / (k + posición)` en cada lista donde aparece, con `k` en torno a 60. Después, un [[glosario/reranking]] reordena los mejores candidatos antes de pasarlos al modelo. Mide con tus preguntas reales si cada pieza mejora la recuperación.
+Las puntuaciones de BM25 y de similitud vectorial no están en la misma escala, así que no se suman sin más. Lo habitual es fusionar por posición con *Reciprocal Rank Fusion* ([[glosario/rrf|RRF]]): cada documento suma `1 / (k + posición)` en cada lista donde aparece, con `k` en torno a 60. Qdrant lo trae integrado (`RrfQuery`) y en PostgreSQL se escribe en SQL combinando pgvector y `tsvector`. Después, un [[glosario/reranking]] reordena los mejores candidatos antes de pasarlos al modelo. Mide con tus preguntas reales si cada pieza mejora la recuperación.
 
 ## No confundir con
 
@@ -25,3 +26,5 @@ Las puntuaciones de BM25 y de similitud vectorial no están en la misma escala, 
 - [[recetas/busqueda-hibrida-con-bm25]]
 - [[cursos/rag-a-fondo/03-recuperar-bien]]
 - [[glosario/rag]]
+- [[recetas/fusionar-rankings-con-rrf]]
+- [[recetas/busqueda-hibrida-con-qdrant]]

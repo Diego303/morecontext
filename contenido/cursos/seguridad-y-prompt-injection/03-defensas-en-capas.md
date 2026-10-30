@@ -1,7 +1,8 @@
 ---
 titulo: Defensas en capas
-descripcion: Por qué ninguna defensa contra la inyección basta sola y cómo combinar separación de datos, seguimiento de contenido contaminado, confirmación, filtrado de salida y detección, con el OWASP Top 10 LLM como control.
+descripcion: Por qué ninguna defensa contra la inyección basta sola y cómo combinar separación de datos, contaminación, confirmación, filtrado de salida y detección, con los OWASP Top 10 de LLM y de agentes como control.
 creado: 2026-10-21
+actualizado: 2026-10-29
 orden: 3
 minutos: 60
 tipo: practica
@@ -9,9 +10,9 @@ objetivos:
   - Explicar qué reduce y qué no reduce cada capa de defensa frente a la inyección.
   - Implementar un seguimiento de contenido contaminado que exige confirmación para acciones sensibles.
   - Implementar un filtro de salida que elimina enlaces e imágenes hacia dominios no permitidos.
-  - Usar el OWASP Top 10 para aplicaciones con LLM como lista de control de un agente.
+  - Usar el OWASP Top 10 para aplicaciones con LLM (2025) y el de aplicaciones agénticas (2026) como listas de control de un agente.
 requiere: ["[[cursos/seguridad-y-prompt-injection/02-inyeccion-directa-e-indirecta]]"]
-relacionados: ["[[glosario/guardrails]]", "[[glosario/humano-en-el-bucle]]", "[[recetas/aprobacion-humana-antes-de-actuar]]", "[[disciplinas/seguridad]]", "[[docs/seguridad/01-prompt-injection]]"]
+relacionados: ["[[glosario/guardrails]]", "[[glosario/humano-en-el-bucle]]", "[[recetas/aprobacion-humana-antes-de-actuar]]", "[[docs/seguridad/03-patrones-contra-inyeccion]]", "[[disciplinas/seguridad]]", "[[docs/seguridad/01-prompt-injection]]"]
 tags: [seguridad, defensas, owasp, prompt-injection]
 ---
 
@@ -96,7 +97,7 @@ class Guardia:
 
 En el bucle del agente, antes de ejecutar cada `tool_use`, llamas a `guardia.permitir`. Si devuelve `False`, no ejecutas y devuelves el mensaje como `tool_result` con `is_error: True`; el modelo sigue teniendo su resultado por cada llamada. Después de ejecutar, llamas a `guardia.tras_resultado`. La confirmación muestra al usuario **los argumentos exactos** («Enviar a cobros@atacante.example: …»), no un resumen escrito por el modelo, que podría estar manipulado. Para el diseño de la aprobación, mira [[recetas/aprobacion-humana-antes-de-actuar]].
 
-Una variante más estricta separa dos modelos: uno **en cuarentena** que lee el contenido no fiable sin herramientas y devuelve solo datos estructurados (por ejemplo, un JSON validado con el remitente y un resumen), y otro con herramientas que nunca ve el texto original. Cuesta más, pero la inyección no llega al modelo que actúa.
+Una variante más estricta separa dos modelos: uno **en cuarentena** que lee el contenido no fiable sin herramientas y devuelve solo datos estructurados (por ejemplo, un JSON validado con el remitente y un resumen), y otro con herramientas que nunca ve el texto original. Cuesta más, pero la inyección no llega al modelo que actúa. Es el patrón *Dual LLM*, uno de los seis que recoge Beurer-Kellner et al. (2025), [*Design Patterns for Securing LLM Agents against Prompt Injections*](https://arxiv.org/abs/2506.08837), junto a otros como *Plan-Then-Execute* (el plan se fija antes de leer nada no fiable) o *Action-Selector* (el modelo solo elige entre acciones predefinidas). Su principio común: una vez que el agente ha leído entrada no fiable, esa entrada no debe poder disparar acciones con consecuencias. CaMeL (Debenedetti et al., 2025, [*Defeating Prompt Injections by Design*](https://arxiv.org/abs/2503.18813)) lleva la idea más lejos: extrae el flujo de control de la petición del usuario y los datos no fiables no pueden alterarlo. Los tienes comparados en [[docs/seguridad/03-patrones-contra-inyeccion]].
 
 ## Capa 3: filtrar la salida
 
@@ -128,24 +129,41 @@ Además, si la salida del modelo alimenta otro sistema, trátala como entrada no
 
 Un clasificador de inyecciones (o un modelo que revisa el contenido externo antes de pasarlo) detiene ataques burdos y te da señales para la [[glosario/observabilidad|observabilidad]]: cuántos intentos recibes y por dónde. Úsalo como alarma y como capa extra. No lo uses como única barrera: los ataques se adaptan al detector.
 
-## El OWASP Top 10 como control
+Esto está medido. Nasr et al. (2025), [*The Attacker Moves Second*](https://arxiv.org/abs/2510.09023), atacaron 12 defensas recientes que reportaban tasas de éxito del atacante cercanas a cero, pero con ataques adaptativos (que iteran contra la defensa concreta): superaron la mayoría con más del 90 % de éxito. Consecuencia práctica: no te fíes de la cifra de un detector evaluado con ataques fijos, y cuando evalúes tus propias defensas, incluye ataques que alguien ha ajustado mirando tu sistema, no solo la batería estática de la lección 2.
 
-El proyecto OWASP mantiene un [*Top 10 for LLM Applications*](https://genai.owasp.org). La edición de 2025 incluye estas categorías (consulta la versión vigente):
+## Los OWASP Top 10 como control
+
+El proyecto OWASP GenAI mantiene dos listas. El [*Top 10 for LLM Applications 2025*](https://genai.owasp.org) cubre cualquier aplicación con un modelo:
 
 | Categoría | En un agente, pregúntate |
 |---|---|
-| Inyección de prompt | ¿qué capas de esta lección tienes? |
-| Revelación de información sensible | ¿puede el agente devolver datos de otro usuario o secretos? |
-| Cadena de suministro | ¿fijas y revisas modelos, paquetes y servidores MCP de terceros? |
-| Envenenamiento de datos y modelos | ¿quién puede escribir en tu índice de RAG? |
-| Manejo inadecuado de la salida | ¿escapas la salida antes de usarla en otros sistemas? |
-| Agencia excesiva | ¿tiene el agente más herramientas o permisos de los que necesita? |
-| Filtración del prompt de sistema | ¿hay secretos o lógica de seguridad en el prompt? (no debería) |
-| Debilidades de vectores y embeddings | ¿filtras permisos en la recuperación? |
-| Desinformación | ¿cita fuentes y se abstiene cuando no sabe? |
-| Consumo sin límites | ¿tienes límites de pasos, tokens y tasa? |
+| LLM01 Inyección de prompt | ¿qué capas de esta lección tienes? |
+| LLM02 Revelación de información sensible | ¿puede el agente devolver datos de otro usuario o secretos? |
+| LLM03 Cadena de suministro | ¿fijas y revisas modelos, paquetes y servidores MCP de terceros? |
+| LLM04 Envenenamiento de datos y modelos | ¿quién puede escribir en tu índice de RAG? |
+| LLM05 Manejo inadecuado de la salida | ¿escapas la salida antes de usarla en otros sistemas? |
+| LLM06 Agencia excesiva | ¿tiene el agente más herramientas o permisos de los que necesita? |
+| LLM07 Filtración del prompt de sistema | ¿hay secretos o lógica de seguridad en el prompt? (no debería) |
+| LLM08 Debilidades de vectores y embeddings | ¿filtras permisos en la recuperación? |
+| LLM09 Desinformación | ¿cita fuentes y se abstiene cuando no sabe? |
+| LLM10 Consumo sin límites | ¿tienes límites de pasos, tokens y tasa? |
 
-Recorre la tabla con tu modelo de amenazas de la [[cursos/seguridad-y-prompt-injection/01-modelo-de-amenazas|lección 1]] delante. Cada fila sin respuesta es trabajo pendiente.
+El [*Top 10 for Agentic Applications for 2026*](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) (9 dic. 2025) se centra en agentes que planifican, usan herramientas y colaboran:
+
+| Categoría | En un agente, pregúntate |
+|---|---|
+| ASI01 Secuestro del objetivo (*Agent Goal Hijack*) | ¿puede un contenido leído cambiar lo que el agente intenta conseguir? |
+| ASI02 Mal uso de herramientas (*Tool Misuse and Exploitation*) | ¿validas los argumentos de cada herramienta en tu código? |
+| ASI03 Abuso de identidad y privilegios | ¿actúa el agente con los permisos del usuario o con una cuenta que lo ve todo? |
+| ASI04 Cadena de suministro agéntica | ¿revisas y fijas servidores MCP, skills y plantillas de prompts? |
+| ASI05 Ejecución inesperada de código | ¿se ejecuta el código del agente en un sandbox? |
+| ASI06 Envenenamiento de memoria y contexto | ¿quién puede escribir en la memoria que el agente relee? |
+| ASI07 Comunicación insegura entre agentes | ¿autentica un agente los mensajes que recibe de otro? |
+| ASI08 Fallos en cascada | ¿un error de un subagente se propaga sin control al resto? |
+| ASI09 Explotación de la confianza humano-agente | ¿podría el agente convencer al usuario de aprobar algo dañino? |
+| ASI10 Agentes descontrolados (*Rogue Agents*) | ¿detectarías un agente que actúa fuera de su encargo? |
+
+Recorre las dos tablas con tu modelo de amenazas de la [[cursos/seguridad-y-prompt-injection/01-modelo-de-amenazas|lección 1]] delante. Cada fila sin respuesta es trabajo pendiente. Los nombres exactos y las descripciones están en las páginas de OWASP; consulta la edición vigente.
 
 > [!peligro] No guardes secretos en el prompt
 > Cualquier cosa del prompt de sistema puede acabar en la respuesta. Claves, contraseñas o reglas cuya confidencialidad sea tu única defensa no deben estar ahí.
@@ -173,10 +191,12 @@ Recorre la tabla con tu modelo de amenazas de la [[cursos/seguridad-y-prompt-inj
 - Separar datos con etiquetas y escape reduce la probabilidad, no la garantiza.
 - El seguimiento de contaminación bloquea acciones sensibles tras leer contenido no fiable.
 - Filtra enlaces, imágenes y URLs hacia dominios no permitidos antes de mostrar la salida.
-- Usa el OWASP Top 10 para aplicaciones con LLM como lista de control.
+- Desconfía de las cifras de detectores: los ataques adaptativos superan la mayoría.
+- Usa el OWASP Top 10 de LLM (2025) y el de aplicaciones agénticas (2026) como listas de control.
 
 ## Para seguir
 
 - [[cursos/seguridad-y-prompt-injection/04-permisos-y-sandbox]]
+- [[docs/seguridad/03-patrones-contra-inyeccion]]
 - [[recetas/aprobacion-humana-antes-de-actuar]]
 - [[disciplinas/seguridad]]

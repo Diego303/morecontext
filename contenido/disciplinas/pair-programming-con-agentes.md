@@ -2,6 +2,7 @@
 titulo: Pair programming con un agente
 descripcion: Programar en pareja con un agente de código, repartiendo los papeles de conductor y navegante y manteniendo tú el criterio sobre el diseño.
 creado: 2026-09-22
+actualizado: 2026-10-29
 orden: 8
 tipo: forma-de-trabajar
 tags: [forma-de-trabajar, agentes-de-codigo]
@@ -36,9 +37,9 @@ Además aprendes. Pedir al agente que te explique un módulo, que te enseñe dó
 - **Avanza en pasos que puedas revisar.** Un cambio, sus tests, revisión, siguiente. Si un paso produce un diff de 400 líneas, era demasiado grande.
 - **Haz que el agente ejecute.** Tests, linter, el script que reproduce el bug. Un agente que ve la salida real de sus cambios se corrige solo. Uno que no la ve, adivina.
 - **Di lo que sabes y él no.** «Ese campo puede venir nulo en clientes antiguos», «este servicio tiene un límite de 10 peticiones por segundo». El contexto del dominio es tu aportación principal.
-- **Pon las convenciones en un archivo.** Las reglas que repites en cada sesión (estilo, comandos de test, carpetas prohibidas) van en un archivo de instrucciones del repositorio que el agente lee al empezar. Lo trata [[cursos/agentes-de-codigo/02-contexto-del-repositorio]].
-- **Desconfía de la confianza.** Cuando el agente dice «esto ya funciona», pide la prueba: el test que pasa, la salida del comando.
-- **Corta y reinicia cuando se atasca.** Si lleva tres intentos con el mismo error, para. Resume lo aprendido, limpia el contexto y empieza una sesión nueva con ese resumen.
+- **Pon las convenciones en un archivo.** Las reglas que repites en cada sesión (estilo, comandos de test, carpetas prohibidas) van en un archivo de instrucciones del repositorio que el agente lee al empezar. El formato compartido por más herramientas es [[glosario/agents-md|`AGENTS.md`]], y Claude Code lo lee de forma nativa cuando no hay `CLAUDE.md` (o lo importa con `@AGENTS.md`). Escribe reglas que se puedan comprobar; una regla vaga se paga en tokens en cada sesión y no cambia nada. Lo tratan [[cursos/agentes-de-codigo/02-contexto-del-repositorio]] y [[docs/claude-code/01-memoria-claude-md-y-agents-md]], con plantillas en [[plantillas/agents-md]] y [[plantillas/claude-md]].
+- **Desconfía de la confianza.** Cuando el agente dice «esto ya funciona», pide la prueba: el test que pasa, la salida del comando, ejecutado después del último cambio ([[disciplinas/verificar-antes-de-dar-por-hecho]]).
+- **Corta y reinicia cuando se atasca.** Si lleva tres intentos con el mismo error, para. Resume lo aprendido, limpia el contexto y empieza una sesión nueva con ese resumen ([[glosario/traspaso-de-sesion|traspaso de sesión]]).
 
 > [!aviso] Revisas tú
 > El código que entra en el repositorio es tuyo, lo haya escrito quien lo haya escrito. Si no entiendes un cambio, no lo aceptes hasta entenderlo.
@@ -64,3 +65,4 @@ Además aprendes. Pedir al agente que te explique un módulo, que te enseñe dó
 - [[cursos/agentes-de-codigo/01-como-trabaja-un-agente-de-codigo]]
 - [[cursos/agentes-de-codigo/03-explorar-planificar-implementar-verificar]]
 - [[sistemas/agente-de-codigo]]
+- [[herramientas/aider]]: un agente de terminal abierto pensado para programar en pareja, con un commit por cambio.

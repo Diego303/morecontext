@@ -11,10 +11,11 @@ import Paginador from '../../components/entrada/Paginador.astro';
 import Relacionados from '../../components/entrada/Relacionados.astro';
 import Retroenlaces from '../../components/entrada/Retroenlaces.astro';
 import EditarEnGitHub from '../../components/entrada/EditarEnGitHub.astro';
-import { resolverEnlaces, urlDe, vecinos } from '../../lib/contenido';
+import { fecha, fechaISO, resolverEnlaces, urlDe, vecinos } from '../../lib/contenido';
 import { temarioCursos, navCurso, idLeccion } from '../../lib/navegacion';
 import { ldAprendizaje } from '../../lib/jsonld';
 import { ogDe } from '../../lib/og';
+import { PROFUNDIDAD } from '../../lib/nombres';
 
 type Curso = CollectionEntry<'cursos'>;
 type Leccion = CollectionEntry<'leccionesCurso'>;
@@ -67,7 +68,7 @@ const TIPO = { teoria: 'teoría', practica: 'práctica', proyecto: 'proyecto' } 
         <ol class="lecciones">
           {p.lecciones.map((l) => (
             <FilaLeccion numero={`${p.curso.data.orden}.${l.data.orden}`} href={urlDe(l)} titulo={l.data.titulo}
-              minutos={l.data.minutos} tipo={l.data.tipo} leccion={idLeccion(l)} />
+              minutos={l.data.minutos} tipo={l.data.tipo} leccion={idLeccion(l)} profundidad={l.data.profundidad} />
           ))}
         </ol>
       </section>
@@ -86,7 +87,8 @@ const TIPO = { teoria: 'teoría', practica: 'práctica', proyecto: 'proyecto' } 
   <DocsLayout entrada={p.leccion} headings={headings} seccion="cursos" navegacion={nav} comentarios
     migas={[{ href: '/', texto: 'Inicio' }, { href: '/cursos/', texto: 'Cursos' }, { href: urlDe(p.curso), texto: p.curso.data.titulo }, { texto: p.leccion.data.titulo }]}
     jsonld={ldAprendizaje(p.leccion, { nivel: p.curso.data.nivel, minutos: p.leccion.data.minutos })}>
-    <span slot="sobre-titulo" class="label sobre-titulo"><b>Lección {p.curso.data.orden}.{p.leccion.data.orden}</b> · {TIPO[p.leccion.data.tipo]}</span>
+    <span slot="sobre-titulo" class="label sobre-titulo"><b>Lección {p.curso.data.orden}.{p.leccion.data.orden}</b> · {TIPO[p.leccion.data.tipo]}{p.leccion.data.profundidad && <span class={`tag ${PROFUNDIDAD[p.leccion.data.profundidad].clase}`}>{PROFUNDIDAD[p.leccion.data.profundidad].texto}</span>}</span>
+    {p.leccion.data.revisado && <p slot="cabecera" class="revisado-enlaces">Enlaces revisados el <time datetime={fechaISO(p.leccion.data.revisado)}>{fecha(p.leccion.data.revisado)}</time></p>}
     <section slot="antes" class="objetivos panel" aria-labelledby="h-objetivos">
       <span class="label" id="h-objetivos">Al terminar podrás</span>
       <ul>{p.leccion.data.objetivos.map((o) => <li>{o}</li>)}</ul>

@@ -2,6 +2,7 @@
 titulo: "Tokens: la unidad con la que se mide todo"
 descripcion: "Qué es un token, por qué no coincide con una palabra y cómo contarlos con la API antes de enviar una petición para controlar coste y límites."
 creado: 2026-09-03
+actualizado: 2026-10-29
 orden: 2
 minutos: 30
 tipo: teoria
@@ -37,6 +38,15 @@ El corte del diagrama es ilustrativo: el real depende del tokenizador. Lo import
 
 Con un vocabulario de palabras completas, cualquier palabra nueva (un nombre propio, un término técnico, una errata) sería imposible de representar. Con letras sueltas, los textos serían larguísimos y el modelo tendría que trabajar mucho más para entenderlos. Los fragmentos son el punto intermedio: un vocabulario de tamaño manejable que puede representar cualquier texto.
 
+Después del corte viene un segundo paso que explica por qué hace falta todo esto: el modelo solo opera con números. Cada token del vocabulario tiene un identificador entero, y cada identificador se convierte dentro del modelo en un vector de números (un [[glosario/embeddings|embedding]]) con el que se hacen todos los cálculos.
+
+```text
+# salida de ejemplo (los identificadores son inventados)
+"Hola mundo"  →  ["Hola", " mundo"]  →  [15321, 9821]  →  vectores  →  modelo
+```
+
+La respuesta recorre el camino inverso: el modelo elige identificadores de token y el tokenizador los vuelve a convertir en texto.
+
 La consecuencia práctica es que **el número de tokens no es el número de palabras**, y la relación cambia con:
 
 - **El idioma.** Los tokenizadores suelen estar más optimizados para el inglés, así que el mismo contenido en español tiende a ocupar algo más. Mídelo con tus textos en vez de fiarte de una regla.
@@ -56,6 +66,8 @@ Esta es la razón por la que la lección está tan al principio. Casi todos los 
 | Límites de uso | Los proveedores limitan cuántos tokens por minuto puedes procesar. |
 
 Retén una asimetría: **la entrada la pagas y la procesa el modelo de golpe; la salida la pagas y se genera token a token**. Por eso una respuesta larga suele pesar más en la latencia que un prompt largo, y por eso los tokens de salida suelen costar más por unidad.
+
+Hay una salida que no siempre ves: el razonamiento. Los modelos actuales de Claude piensan antes de responder (lo verás en [[glosario/razonamiento-extendido]]), y esos tokens se generan y se facturan como salida aunque el texto del razonamiento no te llegue. La respuesta lo desglosa en `usage.output_tokens_details`.
 
 ## Contar tokens antes de enviar
 
@@ -151,3 +163,4 @@ Unas cuantas decisiones que cambian cuando piensas en tokens:
 - [[roadmap/00-fundamentos/03-ventana-de-contexto]]: cuántos tokens caben y qué los ocupa.
 - [[roadmap/00-fundamentos/05-coste-y-latencia]]: convertir tokens en euros y milisegundos.
 - [[glosario/tokenizador]] y [[docs/produccion/02-costes-y-limites]] como referencia.
+- [[roadmap/00-fundamentos/06-como-se-entrena-un-llm]]: cómo aprende el modelo a predecir esos tokens.

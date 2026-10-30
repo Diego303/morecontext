@@ -2,6 +2,7 @@
 titulo: Reintentos y límites de tasa
 descripcion: Qué reintenta ya el SDK por ti ante errores 429 y 529, cómo ajustar max_retries y cómo añadir una capa de backoff y control de concurrencia para trabajos por lotes.
 creado: 2026-09-24
+actualizado: 2026-10-29
 nivel: inicial
 minutos: 15
 tema: produccion
@@ -19,7 +20,7 @@ Antes de escribir tu propio bucle de reintentos, conviene saber qué hace ya el 
 ## Ingredientes
 
 - Python 3.10 o superior.
-- `pip install anthropic`
+- `pip install "anthropic>=2"` (SDK 2.x; los valores por defecto de esta receta son los de la 2.3).
 - La variable de entorno `ANTHROPIC_API_KEY`.
 - Conocer tus límites de tasa: están en la consola de tu cuenta y dependen de tu nivel de uso ([documentación oficial](https://platform.claude.com/docs)).
 
@@ -94,7 +95,7 @@ def crear_con_paciencia(intentos: int = 4, base: float = 10.0, **kwargs):
 def resumir(texto: str) -> str:
     resp = crear_con_paciencia(
         model=MODEL,
-        max_tokens=300,
+        max_tokens=1024,
         messages=[{"role": "user", "content": f"Resume en una frase:\n\n{texto}"}],
     )
     return next(b.text for b in resp.content if b.type == "text")
@@ -127,7 +128,8 @@ WARNING:lotes:HTTP 529, reintento 2 en 14.8 s
 - **Asíncrono.** Con `anthropic.AsyncAnthropic` y `asyncio.Semaphore(4)` para limitar la concurrencia. Los reintentos automáticos funcionan igual.
 - **Guardar progreso.** En lotes largos, escribe cada resultado en disco nada más obtenerlo y salta los ya hechos al reanudar. Un fallo definitivo no debe obligarte a repetir lo que ya pagaste.
 - **API de lotes.** Si no necesitas la respuesta al momento, la API ofrece procesamiento por lotes asíncrono con condiciones propias de precio y plazo. Consulta la [documentación oficial](https://platform.claude.com/docs).
-- **Modelo de reserva.** Ante 529 persistentes en tareas no críticas, puedes caer a otro modelo. Hazlo explícito en tus trazas para no mezclar resultados sin saberlo.
+- **Modelo de reserva.** Ante 529 persistentes en tareas no críticas, puedes caer a otro modelo. Hazlo explícito en tus trazas para no mezclar resultados sin saberlo. Un rechazo (`stop_reason: "refusal"`) no es un error HTTP y ningún reintento lo ve: tiene su propio tratamiento en [[recetas/fallback-ante-rechazos]].
+- **Con LangChain.** `ChatAnthropic(max_retries=…)` pasa el valor al cliente del SDK, que reintenta igual que aquí. Para un agente de `create_agent`, el middleware `ModelRetryMiddleware` añade reintentos alrededor de cada llamada al modelo y `ModelFallbackMiddleware` cae a otro modelo cuando falla el primero ([[docs/frameworks/04-langchain]]). Haz la misma cuenta de intentos apilados que abajo.
 - **Respuestas en streaming.** Si el error llega a mitad de un streaming, el SDK no puede reintentar lo ya emitido. Decide si reintentas la petición entera ([[recetas/streaming-de-respuestas]]).
 
 ## Errores típicos
@@ -137,4 +139,4 @@ WARNING:lotes:HTTP 529, reintento 2 en 14.8 s
 - **Backoff sin jitter.** Si todos tus hilos reintentan exactamente a la vez, chocan otra vez a la vez.
 - **Ignorar `retry-after`.** El servidor te dice cuándo volver. Esperar menos solo produce otro 429.
 - **Reintentar acciones con efectos.** Si tu agente ejecutó una herramienta que envía un correo y luego falla la llamada al modelo, repetir el turno entero puede enviarlo dos veces. Separa la ejecución de herramientas del reintento de la llamada.
-- **No registrar los reintentos.** Un aumento de 429 es una señal temprana de que necesitas más límite o menos concurrencia ([[disciplinas/observabilidad]]).
+- **No registrar los reintentos.** Un aumento de 429 es una señal temprana de que necesitas más límite o menos concurrencia ([[disciplinas/observabilidad]]). Si ya te pasa, sigue [[problemas/error-429-limite-de-tasa]].

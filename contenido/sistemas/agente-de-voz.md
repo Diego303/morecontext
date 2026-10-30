@@ -2,6 +2,7 @@
 titulo: Agente de voz
 descripcion: Arquitectura de un agente que escucha, decide con herramientas y responde hablando, con streaming de punta a punta, gestión de interrupciones y confirmaciones antes de actuar.
 creado: 2026-10-14
+actualizado: 2026-10-29
 tags: [sistemas, voz, latencia, streaming, agentes]
 orden: 7
 complejidad: 3
@@ -9,7 +10,7 @@ tiempo: "3–5 días"
 stack: [Python, asyncio, API de Claude, voz a texto en streaming, texto a voz en streaming, detección de actividad de voz]
 componentes: [Transporte de audio, Detección de actividad de voz, Voz a texto, Agente con herramientas, Troceador de frases, Texto a voz, Gestor de turnos e interrupciones]
 patrones: ["[[patrones/08-agente-autonomo]]", "[[patrones/02-llamada-aumentada]]"]
-relacionados: ["[[glosario/streaming]]", "[[glosario/latencia]]", "[[roadmap/100-produccion/03-latencia]]", "[[disciplinas/ux-de-agentes]]"]
+relacionados: ["[[glosario/streaming]]", "[[glosario/latencia]]", "[[roadmap/100-produccion/03-latencia]]", "[[disciplinas/ux-de-agentes]]", "[[glosario/deteccion-de-turno]]"]
 ---
 
 ## Qué problema resuelve
@@ -37,7 +38,7 @@ flowchart LR
 | Componente | Responsabilidad | Implementación típica |
 |---|---|---|
 | Transporte de audio | Llevar audio en tiempo real en ambos sentidos | WebRTC en navegador, pasarela telefónica o WebSocket |
-| Detección de actividad de voz | Saber cuándo empieza y termina de hablar la persona | Modelo de VAD ligero más una pausa mínima para cerrar el turno |
+| Detección de actividad de voz y de fin de turno | Saber cuándo empieza a hablar la persona y cuándo ha terminado de verdad | Modelo de VAD ligero para la voz; pausa mínima o un modelo de [[glosario/deteccion-de-turno|detección de fin de turno]] para cerrar el turno |
 | Voz a texto | Transcribir mientras se habla | Servicio de transcripción en *streaming* con resultados parciales |
 | Agente con herramientas | Entender, decidir, llamar herramientas y redactar para el oído | Bucle de [[patrones/08-agente-autonomo]] con *streaming* de la respuesta |
 | Troceador de frases | Enviar al TTS frases completas en cuanto existen | Corte por puntuación sobre el flujo de texto |
@@ -47,7 +48,7 @@ flowchart LR
 ## Flujo paso a paso
 
 1. **Escuchar**. El audio llega por el transporte. El VAD detecta que la persona habla y el transcriptor emite texto parcial.
-2. **Cerrar el turno**. Tras una pausa corta, el VAD da el turno por terminado y se toma la transcripción final. Ese umbral de pausa es un compromiso: corto responde antes pero corta a quien piensa en voz alta.
+2. **Cerrar el turno**. Tras una pausa corta, el VAD da el turno por terminado y se toma la transcripción final. Ese umbral de pausa es un compromiso: corto responde antes pero corta a quien piensa en voz alta. Un detector de fin de turno semántico mira además el texto («quería reservar para el…» no está acabado) y reduce ese dilema.
 3. **Pensar y llamar herramientas**. El agente recibe el texto. Si necesita una herramienta, el sistema dice una frase breve de espera («Lo miro») mientras se ejecuta.
 4. **Responder en *streaming***. En cuanto el modelo genera la primera frase completa, el troceador la envía al TTS. El audio empieza a sonar mientras el modelo sigue escribiendo las siguientes.
 5. **Interrupción**. Si el VAD detecta voz mientras el agente habla, el gestor detiene el audio, cancela la generación y guarda en el historial **solo lo que llegó a sonar**.
@@ -58,9 +59,13 @@ flowchart LR
 
 **Cascada frente a modelos de voz nativa.** La cascada (voz a texto, LLM, texto a voz) te deja elegir cada pieza, ver el texto en cada etapa, reutilizar herramientas y *prompts* de tus agentes de texto y evaluar con las mismas técnicas. Los modelos que procesan y generan audio directamente reducen etapas y pueden sonar más naturales, a cambio de menos control y depuración más difícil. Las capacidades y nombres cambian rápido: consulta la documentación de cada proveedor. Esta ficha describe la cascada porque es la más fácil de razonar.
 
+**Presupuesto de latencia.** Fija un objetivo antes de elegir piezas. Una referencia práctica muy citada entre quienes construyen agentes de voz (Kwindla Kramer, *Advice on Voice Agents*, junio de 2025) es una **mediana de unos 800 ms de voz a voz**, desde que la persona deja de hablar hasta que oye la primera palabra, con 1,5 s como aceptable en un prototipo. Ese tiempo se reparte entre red, detección de fin de turno, transcripción final, primer *token* del modelo y primer audio del TTS, y una llamada a herramienta casi duplica la parte del modelo. Por eso el código de abajo dice una frase de espera mientras corre la herramienta, y pide al modelo poco esfuerzo y nada de razonamiento antes de la primera frase. Ajustar el VAD y los turnos rinde más al final, cuando el resto ya está medido.
+
+**Fin de turno por silencio o por significado.** Un VAD solo oye silencio. Un modelo de detección de fin de turno basado en texto decide si la frase está completa: LiveKit publicó en diciembre de 2025 una versión multilingüe (con español) que, según sus mediciones, reduce las interrupciones falsas sin añadir latencia. Úsalo cuando las personas hagan pausas largas a mitad de frase, como al dictar un número o una dirección.
+
 **Todo en *streaming*.** La espera percibida es la suma de lo que tarda cada etapa en producir su primer resultado: fin de turno, transcripción final, primer *token* del modelo, primera frase completa, primer audio. Por eso cada etapa trabaja en *streaming* y el troceador no espera a la respuesta completa. Ver [[glosario/streaming]] y [[recetas/streaming-de-respuestas]].
 
-**Respuestas escritas para el oído.** El *prompt* de sistema pide frases cortas, nada de listas, tablas ni Markdown, números y fechas dichos como se pronuncian, y como mucho una pregunta por turno. Un `max_tokens` bajo es una red de seguridad: en voz, una respuesta larga casi siempre es mala respuesta.
+**Respuestas escritas para el oído.** El *prompt* de sistema pide frases cortas, nada de listas, tablas ni Markdown, números y fechas dichos como se pronuncian, y como mucho una pregunta por turno. Un `max_tokens` bajo es una red de seguridad: en voz, una respuesta larga casi siempre es mala respuesta. Ten en cuenta que el razonamiento también consume `max_tokens`; con `thinking={"type": "between_tools"}` (Sonnet 5.5) el modelo no razona antes de la primera frase y sí entre herramientas, y `effort: "low"` acorta el resto.
 
 **Interrupción con historial recortado.** Si la persona corta al agente a mitad de frase, el historial debe reflejar que solo dijo esa mitad. Si guardas la respuesta completa, el modelo creerá que la persona oyó cosas que no oyó.
 
@@ -100,8 +105,11 @@ async def frases(flujo_texto):
 
 async def hablar_respuesta(mensajes: list, altavoz, dicho: list[str]):
     """Genera y reproduce una respuesta. Devuelve el mensaje final del modelo."""
-    async with client.messages.stream(model=MODEL, max_tokens=300, system=SYSTEM,
-                                      tools=HERRAMIENTAS, messages=mensajes) as stream:
+    async with client.messages.stream(
+            model=MODEL, max_tokens=300, system=SYSTEM, tools=HERRAMIENTAS, messages=mensajes,
+            thinking={"type": "between_tools"},      # Sonnet 5.5: sin razonar antes de la primera frase
+            output_config={"effort": "low"},         # en voz manda el tiempo hasta el primer audio
+    ) as stream:
         async for frase in frases(stream.text_stream):
             await altavoz.decir(frase)          # vuelve cuando la frase ha sonado
             dicho.append(frase)
@@ -123,7 +131,7 @@ async def turno_del_agente(mensajes: list, altavoz, vad) -> None:
             return                               # el bucle principal escucha el nuevo turno
         interrumpir.cancel()
         final = generar.result()
-        if final.stop_reason != "tool_use":      # end_turn o max_tokens: guarda lo que sonó
+        if final.stop_reason != "tool_use":      # end_turn, max_tokens o refusal: guarda lo que sonó
             mensajes.append({"role": "assistant", "content": " ".join(dicho) or "…"})
             return
         mensajes.append({"role": "assistant", "content": final.content})
@@ -154,14 +162,15 @@ async def conversacion(microfono, transcriptor, altavoz, vad) -> None:
         await turno_del_agente(mensajes, altavoz, vad)
 ```
 
-Dos detalles importan. Si la interrupción llega mientras se ejecuta una herramienta, la herramienta termina igualmente y su resultado entra en el historial: no dejes un `tool_use` sin su `tool_result`. Y `ejecutar_herramienta` recibe el historial para comprobar que las acciones con efectos tienen una confirmación explícita en el último turno del usuario.
+Tres detalles importan. `between_tools` es propio de Sonnet 5.5: con otro modelo, quita `thinking` y regula solo con `effort`. Si la interrupción llega mientras se ejecuta una herramienta, la herramienta termina igualmente y su resultado entra en el historial: no dejes un `tool_use` sin su `tool_result`. Y `ejecutar_herramienta` recibe el historial para comprobar que las acciones con efectos tienen una confirmación explícita en el último turno del usuario.
 
 > [!aviso] El primer audio es lo que se percibe
 > Mide por separado el tiempo hasta el fin de turno, hasta la transcripción, hasta el primer *token*, hasta la primera frase y hasta el primer audio. Optimizar la etapa equivocada es el error más común. Ver [[docs/produccion/03-latencia]].
 
 ## Cómo evaluarlo
 
-- **Latencia por etapa**, en percentiles y en conversaciones reales, no en pruebas aisladas.
+- **Latencia por etapa y de voz a voz**, en P50 y P95 y en conversaciones reales, no en pruebas aisladas. Compárala con tu presupuesto.
+- **Interrupciones falsas**: veces que el agente corta a la persona cuando no había terminado. Es la métrica que mueve el detector de fin de turno.
 - **Transcripción**: tasa de errores en las palabras que importan (nombres, fechas, números). Un error ahí es peor que diez en palabras de relleno.
 - **Tarea completada**: guiones de conversación con objetivo («reservar el jueves por la tarde») ejecutados con voz sintética o con personas. ¿Se logró? ¿Con cuántos turnos?
 - **Confirmaciones**: ninguna acción con efectos sin un sí explícito en el turno anterior. Se comprueba con código sobre las trazas. Ver [[roadmap/80-evals/04-evals-de-trayectoria]].
@@ -183,9 +192,11 @@ Dos detalles importan. Si la interrupción llega mientras se ejecuta una herrami
 ## Variantes
 
 - **Copiloto para agentes humanos**: el sistema escucha la llamada y sugiere respuestas o rellena la ficha en pantalla, sin hablar. Menos exigente en latencia y en riesgo.
-- **Voz nativa**: un modelo que procesa audio directamente sustituye la cascada; mantén el gestor de turnos y las confirmaciones.
+- **Voz nativa**: un modelo que procesa audio directamente ([[glosario/voz-a-voz|voz a voz]]) sustituye la cascada; mantén el gestor de turnos y las confirmaciones. Pierdes el texto intermedio sobre el que aplicar políticas y evals antes de hablar.
+- **Dúplex completo**: el siguiente paso quita el detector de turnos: el modelo escucha y habla a la vez, como en una llamada entre personas. OpenAI describió un sistema así, que además delega el trabajo difícil en otros modelos de forma asíncrona y separa el audio de la lógica para que una herramienta lenta no congele la voz (*How we built a realtime system for responsive voice AI in six months*, 3 ago. 2026). Las confirmaciones antes de actuar siguen siendo tuyas.
 - **Voz sobre un agente existente**: el mismo núcleo con las herramientas del [[sistemas/soporte-con-aprobacion-humana|agente de soporte]], que ya tiene aprobación humana para las acciones caras.
 - **Pulsar para hablar**: en entornos ruidosos, un botón sustituye al VAD y elimina casi todos los problemas de turnos.
+- **Modelo local en el centro**: [[herramientas/ollama|Ollama]] expone una API compatible con la de Mensajes, así que el mismo `voz.py` funciona con `anthropic.AsyncAnthropic(base_url="http://localhost:11434", api_key="ollama")` y un modelo abierto en `MODEL`, quitando `thinking` (es de Sonnet 5.5) y sin *prompt caching*, que Ollama no implementa. La latencia pasa a depender de tu GPU: mide el primer *token* antes de decidir ([[recetas/agente-local-con-ollama]]).
 
 ## Por dónde empezar
 

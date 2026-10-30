@@ -2,6 +2,7 @@
 titulo: Agente
 descripcion: Sistema en el que un modelo decide en un bucle qué herramientas usar y qué pasos dar hasta completar una tarea.
 creado: 2026-07-08
+actualizado: 2026-10-29
 categoria: agentes
 ingles: agent
 aliases: [agent, agente de IA, AI agent]
@@ -13,7 +14,7 @@ Un agente es un sistema en el que un [[glosario/llm|LLM]] dirige su propio proce
 
 ## En la práctica
 
-Técnicamente es un [[glosario/bucle-agentico]]: llamas al modelo con herramientas, ejecutas cada `tool_use` que pide, devuelves un [[glosario/tool-result]] por cada uno y repites mientras `stop_reason` sea `"tool_use"`. La fiabilidad depende de lo que rodea al bucle: herramientas bien descritas, límite de pasos y de gasto, trazas para depurar y [[glosario/humano-en-el-bucle|aprobación humana]] antes de acciones irreversibles.
+Técnicamente es un [[glosario/bucle-agentico]]: llamas al modelo con herramientas, ejecutas cada `tool_use` que pide, devuelves un [[glosario/tool-result]] por cada uno y repites mientras `stop_reason` sea `"tool_use"`. La fiabilidad depende de lo que rodea al bucle: herramientas bien descritas, límite de pasos y de gasto, trazas para depurar y [[glosario/humano-en-el-bucle|aprobación humana]] antes de acciones irreversibles. A todo eso que rodea al modelo se le llama [[glosario/harness]]. Un [[glosario/framework-de-agentes]] abierto como LangChain (`create_agent`) te da el bucle hecho, pero los límites y las aprobaciones siguen siendo decisión tuya.
 
 ## No confundir con
 
@@ -26,3 +27,5 @@ Técnicamente es un [[glosario/bucle-agentico]]: llamas al modelo con herramient
 - [[patrones/01-workflows-vs-agentes]]
 - [[patrones/08-agente-autonomo]]
 - [[glosario/tool-use]]
+- [[roadmap/90-harness/01-que-es-un-harness]]
+- [[docs/frameworks/01-elegir-framework]]

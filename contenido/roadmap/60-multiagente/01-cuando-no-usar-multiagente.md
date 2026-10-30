@@ -2,6 +2,7 @@
 titulo: Cuándo NO usar multiagente
 descripcion: Qué cuesta de verdad repartir una tarea entre varios agentes y cómo decidir, con preguntas concretas, si tu problema lo necesita.
 creado: 2026-09-14
+actualizado: 2026-10-29
 orden: 1
 minutos: 25
 tipo: teoria
@@ -37,7 +38,7 @@ flowchart TD
 
 ### Tokens
 
-Cada subagente arranca con su propio [[glosario/prompt-de-sistema]], sus definiciones de herramientas y la tarea. Luego hace sus búsquedas, lee resultados y razona. Todo eso son [[glosario/token|tokens]] de entrada y salida que no existirían con un solo agente. Además, el orquestador lee después lo que devuelven todos. Anthropic contó en [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) que su sistema consumía muchos más tokens que un chat normal y que solo compensa en tareas cuyo valor justifica ese gasto. Lo verás con números propios en [[roadmap/60-multiagente/05-coste-de-multiplicar-agentes]].
+Cada subagente arranca con su propio [[glosario/prompt-de-sistema]], sus definiciones de herramientas y la tarea. Luego hace sus búsquedas, lee resultados y razona. Todo eso son [[glosario/token|tokens]] de entrada y salida que no existirían con un solo agente. Además, el orquestador lee después lo que devuelven todos. Anthropic contó en [How we built our multi-agent research system](https://www.anthropic.com/engineering/multi-agent-research-system) (13 jun. 2025) que un agente gasta unas 4 veces los tokens de un chat y su sistema multiagente unas 15 veces, y que solo compensa en tareas cuyo valor justifica ese gasto. Lo verás con números propios en [[roadmap/60-multiagente/05-coste-de-multiplicar-agentes]].
 
 ### Coordinación
 
@@ -66,6 +67,21 @@ Las señales que justifican varios agentes son pocas y concretas:
 
 Si tu caso no cumple al menos las dos primeras, casi seguro que un solo agente bien hecho gana.
 
+## Lo que funciona en 2026: escrituras en un solo hilo
+
+El debate tiene historia. En junio de 2025, Cognition (los autores de Devin) publicó [*Don't Build Multi-Agents*](https://cognition.com/blog/dont-build-multi-agents): cada acción de un agente lleva decisiones implícitas, y dos agentes que actúan en paralelo sin ver lo que decide el otro toman decisiones que chocan. Su consejo era compartir el contexto completo, la traza entera y no solo mensajes sueltos.
+
+En abril de 2026, el mismo autor revisó la postura en [*Multi-Agents: What's Actually Working*](https://cognition.com/blog/multi-agents-working). La conclusión cabe en una frase suya: **las escrituras se quedan en un solo hilo, y los agentes adicionales aportan inteligencia, no acciones**. Lo que funciona:
+
+- **Un revisor con contexto limpio.** Un agente genera; otro, que no ha visto cómo se llegó al resultado, lo revisa. Precisamente porque no comparte el contexto del autor, no hereda sus suposiciones.
+- **Un «amigo listo».** El agente principal consulta a un modelo más capaz como si fuera una herramienta, para decisiones difíciles. Encaja con el [[patrones/13-ejecutor-y-asesor|patrón ejecutor y asesor]].
+- **Un gestor con hijos** que reparte trabajo, recoge y decide (*map-reduce-and-manage*), con mucho cuidado en qué contexto recibe cada hijo.
+- **Subagentes de solo lectura**: buscan, leen y resumen, pero no cambian nada.
+
+Lo que no funciona: enjambres de agentes que escriben en paralelo sobre lo mismo y redes de agentes sin estructura que se pasan mensajes. LangChain llegó a la misma conclusión: las tareas de lectura se paralelizan bien y las de escritura sufren al juntar los resultados. Y casi todo lo que falla son problemas de comunicación entre agentes, que es el tema de [[roadmap/60-multiagente/03-pasar-contexto-entre-agentes]].
+
+Para tu diseño, esto se traduce en dos reglas: **un único agente escribe**, y los demás leen, buscan o revisan. Si necesitas varios escritores a la vez (por ejemplo, agentes de código en distintas *features*), aíslalos en copias separadas del repositorio y junta su trabajo con un proceso explícito, como verás en [[roadmap/60-multiagente/04-paralelismo]].
+
 ## Alternativas antes de multiplicar agentes
 
 Muchos problemas que parecen pedir multiagente se resuelven con algo más simple:
@@ -76,7 +92,7 @@ Muchos problemas que parecen pedir multiagente se resuelven con algo más simple
 | Hay que hacer varias llamadas independientes | Paralelizar llamadas en un workflow ([[patrones/05-paralelizacion]]), sin bucle agéntico |
 | Tipos de petición muy distintos | [[patrones/04-enrutado]] a prompts especializados |
 | El agente se equivoca a menudo | Mejores herramientas y descripciones ([[disciplinas/diseno-de-herramientas]]) y evals |
-| Necesitas revisar la calidad | [[patrones/07-evaluador-optimizador]] con un criterio claro |
+| Necesitas revisar la calidad | [[patrones/07-evaluador-optimizador]] con un criterio claro, o un revisor con contexto limpio |
 
 Fíjate en la cuarta fila. Si un agente falla, repartir su trabajo entre varios agentes suele repartir también el fallo. Arregla primero la causa.
 
@@ -99,6 +115,7 @@ Sin un «sí» en la 3, no tienes con qué comparar. Construye primero el agente
 
 - Empezar por la arquitectura multiagente porque parece más completa.
 - Dividir la tarea en partes que dependen unas de otras y luego coordinarlas con mensajes.
+- Poner a varios agentes a escribir a la vez sobre el mismo resultado.
 - Comparar el sistema multiagente con un agente único mal configurado.
 - No contar los tokens del orquestador y de la síntesis al estimar el coste.
 
@@ -119,9 +136,11 @@ Sin un «sí» en la 3, no tienes con qué comparar. Construye primero el agente
 - Compensa cuando las subtareas son independientes, generan mucho material intermedio y el valor de la respuesta justifica el gasto.
 - Antes de multiplicar agentes, prueba compactación, paralelización simple o enrutado.
 - Sin un agente único medido, no tienes con qué comparar.
+- Lo que funciona hoy: un solo agente escribe; los demás leen, buscan o revisan con contexto limpio.
 
 ## Para seguir
 
 - [[roadmap/60-multiagente/02-orquestador-y-subagentes]]
 - [[patrones/09-elegir-patron]]
 - [[cursos/sistemas-multiagente/01-arquitecturas]]
+- [[biblioteca/multi-agent-research-system]]

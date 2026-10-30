@@ -2,6 +2,7 @@
 titulo: "Function calling: el ciclo tool_use → tool_result"
 descripcion: "Cómo el modelo pide a tu código que ejecute una función, cómo le devuelves el resultado y cómo escribir el bucle completo sin romper el protocolo."
 creado: 2026-09-23
+actualizado: 2026-10-29
 orden: 1
 minutos: 50
 tipo: practica
@@ -84,7 +85,7 @@ Puede venir un texto antes de la llamada, o no. Puede haber **varios** bloques `
 
 Para continuar, añades a la conversación dos mensajes:
 
-1. Un mensaje `assistant` con **el `content` completo** que te devolvió el modelo, sin quitar nada.
+1. Un mensaje `assistant` con **el `content` completo** que te devolvió el modelo, sin quitar nada (tampoco los bloques `thinking`: dentro de un turno con herramientas la API los necesita tal cual).
 2. Un mensaje `user` con un bloque `tool_result` **por cada** `tool_use`, todos juntos y antes de cualquier texto.
 
 ```python
@@ -187,7 +188,7 @@ console.log(await responder("Hola, ¿cuándo me llega el pedido 4471?"));
 
 Detalles que importan:
 
-- **La condición del bucle es `stop_reason`**, no la presencia de texto. Con `tool_use` se sigue; con cualquier otro valor se termina.
+- **La condición del bucle es `stop_reason`**, no la presencia de texto. Con `tool_use` se sigue; con cualquier otro valor se termina. En un bucle de producción conviene tratar aparte `max_tokens`, `refusal` y `model_context_window_exceeded` (ver [[docs/fundamentos/06-motivos-de-parada-y-rechazos]]).
 - **`MAX_PASOS`** impide que un error de diseño te deje en un bucle que gasta sin parar.
 - **Las herramientas se envían en cada llamada**, porque la API no recuerda nada entre peticiones.
 - **El contenido del resultado** es texto. Serializar a JSON es lo más habitual; también puedes devolver texto plano si es más claro.
@@ -195,6 +196,56 @@ Detalles que importan:
 ## Varias herramientas en una respuesta
 
 Si el usuario pregunta por dos pedidos, el modelo puede pedir `buscar_pedido` dos veces en la misma respuesta. El bucle de arriba ya lo maneja: recorre todos los bloques `tool_use` y devuelve todos los resultados juntos. Si tus herramientas son lentas y no dependen unas de otras, puedes ejecutarlas en paralelo; el orden de los `tool_result` en el mensaje no tiene que coincidir, porque cada uno lleva su `tool_use_id`.
+
+## El mismo ciclo con LangChain
+
+Los *frameworks* abiertos esconden este protocolo detrás de sus propios tipos, pero es el mismo. En [[herramientas/langchain|LangChain]] (MIT), `bind_tools` hace el papel de `tools=`, la respuesta es un `AIMessage` cuyas peticiones están en `tool_calls`, y cada resultado vuelve como un `ToolMessage` con el `tool_call_id` de su llamada:
+
+```python tab="LangChain" title="asistente_langchain.py"
+import json
+from langchain.chat_models import init_chat_model
+from langchain.messages import HumanMessage, ToolMessage
+from langchain.tools import tool
+
+MODEL = "anthropic:claude-sonnet-5-5"
+MAX_PASOS = 10
+
+PEDIDOS = {
+    "4471": {"estado": "en reparto", "entrega_estimada": "2026-09-25"},
+    "4480": {"estado": "entregado", "entrega_estimada": "2026-09-20"},
+}
+
+@tool
+def buscar_pedido(id_pedido: str) -> str:
+    """Devuelve el estado y la fecha estimada de entrega de un pedido. Úsala cuando el usuario pregunte por un pedido concreto y dé su número."""
+    return json.dumps(PEDIDOS.get(id_pedido, {"error": f"No existe el pedido {id_pedido}"}), ensure_ascii=False)
+
+HERRAMIENTAS = {"buscar_pedido": buscar_pedido}
+llm = init_chat_model(MODEL, max_tokens=1024).bind_tools(list(HERRAMIENTAS.values()))
+
+def responder(pregunta: str) -> str:
+    messages = [HumanMessage(pregunta)]
+    for _ in range(MAX_PASOS):
+        ai = llm.invoke(messages)                 # AIMessage
+        messages.append(ai)                       # el turno completo, como antes
+        if not ai.tool_calls:                     # equivale a stop_reason != "tool_use"
+            return ai.text
+        for llamada in ai.tool_calls:             # [{"name", "args", "id"}, ...]
+            salida = HERRAMIENTAS[llamada["name"]].invoke(llamada["args"])
+            messages.append(ToolMessage(salida, tool_call_id=llamada["id"]))
+    return "No he podido terminar en el número máximo de pasos."
+
+print(responder("Hola, ¿cuándo me llega el pedido 4471?"))
+```
+
+| SDK de Anthropic | LangChain |
+|---|---|
+| `tools=TOOLS` en cada llamada | `llm.bind_tools([...])` una vez |
+| `stop_reason == "tool_use"` | `ai.tool_calls` no está vacío |
+| bloque `tool_use` (`id`, `name`, `input`) | elemento de `tool_calls` (`id`, `name`, `args`) |
+| bloque `tool_result` con `tool_use_id` | `ToolMessage(contenido, tool_call_id=…)` |
+
+LangChain junta los `ToolMessage` seguidos en un único mensaje `user` con todos los `tool_result` al enviarlos a Claude, así que las reglas del protocolo se cumplen solas. Lo que no hace por ti es el bucle: aquí lo sigues escribiendo tú. `create_agent` lo escribe por ti, y lo verás en [[roadmap/40-primer-agente/02-el-bucle-agentico]] y en [[cursos/langchain-y-langgraph/03-tu-primer-agente-con-create-agent]]. Con un modelo local basta con cambiar `llm` por `ChatOllama(model=…).bind_tools(...)`, siempre que el modelo admita *tool calling*.
 
 ## Errores frecuentes
 
@@ -227,3 +278,5 @@ Si el usuario pregunta por dos pedidos, el modelo puede pedir `buscar_pedido` do
 - [[roadmap/20-herramientas/02-definir-herramientas]]: definiciones que el modelo entiende bien.
 - [[docs/herramientas/01-uso-de-herramientas]] como referencia del protocolo.
 - [[roadmap/40-primer-agente/02-el-bucle-agentico]]: este mismo bucle convertido en agente.
+- [[cursos/langchain-y-langgraph/02-modelos-mensajes-y-herramientas]]: mensajes y herramientas en LangChain, a fondo.
+- [[problemas/tool-result-sin-tool-use]]: el error 400 más común del ciclo y cómo arreglarlo.

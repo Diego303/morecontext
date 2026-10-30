@@ -2,22 +2,36 @@
 titulo: Elegir modelo por tarea
 descripcion: Qué tier de modelo (grande, mediano o rápido) encaja con cada tipo de tarea y un método para bajar de tier midiendo con evals sin perder calidad.
 creado: 2026-10-12
+actualizado: 2026-10-29
 orden: 5
 tags: [modelos, coste, latencia, evals]
-relacionados: ["[[docs/produccion/02-costes-y-limites]]", "[[docs/produccion/03-latencia]]", "[[docs/evals/01-disenar-evals]]", "[[patrones/04-enrutado]]"]
+relacionados: ["[[docs/produccion/02-costes-y-limites]]", "[[docs/produccion/03-latencia]]", "[[docs/evals/01-disenar-evals]]", "[[patrones/04-enrutado]]", "[[modelos/11-modelos-abiertos]]"]
 ---
 
 **Principio**: empieza con el modelo más capaz para saber qué calidad es posible, y baja de tier solo cuando tus evals demuestren que el más pequeño basta.
 
 ## Los tiers
 
-Los proveedores ofrecen familias de modelos en varios tamaños. Los nombres y versiones cambian a menudo, así que aquí hablamos de **tiers** genéricos. Consulta los modelos concretos de cada tier en la [documentación oficial](https://platform.claude.com/docs).
+Los proveedores ofrecen familias de modelos en varios tamaños. Los nombres y versiones cambian a menudo, así que el método habla de **tiers** genéricos.
 
 | Tier | Qué ofrece | Contrapartida |
 |---|---|---|
 | Grande | El mejor razonamiento, más fiable en tareas largas y ambiguas. | El más caro y el más lento. |
 | Mediano | Buen equilibrio; resuelve la mayoría de tareas de producción. | Puede fallar en los casos más difíciles. |
 | Rápido | Respuesta casi inmediata y coste bajo. | Se pierde antes con instrucciones complejas o mucho contexto. |
+
+### Los modelos de Claude hoy
+
+Así encaja la familia actual de Claude en esos tiers (octubre de 2026). Los cuatro tienen 1M de tokens de contexto y hasta 128k de salida; los precios cambian, así que consúltalos en la [documentación oficial](https://platform.claude.com/docs).
+
+| Modelo | Tier | Para qué lo posiciona Anthropic | Esfuerzo por defecto |
+|---|---|---|---|
+| `claude-fable-5-1` | Grande | Razonamiento exigente y trabajo agéntico de horizonte largo | `high` |
+| `claude-opus-5-5` | Grande | Programación agéntica larga y trabajo de conocimiento | `medium` |
+| `claude-sonnet-5-5` | Mediano | La mejor combinación de velocidad e inteligencia | `high` |
+| `claude-haiku-5-5` | Rápido | Volumen alto y latencia baja: clasificar, extraer, enrutar | `medium` |
+
+La recomendación oficial coincide con el método de esta página: si dudas, empieza por **Opus 5.5** y sube a **Fable 5.1** si tus evals con Opus 5.5 a esfuerzo alto no llegan. Ten en cuenta dos diferencias que afectan al código: en Opus 5.5, Sonnet 5.5 y Fable 5.1 no se puede forzar una herramienta con `tool_choice` (devuelve 400), y el razonamiento solo se puede desactivar en Haiku 5.5 ([[modelos/04-dejar-pensar-al-modelo]]). Los ejemplos de esta web usan Sonnet 5.5.
 
 ## Por qué funciona el método
 
@@ -35,7 +49,7 @@ Si empiezas por el modelo pequeño y falla, no sabes si el problema es el modelo
 | Orquestador que planifica y delega | Grande | La calidad del plan condiciona todo lo demás. |
 | Subagentes de búsqueda o lectura | Mediano o rápido | Tareas acotadas, muchas en paralelo. |
 | Código complejo, depuración, arquitectura | Grande | Razonamiento largo con muchas restricciones. |
-| Modelo juez en evals | Igual o mayor que el evaluado | Debe detectar errores del modelo que juzga. |
+| Modelo juez en evals | Igual o mayor que el evaluado | Debe detectar errores del modelo que juzga; un juez más débil infla las notas. |
 | Autocompletado, voz, respuestas en tiempo real | Rápido | La latencia manda. |
 
 Esta tabla es un punto de partida. Tu tarea concreta puede comportarse distinto; por eso existe el método.
@@ -52,8 +66,8 @@ Esta tabla es un punto de partida. Tu tarea concreta puede comportarse distinto;
 ```python title="comparar_tiers.py"
 import anthropic
 
-MODEL = "claude-sonnet-5-5"  # modelo actual
-CANDIDATOS: list[str] = []   # añade modelos de otros tiers con los nombres de la documentación oficial
+MODEL = "claude-opus-5-5"                              # el techo de calidad
+CANDIDATOS = ["claude-sonnet-5-5", "claude-haiku-5-5"]  # tiers más pequeños que quieres probar
 client = anthropic.Anthropic()
 
 CASOS = [{"entrada": "Me cobrasteis dos veces", "esperado": "facturacion"}]  # tu conjunto real
@@ -62,7 +76,8 @@ SYSTEM = "Clasifica el ticket: facturacion, envio, devolucion u otro. Responde s
 def evaluar(modelo: str) -> dict:
     aciertos, tokens_salida = 0, 0
     for c in CASOS:
-        r = client.messages.create(model=modelo, max_tokens=20, system=SYSTEM,
+        r = client.messages.create(model=modelo, max_tokens=1024, system=SYSTEM,
+                                   output_config={"effort": "low"},   # mismo esfuerzo para todos
                                    messages=[{"role": "user", "content": c["entrada"]}])
         salida = "".join(b.text for b in r.content if b.type == "text").strip().lower()
         aciertos += salida == c["esperado"]
@@ -73,7 +88,7 @@ for m in [MODEL, *CANDIDATOS]:
     print(evaluar(m))
 ```
 
-Registra también la latencia y el coste por caso con `usage`, como se explica en [[docs/produccion/02-costes-y-limites]].
+Dos detalles del código. El esfuerzo va fijo porque cada modelo trae un valor por defecto distinto: si no lo fijas, comparas modelos y esfuerzos a la vez. Y `max_tokens` queda holgado aunque la respuesta sea una palabra, porque el razonamiento adaptativo también consume salida. Registra también la latencia y el coste por caso con `usage`, como se explica en [[docs/produccion/02-costes-y-limites]].
 
 ## Mezclar tiers
 
@@ -82,6 +97,17 @@ No tienes que elegir un solo modelo para todo el sistema:
 - **[[patrones/04-enrutado|Enrutado]]**: un modelo rápido clasifica la petición y la manda al tier que corresponde. Las preguntas sencillas no pagan precio de modelo grande.
 - **Orquestador grande, subagentes medianos**: el plan lo hace el más capaz; la ejecución de cada parte, uno más barato ([[docs/agentes/02-subagentes]]).
 - **Escalado ante duda**: el modelo rápido responde y, si su confianza es baja o la validación falla, se reintenta con el mediano.
+- **Ejecutor y asesor**: un modelo barato hace el trabajo y consulta a uno más capaz solo en los puntos difíciles ([[patrones/13-ejecutor-y-asesor]]).
+
+## Cuándo encaja un modelo abierto
+
+El método vale igual para modelos de [[glosario/pesos-abiertos|pesos abiertos]], servidos en tu infraestructura o en tu máquina. Añade un eje a la decisión: API propietaria, modelo abierto alojado o local.
+
+- **Encaja** cuando los datos no pueden salir de tu red, cuando el volumen es alto y estable y justifica GPU propias, o para tareas acotadas (clasificar, extraer) en las que un modelo abierto pasa **tus** evals.
+- **No encaja** si necesitas funciones que el servidor local no da (la API de Ollama compatible con Anthropic no admite `tool_choice`, la caché ni el conteo de tokens) o si no tienes quien opere la infraestructura.
+- **Mide igual**: fija el techo con el modelo más capaz y prueba el abierto con las mismas evals. Cuidado con el juez: un juez local más débil que el modelo evaluado da notas infladas.
+
+Lo desarrollan [[modelos/11-modelos-abiertos]] y [[cursos/agentes-con-modelos-abiertos/06-local-o-api]]. Revisa siempre la licencia del modelo: «pesos abiertos» no es lo mismo que open source.
 
 ## Antes y después
 

@@ -2,6 +2,7 @@
 titulo: "Fiabilidad: reintentos, verificación y estados"
 descripcion: Cómo hacer fiable un agente que maneja interfaces. Verificar tras cada acción, esperar a condiciones, reintentar con límites, evitar duplicados y detectar bucles.
 creado: 2026-10-19
+actualizado: 2026-10-29
 orden: 3
 minutos: 45
 tipo: practica
@@ -10,7 +11,7 @@ objetivos:
   - Sustituir esperas fijas por esperas a condiciones con tiempo máximo y reintentos acotados
   - Detectar bucles y acciones sin efecto, y evitar efectos duplicados con comprobaciones previas
 requiere: ["[[cursos/uso-del-ordenador/02-navegador-o-api]]"]
-relacionados: ["[[recetas/reintentos-y-limites-de-tasa]]", "[[roadmap/40-primer-agente/03-condiciones-de-parada]]", "[[roadmap/80-evals/04-evals-de-trayectoria]]"]
+relacionados: ["[[recetas/reintentos-y-limites-de-tasa]]", "[[roadmap/40-primer-agente/03-condiciones-de-parada]]", "[[roadmap/80-evals/04-evals-de-trayectoria]]", "[[problemas/el-agente-repite-la-misma-herramienta]]"]
 tags: [uso-del-ordenador, navegador, fiabilidad]
 ---
 
@@ -76,6 +77,8 @@ Fíjate en tres cosas. El aviso de «la página no cambió» es información par
 
 En el uso del ordenador con capturas, el equivalente es comparar la captura antes y después. Si los bytes son idénticos tras un clic, la acción no tuvo efecto visible: devuélvelo como texto junto a la imagen.
 
+Con los *toolsets* del proveedor (lecciones 1 y 2) las acciones las define el proveedor y las elige el modelo, pero la verificación sigue siendo de tu ejecutor. Los dos traen una acción `wait` con una duración en segundos: ponle tu propio tope y, después de esperar, comprueba el estado en lugar de suponer que la página ya cargó. En el de navegador, las referencias a elementos (`[ref_7]`) caducan al navegar o al redibujarse la página: si llega una referencia vieja, devuelve un error que pida leer la página otra vez en lugar de hacer clic en lo que ocupe ahora ese sitio.
+
 ## Qué se puede reintentar
 
 Reintentar es seguro solo si repetir la acción no causa un efecto distinto. Navegar, leer, abrir un menú: sí. Pulsar «Pagar», «Enviar» o «Crear»: no sin comprobar antes.
@@ -132,7 +135,7 @@ class DetectorBucles:
         return None
 ```
 
-Cuando `registrar` devuelve un mensaje, añádelo como texto al `tool_result` de esa acción. Si el bucle continúa después del aviso, corta la ejecución. Junto con el límite de pasos ([[roadmap/40-primer-agente/03-condiciones-de-parada]]), evita que una pantalla inesperada consuma todo el presupuesto.
+Cuando `registrar` devuelve un mensaje, añádelo como texto al `tool_result` de esa acción. Si el bucle continúa después del aviso, corta la ejecución. El síntoma general, fuera del navegador, está en [[problemas/el-agente-repite-la-misma-herramienta]]. Y deja el error de la acción fallida en el contexto: verlo es lo que evita que el modelo repita lo mismo ([[cursos/context-engineering/02-que-meter-y-que-no]]). Junto con el límite de pasos ([[roadmap/40-primer-agente/03-condiciones-de-parada]]), evita que una pantalla inesperada consuma todo el presupuesto.
 
 > [!aviso] Diálogos inesperados
 > *Banners* de cookies, avisos de sesión caducada, ventanas de «¿quieres salir?». Son la causa más común de bloqueos. Ciérralos en tu código cuando los conozcas (un manejador de diálogos en Playwright, un clic previo en el banner) en lugar de dejar que el modelo los descubra en cada ejecución.
@@ -170,3 +173,4 @@ Una ejecución que funciona no demuestra nada. Ejecuta el mismo flujo muchas vec
 - [[cursos/uso-del-ordenador/04-seguridad-y-aislamiento]]
 - [[recetas/reintentos-y-limites-de-tasa]]
 - [[cursos/evals-para-agentes/index]]
+- [[problemas/el-agente-no-para]]

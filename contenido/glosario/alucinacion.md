@@ -2,6 +2,7 @@
 titulo: Alucinación
 descripcion: Respuesta del modelo que suena plausible pero es falsa o no está respaldada por ninguna fuente.
 creado: 2026-07-03
+actualizado: 2026-10-29
 categoria: fundamentos
 ingles: hallucination
 aliases: [hallucination, alucinaciones, confabulación]
@@ -13,7 +14,7 @@ Una alucinación es una salida del modelo que suena segura y coherente pero es f
 
 ## En la práctica
 
-No se elimina, se acota. Las palancas que funcionan: dar al modelo las fuentes en el contexto ([[glosario/rag|RAG]]), pedirle que cite el fragmento exacto en que se apoya, permitirle decir «no lo sé» y comprobar las citas con código. En agentes, las herramientas reducen el problema porque el modelo consulta datos reales en lugar de recordarlos.
+No se elimina, se acota. Las palancas que funcionan: dar al modelo las fuentes en el contexto ([[glosario/rag|RAG]]), pedirle que cite el fragmento exacto en que se apoya, permitirle decir «no lo sé» y comprobar las citas con código. En RAG, la métrica que lo mide es la [[glosario/fidelidad]]: si cada afirmación se apoya en el contexto recuperado. En agentes, las herramientas reducen el problema porque el modelo consulta datos reales en lugar de recordarlos.
 
 ## No confundir con
 
@@ -26,3 +27,4 @@ No se elimina, se acota. Las palancas que funcionan: dar al modelo las fuentes e
 - [[roadmap/30-contexto-y-rag/05-respuestas-con-citas]]
 - [[sistemas/rag-con-citas]]
 - [[roadmap/00-fundamentos/01-que-es-un-llm]]
+- [[blog/2026-10-15-la-respuesta-mas-probable]]

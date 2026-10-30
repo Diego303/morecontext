@@ -2,6 +2,7 @@
 titulo: "Navegador o API: cuándo cada uno"
 descripcion: La escalera de opciones para que un agente trabaje con una aplicación (API, MCP, navegador por DOM, píxeles) y los criterios para elegir el escalón adecuado.
 creado: 2026-10-16
+actualizado: 2026-10-29
 orden: 2
 minutos: 40
 tipo: practica
@@ -10,7 +11,7 @@ objetivos:
   - Implementar herramientas de navegador basadas en el DOM con Playwright como alternativa a las capturas
   - Evaluar un caso real y decidir entre API, MCP, navegador o uso del ordenador
 requiere: ["[[cursos/uso-del-ordenador/01-como-funciona]]"]
-relacionados: ["[[disciplinas/diseno-de-herramientas]]", "[[glosario/mcp]]", "[[cursos/mcp-de-cero-a-servidor/index]]", "[[patrones/01-workflows-vs-agentes]]"]
+relacionados: ["[[disciplinas/diseno-de-herramientas]]", "[[glosario/mcp]]", "[[cursos/mcp-de-cero-a-servidor/index]]", "[[patrones/01-workflows-vs-agentes]]", "[[glosario/toolset]]"]
 tags: [uso-del-ordenador, navegador, herramientas, mcp]
 ---
 
@@ -36,7 +37,7 @@ flowchart TD
 |---|---|---|---|---|
 | API | JSON con campos definidos | Alta | Bajo | Bajo: contrato estable y versionado |
 | Servidor [[glosario/mcp|MCP]] | Herramientas ya descritas | Alta, según el servidor | Bajo | Lo mantiene otro (revisa quién) |
-| Navegador por DOM | Texto y estructura de la página | Media | Medio | Se rompe si cambia el HTML |
+| Navegador por DOM | Texto y estructura de la página | Media | Medio, según cuánto texto devuelvas | Se rompe si cambia el HTML |
 | Uso del ordenador | Capturas de pantalla | Media-baja | Alto (imágenes) | Se rompe si cambia el aspecto |
 
 Además de fiabilidad y coste, la seguridad empeora al bajar. Con una API defines exactamente qué operaciones existen. Con un navegador, el agente lee contenido de terceros que puede contener instrucciones inyectadas, y puede hacer cualquier cosa que haga un usuario con esa sesión ([[cursos/uso-del-ordenador/04-seguridad-y-aislamiento]]).
@@ -134,7 +135,20 @@ export async function pulsar(texto: string): Promise<string> {
 
 Estas herramientas se conectan al mismo bucle agéntico de siempre ([[cursos/agentes-de-codigo/01-como-trabaja-un-agente-de-codigo]] tiene uno completo). Tres detalles importan. El contexto de navegador es nuevo, sin tus cookies. La lista de dominios se comprueba en la herramienta, no en el prompt. Y el contenido de la página va dentro de una etiqueta para marcarlo como dato ajeno.
 
-Localizar por rol y texto visible (`get_by_role`, `get_by_label`) es más robusto que por selectores CSS, que cambian con cada rediseño. Si una página no tiene etiquetas accesibles, el DOM se vuelve difícil de usar y es cuando el uso del ordenador con capturas empieza a compensar.
+Localizar por rol y texto visible (`get_by_role`, `get_by_label`) es más robusto que por selectores CSS, que cambian con cada rediseño. Si una página no tiene etiquetas accesibles, el DOM se vuelve difícil de usar y es cuando el uso del ordenador con capturas empieza a compensar. Ojo con el coste: devolver el HTML o el texto entero de una página grande puede ocupar más tokens que una captura. La ventaja del DOM aparece cuando devuelves solo el texto útil y los elementos accionables, como `leer_pagina`.
+
+### El *toolset* de navegador
+
+La API de Claude ofrece también un [[glosario/toolset|toolset]] de navegador, el equivalente de estas herramientas pero definido por el proveedor: el modelo ya sabe usarlo y tú solo implementas cada acción, por ejemplo con Playwright. Se declara como el de uso del ordenador, una entrada sin nombre en `tools`:
+
+```python title="toolset_navegador.py"
+# versión vigente en oct. 2026: compruébala en la documentación oficial
+NAVEGADOR = {"type": "browser_toolset_20260801",
+             "configs": {n: {"enabled": False}       # menos capacidades, menos superficie de ataque
+                         for n in ("javascript_exec", "file_upload", "read_network", "read_console")}}
+```
+
+Sus acciones trabajan sobre el **árbol de accesibilidad**, no sobre píxeles. `read_page` devuelve ese árbol con referencias a elementos (`[ref_7]`), `find` busca elementos por una descripción en lenguaje natural, y `left_click` o `form_input` actúan sobre una referencia. Hay además `navigate`, pestañas, captura y desplazamiento. Las referencias caducan al navegar o cuando la página se redibuja, así que tu ejecutor debe rechazar una referencia vieja en lugar de hacer clic en lo que haya ahora en ese sitio. En un resultado puedes devolver un bloque `browser_state` con la lista completa de pestañas abiertas y la activa. Como en el de ordenador, cada `tool_result` repite `"toolset_name": "browser"` y las acciones de un mismo turno se ejecutan en orden y se paran en el primer fallo. `javascript_exec`, `file_upload`, `read_console` y `read_network` ya vienen desactivadas por defecto; el bloque de arriba lo deja explícito. Según la documentación, leer el árbol de una página típica suele costar menos tokens que una captura y da referencias sobre las que actuar. Las comprobaciones de dominio y de acciones con efecto siguen siendo tuyas, en el ejecutor ([[cursos/uso-del-ordenador/04-seguridad-y-aislamiento]]).
 
 > [!consejo] Combina escalones
 > Un agente puede tener una herramienta de API para lo que la API cubre y una de navegador para el resto. Describe en cada herramienta cuándo usarla («usa `crear_pedido` siempre que puedas; `pulsar` solo para pantallas sin API») y el modelo elegirá la más alta disponible.
@@ -160,7 +174,7 @@ Localizar por rol y texto visible (`get_by_role`, `get_by_label`) es más robust
 - Escalera: API, MCP, navegador por DOM, uso del ordenador. Empieza arriba.
 - Bajar cuesta fiabilidad, tokens, mantenimiento y seguridad.
 - Razones válidas para bajar: no hay API, no hay acceso, la tarea es visual o es un prototipo.
-- El navegador por DOM da texto en lugar de píxeles: más barato y verificable.
+- El navegador por DOM, con tus herramientas o con el *toolset* de navegador sobre el árbol de accesibilidad, da texto en lugar de píxeles: más barato y verificable si devuelves solo lo útil.
 - Comprueba dominios en la herramienta, usa un contexto de navegador limpio y marca el contenido como dato.
 
 ## Para seguir

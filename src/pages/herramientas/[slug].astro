@@ -1,0 +1,34 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import { fecha, fechaISO, publicados } from '../../lib/contenido';
+import { CATEGORIA_HERRAMIENTA } from '../../lib/nombres';
+import { ldArticulo } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () =>
+  (await publicados('herramientas')).map((e) => ({ params: { slug: e.id }, props: { e } }))) satisfies GetStaticPaths;
+
+const { e } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+const d = e.data;
+const corta = (url: string) => url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+---
+<LecturaLayout entrada={e} headings={headings} seccion="herramientas" jsonld={ldArticulo(e)}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/herramientas/', texto: 'Herramientas' }, { texto: d.titulo }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo"><b>Herramienta</b> · {CATEGORIA_HERRAMIENTA[d.categoria] ?? d.categoria}</span>
+  <div slot="cabecera" class="ficha-datos">
+    <dl class="datos">
+      {d.licencia && <div><dt>Licencia</dt><dd>{d.licencia}</dd></div>}
+      <div><dt>Open source</dt><dd>{d.open_source ? 'sí' : 'no'}</dd></div>
+      {d.lenguajes.length > 0 && <div><dt>Lenguajes</dt><dd>{d.lenguajes.join(' · ')}</dd></div>}
+      {d.version && <div><dt>Versión revisada</dt><dd>{d.version}</dd></div>}
+      <div><dt>Revisada</dt><dd><time datetime={fechaISO(d.revisado)}>{fecha(d.revisado)}</time></dd></div>
+      <div class="ancho"><dt>Enlaces</dt><dd class="enlaces-ficha">
+        <a class="ext" href={d.url} target="_blank" rel="noopener noreferrer">{corta(d.url)}</a>
+        {d.repositorio && <a class="ext" href={d.repositorio} target="_blank" rel="noopener noreferrer">{corta(d.repositorio)}</a>}
+      </dd></div>
+    </dl>
+  </div>
+  <Content />
+</LecturaLayout>

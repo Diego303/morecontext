@@ -2,6 +2,7 @@
 titulo: Nivel 60 · Sistemas multiagente
 descripcion: Cuándo merece la pena repartir el trabajo entre varios agentes, cómo orquestarlos con código y cómo medir lo que cuestan.
 creado: 2026-09-14
+actualizado: 2026-10-29
 nivel: 60
 horas: 5
 objetivo: Decidir con criterio si un problema necesita varios agentes y, cuando lo necesita, construir un orquestador con subagentes en paralelo cuyo coste puedas medir.
@@ -27,9 +28,9 @@ Al terminar sabrás distinguir los problemas que se benefician de varios agentes
 ## Lecciones
 
 1. [[roadmap/60-multiagente/01-cuando-no-usar-multiagente]]. Los costes reales de añadir agentes y una lista de preguntas para decidir. Empieza aquí aunque tengas prisa.
-2. [[roadmap/60-multiagente/02-orquestador-y-subagentes]]. El esqueleto con código: un subagente expuesto como herramienta y otro lanzado como tarea.
+2. [[roadmap/60-multiagente/02-orquestador-y-subagentes]]. El esqueleto con código: un subagente expuesto como herramienta y otro lanzado como tarea, y la versión con LangGraph.
 3. [[roadmap/60-multiagente/03-pasar-contexto-entre-agentes]]. Cómo escribir la tarea para un subagente que no sabe nada de la conversación y qué pedirle que devuelva.
-4. [[roadmap/60-multiagente/04-paralelismo]]. `asyncio.gather`, semáforos para limitar la concurrencia y qué hacer cuando falla uno de cinco.
+4. [[roadmap/60-multiagente/04-paralelismo]]. `asyncio.gather`, semáforos para limitar la concurrencia, qué hacer cuando falla uno de cinco, y `Send` de LangGraph y *worktrees* para agentes de código.
 5. [[roadmap/60-multiagente/05-coste-de-multiplicar-agentes]]. Por qué los tokens se multiplican y cómo medirlo con `usage` antes de decidir.
 
 ## Proyecto del nivel
@@ -41,4 +42,6 @@ Construyes un investigador como el de [[sistemas/investigacion-multiagente]], en
 
 ## Para seguir
 
-Cuando termines, el nivel [[roadmap/80-evals/index]] te da las herramientas para comprobar si tu sistema multiagente responde mejor que el agente simple. Si quieres profundizar en arquitecturas y estado compartido, sigue con el curso [[cursos/sistemas-multiagente/index]].
+El siguiente nivel es [[roadmap/70-flujos-con-especificacion/index]]: cuando varios agentes construyen algo, necesitan una especificación que todos lean igual, un plan con tareas y una forma ejecutable de demostrar que está hecho. Después, [[roadmap/80-evals/index]] te da las herramientas para comprobar si tu sistema multiagente responde mejor que el agente simple.
+
+Si quieres el mismo orquestador con un framework abierto, mira [[cursos/langchain-y-langgraph/08-multiagente-con-langgraph]] (supervisor y `Send` en LangGraph). Para profundizar en arquitecturas y estado compartido, sigue con el curso [[cursos/sistemas-multiagente/index]].

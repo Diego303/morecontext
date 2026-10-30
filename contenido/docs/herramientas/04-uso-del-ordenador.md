@@ -2,6 +2,7 @@
 titulo: Uso del ordenador
 descripcion: Referencia de la herramienta con la que el modelo ve capturas de pantalla y controla ratón y teclado, con su bucle, el entorno aislado y los riesgos.
 creado: 2026-08-08
+actualizado: 2026-10-29
 orden: 4
 nivel: avanzado
 tags: [herramientas, uso-del-ordenador, seguridad]
@@ -31,13 +32,22 @@ El bucle es el de cualquier herramienta ([[docs/herramientas/01-uso-de-herramien
 
 ## Declarar la herramienta
 
-Al contrario que tus herramientas, esta no lleva `description` ni `input_schema` escritos por ti. Se declara con un **identificador de tipo versionado** que publica el proveedor, más las dimensiones de la pantalla virtual. Algunas versiones requieren además activar una cabecera beta en la petición.
+Al contrario que tus herramientas, esta no lleva `description` ni `input_schema` escritos por ti. Se declara con un **identificador de tipo versionado** que publica el proveedor.
 
-**Toma el identificador, los parámetros y la cabecera de la [documentación oficial](https://platform.claude.com/docs)**. Cambian entre versiones de la herramienta y de modelo, y una versión equivocada hace fallar la petición. Suele haber herramientas complementarias del mismo estilo para editar archivos o ejecutar comandos en la máquina.
+Desde agosto de 2026, la forma vigente es un ***toolset* de cliente** (GA, sin cabecera beta): `computer_toolset_20260801` para el escritorio y `browser_toolset_20260801` para el navegador. Un *toolset* cambia la declaración respecto a las versiones anteriores (`computer_20251124`, `computer_20250124`):
+
+| | *Toolset* (`computer_toolset_20260801`) | Herramienta antigua (`computer_2025…`) |
+|---|---|---|
+| Entrada en `tools` | Una sola, **sin `name`**, con `configs` por acción (`enabled`, `defer_loading`) | Una, con `name` y dimensiones de pantalla |
+| El `tool_use` trae | `toolset_name` (`computer` o `browser`) y la acción como `name` | `name` de la herramienta y la acción en `input["action"]` |
+| Cabecera beta | Ninguna | Sí, según la versión |
+| No admite | `strict`, `input_examples`, `tool_choice` de tipo `tool`, llamada programática | Consulta la documentación de esa versión |
+
+Las versiones antiguas van saliendo: Sonnet 5.5 ya no acepta `computer_20251124` y Haiku 5.5 rechaza `computer_20250124`. **Toma el identificador y las opciones de la [documentación oficial](https://platform.claude.com/docs)**: cambian entre versiones de la herramienta y de modelo, y una versión equivocada hace fallar la petición. Los SDK incluyen clases de ayuda para los *toolsets* (en beta). Suele haber herramientas complementarias del mismo estilo (bash, editor de texto) para ejecutar comandos o editar archivos en la máquina.
 
 ## Acciones
 
-El conjunto exacto depende de la versión. Estas categorías están siempre:
+El conjunto exacto depende de la versión. Con el *toolset*, desactiva en `configs` las que tu ejecutor no implemente: así el modelo no las ve ni las pide. Estas categorías están siempre:
 
 | Categoría | Ejemplos de acción | Qué ejecutas |
 |---|---|---|
@@ -49,7 +59,7 @@ El conjunto exacto depende de la versión. Estas categorías están siempre:
 
 ## Ejemplo completo
 
-Bucle mínimo. El ejecutor usa `xdotool` y `scrot`, y **debe correr dentro de la máquina aislada**. Los nombres de acción siguen la forma habitual de la herramienta; compruébalos con la versión que uses.
+Bucle mínimo con el *toolset*. El ejecutor usa `xdotool` y `scrot`, y **debe correr dentro de la máquina aislada**. Los nombres de acción siguen la forma habitual de la herramienta; compruébalos con la versión que uses.
 
 ```python tab="Python" title="ordenador.py"
 import base64, subprocess, time
@@ -59,16 +69,21 @@ MODEL = "claude-sonnet-5-5"
 MAX_PASOS = 30
 client = anthropic.Anthropic()
 
-# Copia la definición exacta de la documentación oficial (tipo versionado, nombre, dimensiones).
-HERRAMIENTA_ORDENADOR = {"type": "<tipo de la documentación>", "name": "<nombre>"}
+# Toolset vigente en oct. 2026 (compruébalo en la documentación). Desactiva lo que no implementas.
+NO_IMPLEMENTADAS = ["double_click", "triple_click", "right_click", "middle_click", "left_click_drag",
+                    "left_mouse_down", "left_mouse_up", "hold_key", "mouse_move", "scroll", "wait",
+                    "zoom", "cursor_position"]
+HERRAMIENTA_ORDENADOR = {
+    "type": "computer_toolset_20260801",
+    "configs": {accion: {"enabled": False} for accion in NO_IMPLEMENTADAS},
+}
 
 def captura() -> dict:
     subprocess.run(["scrot", "-o", "/tmp/pantalla.png"], check=True)
     datos = base64.standard_b64encode(open("/tmp/pantalla.png", "rb").read()).decode()
     return {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": datos}}
 
-def ejecutar(accion: dict) -> list[dict]:
-    tipo = accion.get("action")
+def ejecutar(tipo: str, accion: dict) -> list[dict]:
     if tipo == "left_click":
         x, y = accion["coordinate"]
         subprocess.run(["xdotool", "mousemove", str(x), str(y), "click", "1"], check=True)
@@ -88,6 +103,8 @@ def tarea(instruccion: str) -> str:
             model=MODEL, max_tokens=2048, tools=[HERRAMIENTA_ORDENADOR], messages=mensajes
         )
         mensajes.append({"role": "assistant", "content": resp.content})
+        if resp.stop_reason == "pause_turn":
+            continue
         if resp.stop_reason != "tool_use":
             return "".join(b.text for b in resp.content if b.type == "text")
         resultados = []
@@ -95,7 +112,10 @@ def tarea(instruccion: str) -> str:
             if b.type != "tool_use":
                 continue
             try:
-                resultados.append({"type": "tool_result", "tool_use_id": b.id, "content": ejecutar(b.input)})
+                if getattr(b, "toolset_name", None) != "computer":
+                    raise ValueError(f"Herramienta desconocida: {b.name}")
+                resultados.append({"type": "tool_result", "tool_use_id": b.id,
+                                   "content": ejecutar(b.name, dict(b.input))})
             except Exception as e:
                 resultados.append({"type": "tool_result", "tool_use_id": b.id,
                                    "content": f"Error: {e}", "is_error": True})
@@ -114,8 +134,13 @@ const MODEL = "claude-sonnet-5-5";
 const MAX_PASOS = 30;
 const client = new Anthropic();
 
-// Copia la definición exacta de la documentación oficial (tipo versionado, nombre, dimensiones).
-const HERRAMIENTA_ORDENADOR: any = { type: "<tipo de la documentación>", name: "<nombre>" };
+// Toolset vigente en oct. 2026 (compruébalo en la documentación). Desactiva lo que no implementas.
+const NO_IMPLEMENTADAS = ["double_click", "triple_click", "right_click", "middle_click", "left_click_drag",
+  "left_mouse_down", "left_mouse_up", "hold_key", "mouse_move", "scroll", "wait", "zoom", "cursor_position"];
+const HERRAMIENTA_ORDENADOR: any = {
+  type: "computer_toolset_20260801",
+  configs: Object.fromEntries(NO_IMPLEMENTADAS.map((a) => [a, { enabled: false }])),
+};
 
 function captura(): Anthropic.ImageBlockParam {
   execFileSync("scrot", ["-o", "/tmp/pantalla.png"]);
@@ -123,16 +148,16 @@ function captura(): Anthropic.ImageBlockParam {
   return { type: "image", source: { type: "base64", media_type: "image/png", data } };
 }
 
-function ejecutar(accion: any): Anthropic.ImageBlockParam[] {
-  if (accion.action === "left_click") {
+function ejecutar(tipo: string, accion: any): Anthropic.ImageBlockParam[] {
+  if (tipo === "left_click") {
     const [x, y] = accion.coordinate;
     execFileSync("xdotool", ["mousemove", String(x), String(y), "click", "1"]);
-  } else if (accion.action === "type") {
+  } else if (tipo === "type") {
     execFileSync("xdotool", ["type", "--delay", "40", accion.text]);
-  } else if (accion.action === "key") {
+  } else if (tipo === "key") {
     execFileSync("xdotool", ["key", accion.text]);
-  } else if (accion.action !== "screenshot") {
-    throw new Error(`Acción no soportada por este ejecutor: ${accion.action}`);
+  } else if (tipo !== "screenshot") {
+    throw new Error(`Acción no soportada por este ejecutor: ${tipo}`);
   }
   execFileSync("sleep", ["0.5"]);
   return [captura()];
@@ -148,6 +173,7 @@ async function tarea(instruccion: string): Promise<string> {
       messages: mensajes,
     });
     mensajes.push({ role: "assistant", content: resp.content });
+    if (resp.stop_reason === "pause_turn") continue;
     if (resp.stop_reason !== "tool_use") {
       return resp.content.map((b) => (b.type === "text" ? b.text : "")).join("");
     }
@@ -155,7 +181,8 @@ async function tarea(instruccion: string): Promise<string> {
     for (const b of resp.content) {
       if (b.type !== "tool_use") continue;
       try {
-        resultados.push({ type: "tool_result", tool_use_id: b.id, content: ejecutar(b.input) });
+        if ((b as any).toolset_name !== "computer") throw new Error(`Herramienta desconocida: ${b.name}`);
+        resultados.push({ type: "tool_result", tool_use_id: b.id, content: ejecutar(b.name, b.input) });
       } catch (e) {
         resultados.push({ type: "tool_result", tool_use_id: b.id, content: `Error: ${e}`, is_error: true });
       }
@@ -168,7 +195,7 @@ async function tarea(instruccion: string): Promise<string> {
 console.log(await tarea("Abre el editor de texto, escribe 'hola' y guarda el archivo como hola.txt en el escritorio."));
 ```
 
-Este ejecutor cubre tres acciones para mantener el ejemplo corto. Si el modelo pide otra, recibe un `is_error` y suele intentar una alternativa. En producción, implementa todas las de la versión que declares.
+Este ejecutor cubre cuatro acciones (`screenshot`, `left_click`, `type`, `key`) para mantener el ejemplo corto, y desactiva el resto en `configs` para que el modelo no las pida. En producción, implementa las que necesite tu tarea. Si usas una versión antigua de la herramienta, la acción no viene en `name` sino en `input["action"]`.
 
 ## Parámetros y decisiones
 
@@ -178,6 +205,8 @@ Este ejecutor cubre tres acciones para mantener el ejemplo corto. Si el modelo p
 | Límite de pasos | Obligatorio. Una tarea que no converge puede repetir acciones indefinidamente. |
 | Historial | Las capturas ocupan mucho. Conserva las últimas y sustituye las antiguas por una nota de texto. Ver [[docs/contexto/01-ventana-de-contexto]]. |
 | Confirmaciones | Antes de enviar, pagar, borrar o aceptar condiciones, para y pide aprobación: [[docs/agentes/03-humano-en-el-bucle]]. |
+| Red | Lista blanca de dominios, pero tratándola como una capacidad más: un dominio permitido que acepta contenido de terceros (un formulario, un repositorio) sirve para sacar datos. |
+| Navegador | Si la tarea vive en una web, el *toolset* de navegador o una librería como Playwright con una API suelen ser más fiables que operar el escritorio: [[cursos/uso-del-ordenador/02-navegador-o-api]]. |
 | Verificación | Comprueba el resultado por otra vía (¿existe el archivo?) en vez de fiarte del «hecho» del modelo: [[cursos/uso-del-ordenador/03-fiabilidad]]. |
 
 ## Errores frecuentes
@@ -186,11 +215,14 @@ Este ejecutor cubre tres acciones para mantener el ejemplo corto. Si el modelo p
 - **Usarlo cuando hay API.** Si la aplicación tiene API o hay un [[docs/herramientas/02-mcp|servidor MCP]], úsalo: más rápido, barato y fiable.
 - **No esperar a que la interfaz reaccione.** Capturar justo después del clic devuelve la pantalla anterior y el modelo repite la acción.
 - **Historial con decenas de capturas.** La [[glosario/ventana-de-contexto]] se llena y el coste se dispara.
-- **Copiar el identificador de la herramienta de un tutorial antiguo.** Usa el de la documentación vigente.
+- **Copiar el identificador de la herramienta de un tutorial antiguo.** Usa el de la documentación vigente; con el *toolset* cambian la declaración y dónde viene la acción.
+- **Dar por resuelta la inyección en navegadores.** No lo está: limita qué puede hacer el agente aunque lo engañen ([[docs/seguridad/03-patrones-contra-inyeccion]]).
 
 ## Ver también
 
 - [[cursos/uso-del-ordenador/01-como-funciona]]: la lección de base.
 - [[cursos/uso-del-ordenador/04-seguridad-y-aislamiento]]: cómo montar el aislamiento.
 - [[docs/seguridad/01-prompt-injection]]: la pantalla como vía de inyección.
+- [[glosario/toolset]]: qué es un *toolset* de cliente.
+- [[docs/modelos-abiertos/09-guardrails-y-sandbox]]: *sandboxes* abiertos para aislar la máquina.
 - [[radar/2026-07-02-uso-del-ordenador-en-sandbox]].

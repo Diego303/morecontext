@@ -2,6 +2,7 @@
 titulo: "El prompt de sistema: rol y reglas fijas"
 descripcion: "Qué va en el prompt de sistema y qué en cada mensaje, cómo definir rol y reglas fijas, cómo estructurarlo y por qué no sirve para guardar secretos."
 creado: 2026-09-16
+actualizado: 2026-10-29
 orden: 4
 minutos: 35
 tipo: practica
@@ -51,7 +52,7 @@ de material deportivo. Tu salida la lee un programa, no una persona."""
 
 resp = client.messages.create(
     model=MODEL,
-    max_tokens=300,
+    max_tokens=1024,
     system=SISTEMA,
     messages=[{"role": "user", "content": "<ticket>El pedido llegó sin el casco.</ticket>"}],
 )
@@ -69,14 +70,16 @@ de material deportivo. Tu salida la lee un programa, no una persona.`;
 
 const resp = await client.messages.create({
   model: MODEL,
-  max_tokens: 300,
+  max_tokens: 1024,
   system: SISTEMA,
   messages: [{ role: "user", content: "<ticket>El pedido llegó sin el casco.</ticket>" }],
 });
 console.log(resp.content.map((b) => (b.type === "text" ? b.text : "")).join(""));
 ```
 
-En la API de Mensajes no existe un rol `system` dentro de `messages`: los mensajes solo pueden ser `user` o `assistant`, y el sistema va en su propio parámetro.
+El sistema va en su propio parámetro, antes de todos los mensajes. Con los modelos actuales de Claude también puedes añadir un mensaje `{"role": "system", …}` a mitad de la conversación para cambiar una instrucción a partir de ese punto sin tocar el prompt inicial; es una técnica para agentes largos que verás en [[docs/contexto/06-mensajes-de-sistema-a-mitad-de-conversacion]]. Para el clasificador de este nivel, basta con el parámetro `system`.
+
+En LangChain el mismo papel lo cumple un `SystemMessage` al principio de la lista o el argumento `system_prompt` de `create_agent`; en la API compatible con OpenAI que usan los modelos abiertos, un mensaje con rol `system` al principio de `messages`.
 
 ## El rol: corto y concreto
 
@@ -171,3 +174,4 @@ Un sistema idéntico entre llamadas es candidato perfecto al [[glosario/prompt-c
 - [[roadmap/10-prompting/05-iterar-con-casos-de-prueba]]: medir si cada cambio mejora.
 - [[docs/prompting/01-prompt-de-sistema]] como referencia.
 - [[glosario/inyeccion-de-prompt]]: por qué los datos del usuario pueden intentar dar órdenes.
+- [[plantillas/prompt-de-sistema-de-agente]]: una plantilla de sistema lista para copiar cuando el modelo tenga herramientas.

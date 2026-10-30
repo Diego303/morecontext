@@ -2,11 +2,12 @@
 titulo: Por qué tu primer agente debería ser un workflow
 descripcion: Un ensayo sobre por qué conviene empezar con pasos fijos en código y dejar la autonomía del modelo para cuando de verdad la necesitas.
 creado: 2026-10-12
+actualizado: 2026-10-29
 estado: revision
 tipo: ensayo
 destacado: true
 tags: [agentes, workflows, diseno]
-relacionados: ["[[patrones/01-workflows-vs-agentes]]", "[[roadmap/40-primer-agente/01-que-es-un-agente]]", "[[patrones/09-elegir-patron]]", "[[glosario/workflow]]"]
+relacionados: ["[[patrones/01-workflows-vs-agentes]]", "[[roadmap/40-primer-agente/01-que-es-un-agente]]", "[[patrones/09-elegir-patron]]", "[[glosario/workflow]]", "[[biblioteca/building-effective-agents]]"]
 ---
 
 Cuando alguien me dice que quiere construir su primer agente, casi siempre está describiendo otra cosa. Quiere que un modelo lea un correo, lo clasifique, busque el pedido y redacte una respuesta. Eso tiene cuatro pasos, siempre los mismos y en el mismo orden. Es un [[glosario/workflow|workflow]]. Y defiendo que es exactamente lo que debería construir primero.

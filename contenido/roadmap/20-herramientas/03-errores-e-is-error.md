@@ -2,6 +2,7 @@
 titulo: "Manejo de errores e is_error"
 descripcion: "Qué hacer cuando una herramienta falla: devolver el error al modelo con is_error, escribir mensajes que le permitan corregirse y cortar los bucles de reintentos."
 creado: 2026-09-25
+actualizado: 2026-10-29
 orden: 3
 minutos: 40
 tipo: practica
@@ -52,6 +53,7 @@ Mete toda la ejecución en una función que recibe un bloque `tool_use` y **siem
 
 ```python tab="Python" title="ejecutor.py"
 import json
+import logging
 from pydantic import BaseModel, ValidationError
 
 class ErrorHerramienta(Exception):
@@ -89,7 +91,7 @@ def ejecutar(bloque) -> dict:
     except ErrorHerramienta as e:
         return resultado(str(e), True)
     except Exception:
-        # no filtres trazas ni datos internos al modelo; regístralos tú
+        logging.exception("Fallo en %s", bloque.name)  # el detalle va a tus logs, no al modelo
         return resultado("Error interno al ejecutar la herramienta. Inténtalo más tarde o informa al usuario.", True)
 ```
 
@@ -173,6 +175,54 @@ def ejecutar_con_limite(bloque, max_fallos: int = 2) -> dict:
 
 Los reintentos por fallos transitorios (un servicio que tarda o da un error puntual) es mejor hacerlos **dentro** de la herramienta, con espera entre intentos, antes de devolver nada al modelo. Así no gastas un paso entero de conversación en algo que tu código puede resolver. La receta [[recetas/reintentos-y-limites-de-tasa]] lo cubre, junto con los reintentos de la propia API.
 
+## Con LangChain: la excepción no vuelve sola
+
+Aquí los *frameworks* esconden menos de lo que parece. En [[herramientas/langchain|LangChain]] 1.x, si una herramienta lanza una excepción dentro de `create_agent`, **el agente se detiene** y la excepción llega a tu código; el modelo no se entera. Solo los argumentos que no cumplen el esquema vuelven solos al modelo como error. Para tener el equivalente a `is_error: true` hay que añadir `ToolErrorMiddleware`, que convierte la excepción en un `ToolMessage` con `status="error"` (y LangChain lo envía a Claude como `tool_result` con `is_error: true`):
+
+```python tab="LangChain" title="agente_errores_langchain.py"
+from langchain.agents import create_agent
+from langchain.agents.middleware import ModelCallLimitMiddleware, ToolErrorMiddleware
+from langchain.chat_models import init_chat_model
+from langchain.tools import tool
+
+MODEL = "anthropic:claude-sonnet-5-5"
+PEDIDOS = {"4471": {"estado": "entregado", "dias_desde_entrega": 12}}
+
+class ErrorHerramienta(Exception):
+    """Error esperado, con un mensaje pensado para el modelo."""
+
+@tool
+def solicitar_devolucion(id_pedido: str, motivo: str) -> str:
+    """Solicita la devolución de un pedido entregado hace 30 días o menos."""
+    pedido = PEDIDOS.get(id_pedido)
+    if pedido is None:
+        raise ErrorHerramienta(f"No existe el pedido {id_pedido}. Pide al usuario que revise el número.")
+    if pedido["dias_desde_entrega"] > 30:
+        raise ErrorHerramienta("El plazo de devolución (30 días) ha terminado. No reintentes: explícaselo al usuario.")
+    return f"Devolución creada para {id_pedido}."
+
+def error_para_el_modelo(exc: Exception, request) -> str:
+    if isinstance(exc, ErrorHerramienta):
+        return str(exc)                        # llega como ToolMessage(status="error")
+    return "Error interno al ejecutar la herramienta. Inténtalo más tarde o informa al usuario."
+
+agente = create_agent(
+    model=init_chat_model(MODEL, max_tokens=1024),
+    tools=[solicitar_devolucion],
+    middleware=[
+        ToolErrorMiddleware(on_error=error_para_el_modelo),          # sin esto, la excepción corta el agente
+        ModelCallLimitMiddleware(run_limit=10, exit_behavior="end"),  # el equivalente a MAX_PASOS
+    ],
+)
+
+if __name__ == "__main__":
+    salida = agente.invoke({"messages": [{"role": "user", "content": "Quiero devolver el pedido 4417, llegó roto."}]})
+    for m in salida["messages"]:
+        m.pretty_print()
+```
+
+La función `error_para_el_modelo` cumple el mismo papel que tu ejecutor: decide qué texto ve el modelo y oculta los detalles internos. `ModelCallLimitMiddleware` es el límite de pasos. En otros frameworks el mecanismo tiene otro nombre (`failure_error_function` en el OpenAI Agents SDK, `ModelRetry` en Pydantic AI); lo tienes comparado en [[docs/frameworks/02-equivalencias]]. Y en un servidor MCP, el error que el modelo debe leer se lanza con `ToolError`, como verás en [[roadmap/20-herramientas/05-mcp-conectar-un-servidor]].
+
 ## Errores frecuentes
 
 - Dejar que una excepción de la herramienta tumbe el bucle.
@@ -181,6 +231,7 @@ Los reintentos por fallos transitorios (un servicio que tarda o da un error punt
 - Mensajes de error crípticos («Error», «400») que no dicen qué hacer.
 - Pasar trazas completas o datos internos al modelo.
 - Reintentar sin límite.
+- Dar por hecho que un framework devuelve las excepciones al modelo sin comprobarlo.
 
 ## Ejercicio
 
@@ -205,3 +256,4 @@ Los reintentos por fallos transitorios (un servicio que tarda o da un error punt
 - [[roadmap/20-herramientas/04-tool-choice]]: controlar cuándo y qué herramienta usa.
 - [[roadmap/40-primer-agente/03-condiciones-de-parada]]: límites y presupuesto en agentes.
 - [[glosario/tool-result]] como referencia rápida.
+- [[problemas/el-agente-repite-la-misma-herramienta]]: qué hacer cuando el modelo reintenta en bucle.

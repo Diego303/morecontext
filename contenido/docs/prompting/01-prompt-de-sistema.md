@@ -2,6 +2,7 @@
 titulo: Prompt de sistema
 descripcion: Qué es el parámetro system, qué conviene poner en él, cómo estructurarlo por secciones y cómo cachearlo cuando es largo.
 creado: 2026-07-22
+actualizado: 2026-10-29
 orden: 1
 nivel: inicial
 tags: [prompting, system]
@@ -121,7 +122,17 @@ Guardar el prompt en un archivo aparte permite versionarlo, revisarlo en un *pul
 
 ## Prompt de sistema y caché
 
-El prompt de sistema es el candidato natural para el [[glosario/prompt-caching|prompt caching]]: es largo, estable y va al principio de cada petición. Recuerda el orden del prefijo cacheado: `tools` → `system` → `messages`. **Cualquier cambio en `system` invalida la caché de lo que va después**, así que no metas en él datos variables como la fecha y hora exactas o el nombre de la persona. Si los necesitas, ponlos en el primer mensaje `user` o en un bloque de `system` posterior al punto de caché. Detalles en [[docs/contexto/02-prompt-caching]].
+El prompt de sistema es el candidato natural para el [[glosario/prompt-caching|prompt caching]]: es largo, estable y va al principio de cada petición. Recuerda el orden del prefijo cacheado: `tools` → `system` → `messages`. **Cualquier cambio en `system` invalida la caché de lo que va después**, así que no metas en él datos variables como la fecha y hora exactas o el nombre de la persona. Si los necesitas, ponlos en el primer mensaje `user` o en un bloque de `system` posterior al punto de caché. Recuerda también el mínimo cacheable (512 tokens en los modelos actuales): un prompt de sistema corto no se cachea aunque lo marques. Detalles en [[docs/contexto/02-prompt-caching]].
+
+## Cambiar instrucciones a mitad de conversación
+
+El parámetro `system` es fijo para toda la petición. Si un agente necesita reglas nuevas a partir de un punto (entra en la fase de entrega, pasa a modo solo lectura, ahorra esfuerzo), no reescribas `system`: eso invalida la caché. En los modelos 5.x (salvo Sonnet 5) puedes añadir un mensaje `{"role": "system", "content": "…"}` dentro de `messages`, justo después de un turno `user`. Tiene prioridad sobre el `system` de arriba en los turnos siguientes y el prefijo cacheado sigue valiendo.
+
+```python nocheck
+historial.append({"role": "system", "content": "A partir de aquí, no llames a herramientas de escritura: resume y entrega."})
+```
+
+Reglas de posición, `clear_at` para mensajes de un solo turno y cambios de herramientas en [[docs/contexto/06-mensajes-de-sistema-a-mitad-de-conversacion]].
 
 ## Casos límite
 
@@ -144,4 +155,7 @@ El prompt de sistema es el candidato natural para el [[glosario/prompt-caching|p
 - [[roadmap/10-prompting/04-prompt-de-sistema]]: la lección.
 - [[modelos/02-ingenieria-de-contexto]]: qué meter y en qué orden.
 - [[docs/prompting/02-ejemplos-few-shot]]: añadir ejemplos al prompt.
+- [[plantillas/prompt-de-sistema-de-agente]]: una plantilla lista para un agente con herramientas.
+- [[docs/claude-code/01-memoria-claude-md-y-agents-md]]: el equivalente en un agente de código (`CLAUDE.md` y `AGENTS.md`).
+- [[problemas/el-modelo-ignora-instrucciones]]: qué revisar cuando el modelo no sigue el prompt.
 - [[glosario/prompt-de-sistema]].

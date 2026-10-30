@@ -2,6 +2,7 @@
 titulo: Observabilidad
 descripcion: Qué registrar de cada llamada al modelo y de cada paso de un agente, cómo organizarlo en trazas y qué métricas vigilar en producción.
 creado: 2026-10-20
+actualizado: 2026-10-29
 orden: 1
 nivel: intermedio
 tags: [produccion, observabilidad, trazas, logging]
@@ -23,7 +24,7 @@ flowchart TD
   S --> L3[Span: llamada al modelo del subagente]
 ```
 
-Cada span lleva el identificador de la traza y el de su span padre. Con eso puedes reconstruir el árbol completo, incluso cuando hay [[docs/agentes/02-subagentes|subagentes]] en paralelo. Si ya usas OpenTelemetry u otra herramienta de trazas en tu empresa, mete aquí los spans del agente: no hace falta un sistema aparte.
+Cada span lleva el identificador de la traza y el de su span padre. Con eso puedes reconstruir el árbol completo, incluso cuando hay [[docs/agentes/02-subagentes|subagentes]] en paralelo. Si ya usas OpenTelemetry u otra herramienta de trazas en tu empresa, mete aquí los spans del agente: no hace falta un sistema aparte. El formato común para nombrarlos está en [[docs/produccion/04-opentelemetry-genai]].
 
 ## Qué registrar
 
@@ -144,6 +145,25 @@ Con los spans registrados, estas métricas salen solas:
 | Latencia p50 y p95 | La experiencia típica y la de los peores casos. |
 | Valoración del usuario | Calidad percibida; crúzala con las anteriores. |
 
+## Con OpenTelemetry y herramientas abiertas
+
+Un registro JSON propio sirve para empezar. Cuando quieras verlo en un panel, no hace falta inventar el formato: [[glosario/convenciones-genai-otel|las convenciones GenAI de OpenTelemetry]] fijan los nombres. El árbol típico de un agente es `invoke_agent` → `chat` → `execute_tool`, y los campos de la tabla anterior tienen atributo propio (`gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`, `gen_ai.tool.name`, `gen_ai.conversation.id`). Dos avisos:
+
+- **Siguen en estado *Development***. No hay atributos `gen_ai.*` estables, los nombres han cambiado (`gen_ai.system` quedó obsoleto en favor de `gen_ai.provider.name`) y desde junio de 2026 viven en su propio repositorio, `open-telemetry/semantic-conventions-genai`. Fija la versión de la instrumentación que uses.
+- **El contenido de prompts y respuestas es opt-in** (`gen_ai.input.messages`, `gen_ai.output.messages`), por privacidad. Actívalo solo con una política de datos clara.
+
+El SDK `anthropic` 2.x ya emite sus propios spans OpenTelemetry por cada llamada a la API (con sus reintentos), siempre que haya `opentelemetry` instalado y un proveedor de trazas registrado. Si ya instrumentas tú cada llamada, como en el envoltorio de arriba, evita duplicados con `anthropic.Anthropic(open_telemetry=False)`. Esos spans no sustituyen a los de tu agente: no saben qué es un paso, una herramienta o una tarea.
+
+Para guardar y consultar las trazas con software abierto:
+
+| Opción | Licencia | Para qué |
+|---|---|---|
+| [[herramientas/langfuse\|Langfuse]] | SDK MIT (Python v5, sobre OpenTelemetry); revisa el `LICENSE` del servidor antes de autoalojar | Trazas, costes, prompts y evals; autoalojable. Receta: [[recetas/trazas-con-langfuse]]. |
+| [[herramientas/arize-phoenix\|Arize Phoenix]] | Elastic-2.0 (servidor), que no es una licencia OSI | Trazas y evals locales; acepta OpenTelemetry. |
+| Cualquier backend OpenTelemetry | Según el producto | Si tu empresa ya tiene uno, envía allí los spans del agente. |
+
+LangSmith es comercial. Comparativa y montaje con modelos locales en [[docs/modelos-abiertos/07-observabilidad-abierta]].
+
 ## De las trazas a las evals
 
 Las trazas de producción son la mejor fuente de casos de prueba. Cuando una traza muestra un fallo, conviértela en un caso de tu conjunto de [[glosario/evals|evals]] para que no vuelva a pasar. Ver [[docs/evals/01-disenar-evals]].
@@ -161,3 +181,4 @@ Las trazas de producción son la mejor fuente de casos de prueba. Cuando una tra
 - [[disciplinas/observabilidad]]: la práctica en el día a día.
 - [[docs/produccion/02-costes-y-limites]]: qué hacer con los números de `usage`.
 - [[sistemas/investigacion-multiagente]]: trazas en un sistema con subagentes.
+- [[docs/produccion/04-opentelemetry-genai]]: el árbol de spans estándar, con un bucle instrumentado.

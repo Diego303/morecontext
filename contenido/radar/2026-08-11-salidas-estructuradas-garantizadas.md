@@ -2,6 +2,7 @@
 titulo: Salidas estructuradas garantizadas por esquema
 descripcion: La API puede garantizar que la respuesta o los argumentos de una herramienta cumplen un JSON Schema; cambia cómo pides y validas JSON.
 creado: 2026-08-11
+actualizado: 2026-10-29
 categoria: herramientas
 tags: [salida-estructurada, json, api]
 fuente:
@@ -31,3 +32,6 @@ Con Pydantic, `client.messages.parse(..., output_format=MiModelo)` devuelve el o
 2. Mueve los rangos y longitudes que el esquema no admite a validación propia tras la respuesta.
 3. Mantén ejemplos de salida en el prompt para guiar el contenido: [[modelos/03-formato-y-salidas-estructuradas]].
 4. Practica con la receta [[recetas/extraer-facturas-a-json]] o el sistema [[sistemas/extraccion-documental]].
+
+> [!nota] Actualización (oct. 2026)
+> Las salidas estructuradas son GA en todos los modelos actuales. Dos matices a lo de arriba. Primero, la garantía vale para respuestas completas: con `stop_reason` `max_tokens` o `refusal` el JSON puede quedar a medias, así que comprueba la parada antes de parsear ([[problemas/json-invalido-del-modelo]]). Segundo, para obligar a entregar con una herramienta ya no sirve forzarla con `tool_choice` (400 en los modelos 5.5): usa `output_config.format` en el último paso, como en [[recetas/entregar-resultado-sin-forzar-herramienta]]. En LangChain, `with_structured_output(..., method="json_schema")`.

@@ -2,6 +2,7 @@
 titulo: Cómo trabaja un agente de código
 descripcion: Las herramientas que necesita un agente de código (leer, buscar, editar, ejecutar), cómo diseñarlas con seguridad y un agente mínimo funcional.
 creado: 2026-09-14
+actualizado: 2026-10-29
 orden: 1
 minutos: 45
 tipo: practica
@@ -10,7 +11,7 @@ objetivos:
   - Implementar herramientas de lectura, búsqueda, edición por reemplazo exacto y ejecución confinadas al repositorio
   - Construir un bucle agéntico que maneje stop_reason y devuelva un tool_result por cada tool_use
 requiere: ["[[roadmap/40-primer-agente/02-el-bucle-agentico]]", "[[roadmap/20-herramientas/03-errores-e-is-error]]"]
-relacionados: ["[[sistemas/agente-de-codigo]]", "[[disciplinas/diseno-de-herramientas]]", "[[docs/agentes/01-el-bucle-agentico]]"]
+relacionados: ["[[sistemas/agente-de-codigo]]", "[[disciplinas/diseno-de-herramientas]]", "[[docs/agentes/01-el-bucle-agentico]]", "[[docs/claude-code/index]]"]
 tags: [agentes, codigo, herramientas]
 ---
 
@@ -42,7 +43,7 @@ Lo que diferencia a un agente de código de otros agentes es la **retroalimentac
 | `editar_archivo` | Cambiar código | Reemplazo de un fragmento exacto que aparece una sola vez |
 | `ejecutar` | Tests, linter, compilador | Lista de comandos permitidos, tiempo máximo y salida recortada |
 
-Muchos agentes añaden listar archivos por patrón (`glob`) y crear archivos nuevos. Con las cuatro de la tabla ya puedes resolver tareas reales.
+Muchos agentes añaden listar archivos por patrón (`glob`) y crear archivos nuevos. Con las cuatro de la tabla ya puedes resolver tareas reales. Los agentes comerciales y abiertos usan el mismo reparto con otros nombres: en [[herramientas/claude-code|Claude Code]] son `Read`, `Grep` y `Glob`, `Edit` y `Bash`, y la herramienta de editor de texto que Anthropic ofrece para el cliente también edita por reemplazo de un fragmento exacto.
 
 ### Por qué editar por reemplazo exacto
 
@@ -52,7 +53,7 @@ El reemplazo exacto pide dos cadenas: el fragmento actual y su sustituto. Si el 
 
 ### Ejecutar comandos sin abrir la puerta a todo
 
-`ejecutar` es la herramienta más útil y la más peligrosa. Tres reglas mínimas: una lista de comandos permitidos (prefijos como `pytest` o `npm test`), un tiempo máximo y la salida recortada a los últimos miles de caracteres, que es donde suelen estar los errores. Para ir más allá (red, sistema de archivos) ejecuta el agente dentro de un [[glosario/sandbox|sandbox]] y aplica [[glosario/minimo-privilegio|mínimo privilegio]]; lo tienes en [[docs/seguridad/02-permisos-y-minimo-privilegio]].
+`ejecutar` es la herramienta más útil y la más peligrosa. Tres reglas mínimas: una lista de comandos permitidos (prefijos como `pytest` o `npm test`), un tiempo máximo y la salida recortada a los últimos miles de caracteres, que es donde suelen estar los errores. Para ir más allá (red, sistema de archivos) ejecuta el agente dentro de un [[glosario/sandbox|sandbox]] y aplica [[glosario/minimo-privilegio|mínimo privilegio]]; lo tienes en [[docs/seguridad/02-permisos-y-minimo-privilegio]]. Cómo lo resuelve Claude Code con reglas `allow`/`ask`/`deny` y un *sandbox* de sistema operativo está en [[docs/claude-code/06-permisos-y-sandbox]].
 
 ## Un agente mínimo
 
@@ -132,6 +133,8 @@ def agente(tarea: str, max_pasos: int = 40) -> str:
         messages.append({"role": "assistant", "content": resp.content})
         if resp.stop_reason == "end_turn":
             return "".join(b.text for b in resp.content if b.type == "text")
+        if resp.stop_reason == "refusal":       # llega con HTTP 200: es un final más
+            return "El modelo ha rechazado continuar con la tarea."
         if resp.stop_reason == "pause_turn":
             continue
         if resp.stop_reason != "tool_use":
@@ -174,6 +177,7 @@ export async function agente(tarea: string, maxPasos = 40): Promise<string> {
     if (resp.stop_reason === "end_turn") {
       return resp.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
     }
+    if (resp.stop_reason === "refusal") return "El modelo ha rechazado continuar con la tarea.";
     if (resp.stop_reason === "pause_turn") continue;
     if (resp.stop_reason !== "tool_use") throw new Error(`stop_reason inesperado: ${resp.stop_reason}`);
     const resultados: Anthropic.ToolResultBlockParam[] = [];
@@ -191,7 +195,7 @@ export async function agente(tarea: string, maxPasos = 40): Promise<string> {
 }
 ```
 
-Fíjate en tres detalles. Las descripciones de las herramientas dicen cuándo usarlas («Lee el archivo antes»), porque el modelo las lee como instrucciones; lo tienes desarrollado en [[disciplinas/diseno-de-herramientas]]. Los errores no rompen el bucle: vuelven al modelo, que suele corregirse solo. Y el [[glosario/stop-reason|stop_reason]] se trata caso por caso, con un límite de pasos como red de seguridad ([[roadmap/40-primer-agente/03-condiciones-de-parada]]).
+Fíjate en tres detalles. Las descripciones de las herramientas dicen cuándo usarlas («Lee el archivo antes»), porque el modelo las lee como instrucciones; lo tienes desarrollado en [[disciplinas/diseno-de-herramientas]]. Los errores no rompen el bucle: vuelven al modelo, que suele corregirse solo. Y el [[glosario/stop-reason|stop_reason]] se trata caso por caso, con un límite de pasos como red de seguridad ([[roadmap/40-primer-agente/03-condiciones-de-parada]]). Un `refusal` llega con HTTP 200 y hay que tratarlo como un final más ([[docs/fundamentos/06-motivos-de-parada-y-rechazos]]).
 
 ## Errores frecuentes
 
@@ -222,3 +226,4 @@ Fíjate en tres detalles. Las descripciones de las herramientas dicen cuándo us
 - [[cursos/agentes-de-codigo/02-contexto-del-repositorio]]
 - [[sistemas/agente-de-codigo]]
 - [[roadmap/40-primer-agente/05-agente-con-varias-herramientas]]
+- [[recetas/agente-de-codigo-con-modelo-local]]

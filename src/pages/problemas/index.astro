@@ -1,0 +1,38 @@
+---
+import { getEntry, render } from 'astro:content';
+import PaginaLayout from '../../layouts/PaginaLayout.astro';
+import FiltroChips from '../../components/listados/FiltroChips.astro';
+import { porTitulo, publicados, urlDe } from '../../lib/contenido';
+import { TEMA } from '../../lib/nombres';
+import { ldColeccion } from '../../lib/jsonld';
+
+const s = (await getEntry('secciones', 'problemas'))!;
+const { Content } = await render(s);
+const problemas = (await publicados('problemas')).sort(porTitulo);
+// El síntoma (mensaje de error o frase literal) solo se repite debajo del título cuando no coincide con él.
+const temas = Object.entries(TEMA)
+  .map(([valor, texto]) => ({ valor, texto, n: problemas.filter((p) => p.data.tema === valor).length }))
+  .filter((o) => o.n > 0);
+---
+<PaginaLayout entrada={s} titulo={s.data.titulo} descripcion={s.data.descripcion} lead={s.data.descripcion} seccion="problemas"
+  migas={[{ href: '/', texto: 'Inicio' }, { texto: s.data.titulo }]} jsonld={ldColeccion(s.data.titulo, s.data.descripcion, '/problemas/')}>
+  <Content />
+  <section slot="despues" class="wrap narrow listado" aria-labelledby="h-problemas">
+    <div class="listado-cab"><h2 id="h-problemas">Por síntoma</h2></div>
+    <FiltroChips objetivo="lista-problemas" total={problemas.length} nombre="problemas"
+      grupos={[{ clave: 'tema', etiqueta: 'Tema', opciones: temas }]} />
+    <ol class="entradas" id="lista-problemas">
+      {problemas.map((p) => (
+        <li data-filtrable data-tema={p.data.tema}>
+          <div class="meta"><span class="tag">{TEMA[p.data.tema]}</span></div>
+          <h3><a href={urlDe(p)}>{p.data.titulo}</a></h3>
+          {p.data.sintoma !== p.data.titulo && <p class="sintoma">{p.data.sintoma}</p>}
+          <p>{p.data.descripcion}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+</PaginaLayout>
+<script>
+  import '../../scripts/filtros.ts';
+</script>

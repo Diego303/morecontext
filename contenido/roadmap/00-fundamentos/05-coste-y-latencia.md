@@ -2,6 +2,7 @@
 titulo: "Coste y latencia: medir antes de optimizar"
 descripcion: "Cómo medir tokens, tiempo total y tiempo hasta el primer token de cada llamada, convertirlo en coste y registrar todo para decidir con datos."
 creado: 2026-09-08
+actualizado: 2026-10-29
 orden: 5
 minutos: 40
 tipo: practica
@@ -37,6 +38,8 @@ Hay dos tiempos que medir y responden a preguntas diferentes:
 - **Tiempo hasta el primer token** (TTFT, *time to first token*): desde que envías hasta que llega el primer fragmento de texto. Es la que percibe una persona en un chat, porque con [[glosario/streaming|streaming]] empieza a leer en cuanto llega algo.
 
 La latencia total crece sobre todo con los **tokens de salida**, porque se generan uno detrás de otro. La entrada influye más en el tiempo hasta el primer token, porque el modelo la procesa antes de empezar a escribir.
+
+Con los modelos actuales hay un tercer factor: el **razonamiento**. Antes de escribir el primer token de texto, el modelo puede generar tokens de razonamiento que no ves (llegan como un bloque `thinking` vacío por defecto). Esos tokens retrasan el primer texto y se pagan como salida. Cuánto razona lo regulas con el [[glosario/esfuerzo|esfuerzo]] (`output_config={"effort": "low"}` y otros niveles); en `claude-sonnet-5-5` el valor por defecto es `high`.
 
 ## Medir la latencia total
 
@@ -115,6 +118,8 @@ console.log(`\nTTFT: ${((primer ?? fin) - inicio).toFixed(0)} ms · total: ${(fi
 console.log(`salida: ${final.usage.output_tokens} tokens · stop_reason: ${final.stop_reason}`);
 ```
 
+Si el TTFT te sale alto con preguntas sencillas, mira `usage.output_tokens` frente al texto que has recibido: la diferencia suele ser razonamiento.
+
 Tienes más detalle sobre streaming en [[docs/fundamentos/04-streaming]] y una receta lista en [[recetas/streaming-de-respuestas]].
 
 ## Calcular el coste
@@ -150,6 +155,8 @@ def coste_llamada(modelo: str, usage, precios_path: str = "precios.json") -> flo
 
 Los dos campos de caché aparecen cuando usas [[glosario/prompt-caching|prompt caching]]; mientras no lo uses valdrán cero. Los incluimos desde ya para que el cálculo siga siendo correcto cuando llegues a [[roadmap/100-produccion/02-costes-y-prompt-caching]]. La moneda del archivo es la que use la página de precios; si conviertes, hazlo en un solo sitio.
 
+Lee la página de precios con calma: hay modelos que cobran distinto por encima de cierto tamaño de prompt, y opciones como el modo rápido o la residencia de datos aplican multiplicadores. Si usas alguna, añádela a la configuración en vez de corregir el número a mano.
+
 > [!aviso] Una llamada no es una muestra
 > La latencia varía bastante de una llamada a otra por carga del servicio, red y longitud de la respuesta. Nunca concluyas nada con una sola ejecución: repite al menos diez y mira la mediana y el percentil alto.
 
@@ -184,9 +191,9 @@ Cuando tengas datos, las palancas habituales son pocas y conviene probarlas de u
 
 | Si el problema es… | Prueba primero |
 |---|---|
-| Respuestas lentas | Pedir salidas más cortas, ajustar `max_tokens`, usar streaming en interfaces. |
+| Respuestas lentas | Pedir salidas más cortas, bajar el esfuerzo en tareas sencillas, usar streaming en interfaces. |
 | Coste de entrada alto | Quitar contexto que no aporta; [[glosario/prompt-caching]] para lo que se repite. |
-| Coste de salida alto | Formatos más compactos, instrucciones de brevedad. |
+| Coste de salida alto | Formatos más compactos, instrucciones de brevedad, menos esfuerzo de razonamiento. |
 | Todo a la vez | Un modelo más pequeño para esa tarea concreta ([[modelos/05-elegir-modelo-por-tarea]]). |
 
 Cambiar de modelo puede afectar a la calidad. Por eso en el [[roadmap/10-prompting/05-iterar-con-casos-de-prueba|nivel 10]] aprenderás a comprobar con casos de prueba que una optimización no rompe nada.
@@ -221,3 +228,4 @@ Cambiar de modelo puede afectar a la calidad. Por eso en el [[roadmap/10-prompti
 - [[roadmap/00-fundamentos/index]]: con esto tienes todo lo necesario para el proyecto del nivel.
 - [[roadmap/10-prompting/index]]: el siguiente nivel.
 - [[docs/produccion/03-latencia]] y [[docs/produccion/02-costes-y-limites]] como referencia.
+- [[cursos/agentes-con-modelos-abiertos/06-local-o-api]]: cuándo compensa ejecutar el modelo en tu máquina en lugar de pagar por token.

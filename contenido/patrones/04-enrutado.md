@@ -2,6 +2,7 @@
 titulo: Enrutado
 descripcion: Clasifica cada entrada y envíala al flujo especializado que le toca, con su propio prompt, herramientas y modelo, para no optimizar todo con un único prompt.
 creado: 2026-07-17
+actualizado: 2026-10-29
 tags: [patrones, workflows, clasificacion]
 aliases: [Routing, Router]
 orden: 4
@@ -33,7 +34,7 @@ La clasificación puede hacerla un LLM o un modelo clásico entrenado con tus da
 ## Cuándo usarlo
 
 - Hay **categorías distintas** que se tratan mejor por separado, y puedes clasificar con precisión.
-- Quieres mandar **lo fácil a un modelo pequeño y rápido** y lo difícil a uno más capaz. El artículo lo cita como uso típico para ajustar coste y velocidad; tienes el método en [[modelos/05-elegir-modelo-por-tarea]].
+- Quieres mandar **lo fácil a un modelo pequeño y rápido** y lo difícil a uno más capaz. El artículo lo cita como uso típico para ajustar coste y velocidad; tienes el método en [[modelos/05-elegir-modelo-por-tarea]]. Anthropic posiciona Haiku 5.5 precisamente para clasificar y enrutar, y el clasificador también puede ser un modelo abierto en tu máquina si los datos no deben salir ([[modelos/11-modelos-abiertos]]).
 - Cada categoría necesita **herramientas o permisos diferentes**. El flujo de facturación puede consultar pagos; el general, no. Es una forma sencilla de aplicar [[glosario/minimo-privilegio|mínimo privilegio]].
 
 ## Cuándo no
@@ -97,6 +98,65 @@ Cada `flujo_*` puede ser una [[patrones/02-llamada-aumentada|llamada aumentada]]
 
 > [!consejo] Evalúa el router por separado
 > Etiqueta a mano unos cientos de mensajes reales y mide la precisión por categoría. Un error de ruta contamina todo lo que viene después, y es el fallo más barato de detectar. Tienes cómo montarlo en [[roadmap/80-evals/02-conjunto-de-prueba]].
+
+## Con LangGraph
+
+En LangGraph (MIT) el router es un nodo que devuelve `Command(goto=ruta)`: actualiza el estado y elige la arista en el mismo paso. Cada ruta es un nodo, que puede ser una cadena o un subgrafo. Necesitas `pip install langgraph langchain langchain-anthropic`.
+
+```python title="enrutado_langgraph.py"
+from typing import Literal, TypedDict
+
+from langchain.chat_models import init_chat_model
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Command
+from pydantic import BaseModel
+
+MODEL = "anthropic:claude-sonnet-5-5"
+Ruta = Literal["devolucion", "incidencia_tecnica", "consulta_general", "dudosa"]
+
+
+class Decision(BaseModel):
+    ruta: Ruta
+    motivo: str
+
+
+class Estado(TypedDict, total=False):
+    mensaje: str
+    decision: Decision
+    respuesta: str
+
+
+def construir(modelo=None):
+    llm = modelo or init_chat_model(MODEL, max_tokens=256)
+    clasificador = llm.with_structured_output(Decision, method="json_schema")  # output_config.format, sin forzar herramienta
+
+    def clasificar(state: Estado) -> Command[Ruta]:
+        d = clasificador.invoke("Clasifica el mensaje del cliente. Usa 'dudosa' si encaja en más de una "
+                                f"ruta o en ninguna.\n<mensaje>\n{state['mensaje']}\n</mensaje>")
+        return Command(goto=d.ruta, update={"decision": d})      # actualiza el estado y elige la arista
+
+    def flujo(nombre: str):
+        def nodo(state: Estado):
+            return {"respuesta": f"[{nombre}] {state['mensaje']}"}  # aquí va tu cadena, llamada o agente
+        return nodo
+
+    g = StateGraph(Estado)
+    g.add_node("clasificar", clasificar)
+    for ruta in ("devolucion", "incidencia_tecnica", "consulta_general", "dudosa"):
+        g.add_node(ruta, flujo(ruta))
+        g.add_edge(ruta, END)
+    g.add_edge(START, "clasificar")
+    return g.compile()
+
+
+if __name__ == "__main__":
+    out = construir().invoke({"mensaje": "Quiero devolver las zapatillas"})
+    print(out["decision"].ruta, "→", out["respuesta"])
+```
+
+Fíjate en `method="json_schema"`: hace que LangChain envíe `output_config.format`. Sin él, `with_structured_output` intenta forzar una herramienta, que en `claude-sonnet-5-5` no está permitido. La anotación `Command[Ruta]` le dice al grafo a qué nodos puede saltar el clasificador; la alternativa equivalente es `add_conditional_edges("clasificar", funcion, [...])`.
+
+**Qué esconde el framework**: el despacho a cada ruta y el registro de por dónde pasó cada entrada. La clasificación, el `enum` de rutas y la categoría «dudosa» siguen siendo decisiones tuyas. En el OpenAI Agents SDK el mismo patrón se llama *handoff* ([[glosario/handoff]]).
 
 ## Coste y latencia
 

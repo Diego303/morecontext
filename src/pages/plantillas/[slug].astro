@@ -1,0 +1,29 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { render } from 'astro:content';
+import LecturaLayout from '../../layouts/LecturaLayout.astro';
+import { publicados } from '../../lib/contenido';
+import { TIPO_PLANTILLA } from '../../lib/nombres';
+import { ldArticulo } from '../../lib/jsonld';
+
+export const getStaticPaths = (async () =>
+  (await publicados('plantillas')).map((e) => ({ params: { slug: e.id }, props: { e } }))) satisfies GetStaticPaths;
+
+const { e } = Astro.props as InferGetStaticPropsType<typeof getStaticPaths>;
+const { Content, headings } = await render(e);
+---
+<LecturaLayout entrada={e} headings={headings} seccion="plantillas" jsonld={ldArticulo(e)}
+  migas={[{ href: '/', texto: 'Inicio' }, { href: '/plantillas/', texto: 'Plantillas' }, { texto: e.data.titulo }]}>
+  <span slot="sobre-titulo" class="label sobre-titulo"><b>Plantilla</b> · {TIPO_PLANTILLA[e.data.tipo]}</span>
+  <div slot="cabecera" class="ficha-datos" data-plantilla-archivo={e.data.archivo}>
+    <dl class="datos">
+      <div><dt>Tipo</dt><dd>{TIPO_PLANTILLA[e.data.tipo]}</dd></div>
+      <div><dt>Formato</dt><dd>.{e.data.formato}</dd></div>
+      <div><dt>Guárdala como</dt><dd>{e.data.archivo}</dd></div>
+    </dl>
+  </div>
+  <Content />
+</LecturaLayout>
+<script>
+  import '../../scripts/plantilla.ts';
+</script>

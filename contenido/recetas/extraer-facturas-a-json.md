@@ -2,6 +2,7 @@
 titulo: Extraer datos de facturas a JSON validado
 descripcion: Convierte el texto de una factura en un objeto JSON que cumple un esquema, con validación de importes en Pydantic y un camino claro para los casos dudosos.
 creado: 2026-08-06
+actualizado: 2026-10-29
 nivel: inicial
 minutos: 25
 tema: herramientas
@@ -19,7 +20,7 @@ La solución tiene dos capas. La API garantiza que la respuesta cumple el esquem
 ## Ingredientes
 
 - Python 3.10 o superior.
-- `pip install anthropic pydantic`
+- `pip install "anthropic>=2" pydantic` (SDK 2.x).
 - La variable de entorno `ANTHROPIC_API_KEY`.
 - Una factura de prueba en texto (`factura.txt`).
 
@@ -142,7 +143,7 @@ Base imponible: 151,00 €   IVA 21 %: 31,71 €   TOTAL: 182,71 €
 
 ## Variaciones
 
-- **Con una herramienta `strict`.** Si ya trabajas con herramientas, define una cuyo `input_schema` sea el esquema y fuerza su uso. `strict: True` garantiza que los argumentos cumplen el esquema. Validas igual con Pydantic.
+- **Con una herramienta `strict`.** Si ya trabajas con herramientas, define una cuyo `input_schema` sea el esquema. `strict: True` garantiza que los argumentos cumplen el esquema. No la fuerces con `tool_choice`: en Opus 5.5, Sonnet 5.5 y Fable 5.1, `{"type": "tool", …}` y `{"type": "any"}` devuelven 400. Deja `tool_choice` en `auto`, pídela en el prompt de sistema y trata el caso en que el modelo conteste con texto. Validas igual con Pydantic.
 
 ```python title="extraer_con_herramienta.py"
 import anthropic
@@ -164,12 +165,39 @@ def extraer_factura(texto: str) -> Factura:
     resp = client.messages.create(
         model=MODEL,
         max_tokens=2048,
-        tools=[herramienta],
-        tool_choice={"type": "tool", "name": "guardar_factura"},
+        system="Extraes datos de facturas. Entrega siempre el resultado llamando a guardar_factura.",
+        tools=[herramienta],  # tool_choice queda en auto: forzarlo da 400 en los modelos 5.5
         messages=[{"role": "user", "content": f"<factura>\n{texto}\n</factura>"}],
     )
-    bloque = next(b for b in resp.content if b.type == "tool_use")
+    bloque = next((b for b in resp.content if b.type == "tool_use"), None)
+    if bloque is None:  # contestó con texto (stop_reason end_turn, max_tokens o refusal)
+        raise RuntimeError(f"Sin datos: stop_reason={resp.stop_reason}")
     return Factura.model_validate(bloque.input)  # lanza ValidationError si no cuadra
+```
+
+Si la herramienta solo sirve para entregar el resultado, la vía de `messages.parse` de arriba es más simple. Cuándo usar cada una lo explica [[recetas/entregar-resultado-sin-forzar-herramienta]].
+
+- **Con Pydantic AI.** El mismo modelo `Factura` sirve como `output_type` de un agente de [[docs/frameworks/07-pydantic-ai|Pydantic AI]] (MIT, `pip install "pydantic-ai-slim[anthropic]"`). Si el validador falla, el framework devuelve el error al modelo y le pide otro intento (hasta `retries`); si los agota, lanza `UnexpectedModelBehavior` y la factura va a revisión.
+
+```python title="extraer_pydantic_ai.py"
+from pydantic_ai import Agent
+from pydantic_ai.models.anthropic import AnthropicModelSettings
+
+from modelo import Factura
+
+MODEL = "anthropic:claude-sonnet-5-5"
+
+agente = Agent(
+    MODEL,
+    output_type=Factura,
+    instructions="Extraes datos de facturas. Copia los valores tal como aparecen; no calcules.",
+    model_settings=AnthropicModelSettings(max_tokens=2048),
+    retries=1,  # un reintento si el validador rechaza la salida
+)
+
+
+def extraer_factura(texto: str) -> Factura:
+    return agente.run_sync(f"<factura>\n{texto}\n</factura>").output
 ```
 
 - **PDF directo.** La API acepta PDF como bloque de documento en el mensaje, sin extraer el texto antes. Consulta el formato en la [documentación oficial](https://platform.claude.com/docs).
@@ -184,4 +212,4 @@ def extraer_factura(texto: str) -> Factura:
 - **Meter en el ERP lo que falla la validación «porque casi cuadra».** Esa es justo la factura que hay que mirar.
 - **Esquemas recursivos o con `additionalProperties: true`.** No están soportados. Aplana la estructura.
 
-Más contexto en [[sistemas/extraccion-documental]] y [[roadmap/10-prompting/03-formato-de-salida]].
+Más contexto en [[sistemas/extraccion-documental]] y [[roadmap/10-prompting/03-formato-de-salida]]. Si el JSON llega roto, mira [[problemas/json-invalido-del-modelo]].

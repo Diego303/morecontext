@@ -1,19 +1,28 @@
 ---
 titulo: "{{title}}"
-descripcion: Una frase de 20 a 220 caracteres con lo que aporta el paper.
+descripcion: Una frase de 20 a 220 caracteres con la idea del texto.
 creado: {{date:YYYY-MM-DD}}
 estado: borrador
-autores: Apellido et al.
-anio: 2024
-url: https://arxiv.org/abs/0000.00000
 tags: [biblioteca]
 relacionados: []
+autores: Apellido, Apellido y Apellido
+anio: 2026
+url: https://arxiv.org/abs/0000.00000
+tipo: paper
+tema: fundamentos
+nivel: intermedio
 ---
 
-## Qué propone
+De qué va, en dos o tres frases.
 
-## Por qué importa al construir
+## La idea clave
 
-## Qué ha cambiado desde entonces
+## Por qué importa hoy
 
-## Ver también
+## Qué leer primero
+
+## Qué ha envejecido
+
+## Dónde lo ves en MoreContext
+
+- Wikilinks a lecciones, patrones y términos.

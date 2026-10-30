@@ -2,6 +2,7 @@
 titulo: RAG con citas verificables
 descripcion: Arquitectura de un asistente que responde sobre tus documentos citando la fuente exacta, comprueba en código que cada cita existe y se abstiene cuando no hay evidencia.
 creado: 2026-09-02
+actualizado: 2026-10-29
 tags: [sistemas, rag, citas, recuperacion]
 orden: 1
 complejidad: 2
@@ -9,7 +10,7 @@ tiempo: "2–3 días"
 stack: [Python, API de Claude, base vectorial, BM25, reranker]
 componentes: [Ingesta y troceado, Índice híbrido, Reranker, Generador con citas, Verificador de citas, Política de abstención]
 patrones: ["[[patrones/02-llamada-aumentada]]", "[[patrones/03-encadenado]]"]
-relacionados: ["[[glosario/rag]]", "[[cursos/rag-a-fondo/index]]", "[[roadmap/30-contexto-y-rag/05-respuestas-con-citas]]", "[[docs/contexto/03-rag]]"]
+relacionados: ["[[glosario/rag]]", "[[cursos/rag-a-fondo/index]]", "[[roadmap/30-contexto-y-rag/05-respuestas-con-citas]]", "[[docs/contexto/03-rag]]", "[[sistemas/asistente-100-local]]"]
 ---
 
 ## Qué problema resuelve
@@ -58,9 +59,9 @@ flowchart LR
 
 ## Decisiones de diseño
 
-**Búsqueda híbrida frente a solo vectorial.** Los *embeddings* capturan el significado, pero fallan con códigos de producto, nombres propios y siglas. BM25 acierta justo ahí. Fusionar ambos es la opción por defecto razonable; la desarrolla [[roadmap/30-contexto-y-rag/03-busqueda-hibrida]]. La alternativa (solo vectorial) es más simple y basta si tus preguntas son conceptuales y sin identificadores.
+**Búsqueda híbrida frente a solo vectorial.** Los *embeddings* capturan el significado, pero fallan con códigos de producto, nombres propios y siglas. BM25 acierta justo ahí. Fusionar ambos ([[glosario/busqueda-hibrida|búsqueda híbrida]] con [[glosario/rrf|RRF]]) es la opción por defecto razonable; la desarrolla [[roadmap/30-contexto-y-rag/03-busqueda-hibrida]]. La alternativa (solo vectorial) es más simple y basta si tus preguntas son conceptuales y sin identificadores.
 
-**Recuperación contextual.** Un fragmento aislado («El plazo es de 30 días») pierde a qué se refiere. La [[glosario/recuperacion-contextual|recuperación contextual]] ([Anthropic, 2024](https://www.anthropic.com/news/contextual-retrieval)) antepone a cada fragmento una frase generada que lo sitúa en su documento antes de indexarlo. Encarece la ingesta, pero suele mejorar la recuperación. Empieza sin ella, mide y añádela si los fallos son de fragmentos que "no se encuentran".
+**Recuperación contextual.** Un fragmento aislado («El plazo es de 30 días») pierde a qué se refiere. La [[glosario/recuperacion-contextual|recuperación contextual]] ([Anthropic, 19 sept. 2024](https://www.anthropic.com/news/contextual-retrieval)) antepone a cada fragmento una frase generada que lo sitúa en su documento antes de indexarlo. Encarece la ingesta, pero suele mejorar la recuperación. Empieza sin ella, mide y añádela si los fallos son de fragmentos que "no se encuentran".
 
 **Citas literales frente a solo ids.** Pedir solo el id del fragmento es más barato, pero no te deja verificar que la afirmación salga de ahí. Pedir el texto literal permite una comprobación determinista y le da al usuario la frase exacta que respalda la respuesta. El precio es algo más de salida.
 
@@ -68,7 +69,7 @@ flowchart LR
 
 **Abstenerse frente a responder siempre.** La abstención reduce errores graves a cambio de responder menos. Es una decisión de producto: en un asistente legal o médico, abstente con facilidad; en un buscador interno informal, puedes ser más permisivo y avisar de la confianza baja.
 
-**Contexto largo frente a recuperación.** Con ventanas grandes, es tentador meter todos los documentos. Para un corpus pequeño y estable puede servir, y con [[glosario/prompt-caching|prompt caching]] sale razonable. Para corpus grandes o cambiantes, la recuperación sigue siendo más barata y precisa, y el modelo atiende peor a la información en mitad de contextos muy largos ([Liu et al., 2023](https://arxiv.org/abs/2307.03172)).
+**Contexto largo frente a recuperación.** Con ventanas grandes, es tentador meter todos los documentos. Para un corpus pequeño y estable puede servir, y con [[glosario/prompt-caching|prompt caching]] sale razonable: el mismo artículo de Anthropic sugiere meter la base entera en el *prompt* si no pasa de unos 200 000 tokens. Para corpus grandes o cambiantes, la recuperación sigue siendo más barata y precisa, y el modelo atiende peor a la información en mitad de contextos muy largos ([Liu et al., 2023](https://arxiv.org/abs/2307.03172)).
 
 ## Código esencial
 
@@ -145,7 +146,7 @@ def verificar(salida: dict, fragmentos: dict[str, str]) -> list[dict]:
 def responder(pregunta: str, usuario: str) -> dict:
     ids = fusionar([buscar_vectorial(pregunta, 40), buscar_bm25(pregunta, 40)])
     ids = [i for i in ids if puede_ver(usuario, i)]        # permisos antes que el modelo
-    fragmentos = reranquear(pregunta, ids)[:6]             # {id: texto}
+    fragmentos = dict(reranquear(pregunta, ids)[:6])       # [(id, texto), …] ordenados
     salida = generar(pregunta, fragmentos)
     citas = verificar(salida, fragmentos)
     if salida["sin_respuesta"] or not citas:
@@ -155,14 +156,14 @@ def responder(pregunta: str, usuario: str) -> dict:
             "citas_descartadas": len(salida["citas"]) - len(citas)}
 ```
 
-`buscar_vectorial`, `buscar_bm25`, `reranquear` y `puede_ver` dependen de tu infraestructura. Para la parte vectorial, usa el proveedor de *embeddings* que prefieras; tienes una implementación completa en [[recetas/busqueda-hibrida-con-bm25]]. El mínimo de 15 caracteres evita "citas" triviales como «el plazo».
+`buscar_vectorial`, `buscar_bm25`, `reranquear` y `puede_ver` dependen de tu infraestructura (`reranquear` devuelve pares `(id, texto)` ordenados). Para la parte vectorial, usa el proveedor de *embeddings* que prefieras; tienes una implementación completa en [[recetas/busqueda-hibrida-con-bm25]]. El mínimo de 15 caracteres evita "citas" triviales como «el plazo».
 
 > [!aviso] Registra las citas descartadas
 > Un descarte suele significar que el modelo parafraseó en lugar de copiar o que mezcló dos fragmentos. Si la tasa de descartes sube, revisa el *prompt* antes de culpar a la recuperación.
 
 ## Cómo evaluarlo
 
-Evalúa **recuperación y generación por separado**: si mezclas, no sabrás qué arreglar. El curso [[cursos/rag-a-fondo/04-evaluar-un-rag]] lo desarrolla.
+Evalúa **recuperación y generación por separado**: si mezclas, no sabrás qué arreglar. El curso [[cursos/rag-a-fondo/10-evaluar-un-rag]] lo desarrolla.
 
 - **Recuperación**: un [[glosario/conjunto-de-evaluacion|conjunto de evaluación]] de preguntas reales con el fragmento o fragmentos que las responden. Mide si el fragmento correcto aparece entre los primeros resultados antes y después del *reranking*.
 - **Precisión de citas**: proporción de citas que pasan el verificador. Es gratis porque ya la calculas.
@@ -185,8 +186,79 @@ Evalúa **recuperación y generación por separado**: si mezclas, no sabrás qu�
 
 - **Con historial de conversación**: reescribe la pregunta de seguimiento («¿y para autónomos?») como pregunta completa antes de recuperar.
 - **Recuperación agéntica**: en lugar de una búsqueda fija, el modelo decide qué buscar en varias rondas con una herramienta `buscar`. Mejor para preguntas compuestas, peor en coste y latencia. Es el paso hacia [[patrones/08-agente-autonomo]].
-- **Citas nativas del proveedor**: algunas API ofrecen citas integradas sobre documentos. Consulta la [documentación oficial](https://platform.claude.com/docs) y mantén igualmente la verificación propia.
+- **Citas nativas del proveedor**: algunas API ofrecen citas integradas sobre documentos. En la API de Claude son incompatibles con las salidas estructuradas (la petición da 400), así que eliges una de las dos. Consulta la [documentación oficial](https://platform.claude.com/docs) y mantén igualmente la verificación propia.
 - **Respuesta en *streaming***: emite la respuesta mientras se genera y muestra las citas al validar. Ver [[recetas/streaming-de-respuestas]].
+
+### Con open source: Qdrant y un modelo local
+
+La misma arquitectura funciona sin salir de tu servidor: [[herramientas/qdrant|Qdrant]] como índice híbrido, *embeddings* abiertos servidos por [[herramientas/ollama|Ollama]] y un modelo local para generar con esquema a través de LangChain. Las funciones `verificar` y `SYSTEM` son las de arriba, sin cambios: la garantía sigue estando en tu código.
+
+```python title="rag_local.py"
+import ollama
+from langchain_ollama import ChatOllama
+from pydantic import BaseModel
+from qdrant_client import QdrantClient, models
+
+LLM = "qwen3.6:27b"                     # modelo local con salida estructurada
+EMBED = "bge-m3"                        # embeddings multilingües, 1024 dimensiones
+qdrant = QdrantClient(":memory:")       # en producción: QdrantClient(url="http://localhost:6333")
+
+def embed(textos: list[str]) -> list[list[float]]:
+    return ollama.embed(model=EMBED, input=textos).embeddings
+
+def crear_indice(dim: int = 1024) -> None:
+    qdrant.create_collection("fragmentos",
+        vectors_config={"densa": models.VectorParams(size=dim, distance=models.Distance.COSINE)})
+    qdrant.create_payload_index("fragmentos", field_name="texto",     # BM25 sobre el texto (Qdrant ≥ 1.20)
+        field_schema=models.TextIndexParams(type=models.TextIndexType.TEXT,
+            tokenizer=models.TokenizerType.WORD, lowercase=True, scoring=True))
+
+def indexar(fragmentos: list[dict]) -> None:            # {"id", "frag_id", "texto", "grupos"}
+    vectores = embed([f["texto"] for f in fragmentos])
+    qdrant.upsert("fragmentos", points=[
+        models.PointStruct(id=f["id"], vector={"densa": v},
+                           payload={"frag_id": f["frag_id"], "texto": f["texto"], "grupos": f["grupos"]})
+        for f, v in zip(fragmentos, vectores)])
+
+def recuperar(pregunta: str, grupos_usuario: list[str], k: int = 6) -> dict[str, str]:
+    permisos = models.Filter(must=[models.FieldCondition(key="grupos", match=models.MatchAny(any=grupos_usuario))])
+    res = qdrant.query_points("fragmentos",
+        prefetch=[models.Prefetch(query=embed([pregunta])[0], using="densa", limit=40, filter=permisos),
+                  models.Prefetch(query=models.TextQuery(text=pregunta), using="texto", limit=40, filter=permisos)],
+        query=models.RrfQuery(rrf=models.Rrf(k=60)),     # la misma fusión RRF de la versión con el SDK
+        limit=k, with_payload=True)
+    return {p.payload["frag_id"]: p.payload["texto"] for p in res.points}
+
+class Cita(BaseModel):
+    fragmento: str
+    texto: str
+
+class Salida(BaseModel):
+    sin_respuesta: bool
+    respuesta: str
+    citas: list[Cita]
+
+# num_ctx explícito: el valor por defecto de Ollama es pequeño y trunca en silencio
+generador = ChatOllama(model=LLM, num_ctx=32768, reasoning=False).with_structured_output(Salida, method="json_schema")
+
+def generar(pregunta: str, fragmentos: dict[str, str]) -> dict:
+    docs = "\n".join(f'<fragmento id="{fid}">\n{t}\n</fragmento>' for fid, t in fragmentos.items())
+    salida = generador.invoke([("system", SYSTEM),
+                               ("user", f"<documentos>\n{docs}\n</documentos>\n\nPregunta: {pregunta}")])
+    return salida.model_dump()
+```
+
+Lo probé con Qdrant en memoria, *embeddings* simulados y un modelo de chat falso: el filtro de permisos deja fuera los fragmentos de otro grupo antes de la fusión y `verificar` descarta igual las citas inventadas. Contra un Ollama real no está ejecutado; la sintaxis de `ollama.embed` y `ChatOllama` es la de sus paquetes actuales.
+
+| Pieza | Con el SDK de Claude | Con open source |
+|---|---|---|
+| Índice | El que tengas, más BM25 aparte | Qdrant con vector denso y BM25 sobre el *payload*, fusionados con `RrfQuery` en una consulta. Con Postgres, [[herramientas/pgvector|pgvector]] y `tsvector('spanish')`: [[recetas/rag-local-con-pgvector]] |
+| Permisos | `puede_ver` en tu código | Filtro de *payload* dentro de cada `Prefetch`, antes de fusionar |
+| Generación con esquema | `output_config.format` | `with_structured_output(..., method="json_schema")`; el modelo local no garantiza el esquema igual que la API, así que Pydantic valida al leer |
+| Contexto | 1M de tokens | Lo que fijes en `num_ctx`: seis fragmentos y el *prompt* deben caber |
+| Caché del prefijo | *Prompt caching* | No hay equivalente en Ollama; cada consulta paga el prefijo entero |
+
+En Chroma la búsqueda híbrida solo existe en su nube, así que para un índice híbrido autoalojado elige Qdrant, pgvector u otra base que la haga en local ([[docs/modelos-abiertos/05-bases-vectoriales]]). Si prefieres un *framework* para la ingesta, [[herramientas/llamaindex|LlamaIndex]] y [[herramientas/haystack|Haystack]] traen cargadores y troceadores; la verificación de citas la sigues escribiendo tú. La arquitectura completa sin servicios externos está en [[sistemas/asistente-100-local]] y el curso [[cursos/agentes-con-modelos-abiertos/05-rag-cien-por-cien-local]].
 
 ## Por dónde empezar
 
@@ -194,4 +266,4 @@ Evalúa **recuperación y generación por separado**: si mezclas, no sabrás qu�
 2. Monta la ingesta con [[recetas/trocear-documentos]] y la búsqueda con [[recetas/busqueda-hibrida-con-bm25]].
 3. Implementa generación y verificación con el código de arriba y [[roadmap/30-contexto-y-rag/05-respuestas-con-citas]].
 4. Antes de afinar nada, escribe 30–50 preguntas reales con su respuesta esperada y mide.
-5. Profundiza en [[cursos/rag-a-fondo/index]].
+5. Profundiza en [[cursos/rag-a-fondo/index]] y repasa [[plantillas/checklist-de-rag]] antes de ponerlo en producción. Si algo falla, [[recetas/depurar-un-rag]].

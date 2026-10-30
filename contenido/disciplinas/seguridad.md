@@ -2,10 +2,11 @@
 titulo: Seguridad de agentes
 descripcion: Diseñar agentes que sigan siendo seguros aunque el modelo se equivoque o alguien intente manipularlo con instrucciones escondidas en los datos.
 creado: 2026-08-25
+actualizado: 2026-10-29
 orden: 4
 tipo: disciplina
 tags: [seguridad, agentes, prompt-injection]
-relacionados: ["[[cursos/seguridad-y-prompt-injection/index]]", "[[docs/seguridad/01-prompt-injection]]", "[[docs/seguridad/02-permisos-y-minimo-privilegio]]", "[[glosario/inyeccion-de-prompt]]"]
+relacionados: ["[[cursos/seguridad-y-prompt-injection/index]]", "[[docs/seguridad/01-prompt-injection]]", "[[docs/seguridad/02-permisos-y-minimo-privilegio]]", "[[glosario/inyeccion-de-prompt]]", "[[docs/seguridad/03-patrones-contra-inyeccion]]"]
 ---
 
 La seguridad de un [[glosario/agente|agente]] parte de una premisa incómoda: no puedes garantizar que el modelo haga siempre lo que le pides. Así que diseñas el sistema para que, cuando se equivoque o lo engañen, el daño posible sea pequeño, visible y reversible.
@@ -16,7 +17,7 @@ Un chatbot sin herramientas solo puede decir cosas. Un agente puede leer correos
 
 La amenaza principal es la [[glosario/inyeccion-de-prompt|inyección de prompt]]. En la **directa**, el usuario escribe «ignora tus instrucciones y…». En la **indirecta**, la instrucción llega dentro de los datos que el agente procesa: una página web, un PDF, un correo, la respuesta de una API. Greshake et al. la describieron en [Not what you've signed up for](https://arxiv.org/abs/2302.12173) (2023). Para el modelo, todo es texto en su contexto, y no tiene una frontera fiable entre «instrucción» y «dato».
 
-El riesgo se dispara cuando un agente junta tres cosas: acceso a datos privados, exposición a contenido no confiable y capacidad de enviar información fuera. Con las tres, un documento envenenado puede ordenar «manda el historial de este cliente a esta dirección».
+El riesgo se dispara cuando un agente junta tres cosas: acceso a datos privados, exposición a contenido no confiable y capacidad de enviar información fuera. Simon Willison lo bautizó como [[glosario/trifecta-letal|trifecta letal]] ([16 jun. 2025](https://simonwillison.net/2025/Jun/16/the-lethal-trifecta/)): con las tres, un documento envenenado puede ordenar «manda el historial de este cliente a esta dirección». Meta lo convirtió en una regla de diseño, la [[glosario/regla-de-dos|regla de dos]] ([*Agents Rule of Two*](https://ai.meta.com/blog/practical-ai-agent-security/), 31 oct. 2025): en una misma sesión, como mucho dos de procesar entradas no fiables, acceder a datos o sistemas sensibles y cambiar estado o comunicar al exterior. Si necesitas las tres, añade aprobación humana o empieza un contexto limpio.
 
 ```mermaid
 flowchart LR
@@ -28,7 +29,9 @@ flowchart LR
 
 ## Por qué importa
 
-No hay un filtro que detecte todas las inyecciones. Los clasificadores ayudan, pero un atacante tiene infinitas formas de redactar una instrucción. Por eso la defensa seria es de arquitectura: permisos, aislamiento y aprobaciones. El [OWASP Top 10 for LLM Applications](https://genai.owasp.org) recoge la inyección de prompt, la exposición de datos sensibles y la «agencia excesiva» entre los riesgos principales.
+No hay un filtro que detecte todas las inyecciones. Los clasificadores ayudan, pero un atacante tiene infinitas formas de redactar una instrucción, y con ataques adaptativos se han superado defensas que decían bloquear casi todo ([*The Attacker Moves Second*](https://arxiv.org/abs/2510.09023), 2025). Por eso la defensa seria es de arquitectura: permisos, aislamiento, aprobaciones y patrones que impiden que la entrada no fiable decida acciones, como planificar antes de leer datos externos o separar un modelo con herramientas de otro que solo lee lo no fiable ([[docs/seguridad/03-patrones-contra-inyeccion]]).
+
+El [OWASP Top 10 for LLM Applications](https://genai.owasp.org) recoge la inyección de prompt, la exposición de datos sensibles y la «agencia excesiva». Para agentes, OWASP publicó además el [*Top 10 for Agentic Applications for 2026*](https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/) (9 dic. 2025): secuestro del objetivo, mal uso de herramientas, abuso de identidad y privilegios, cadena de suministro agéntica, ejecución inesperada de código, envenenamiento de memoria y contexto, comunicación insegura entre agentes, fallos en cascada, explotación de la confianza humana y agentes que se desvían ([[radar/2026-10-24-owasp-top-10-agentico]]).
 
 ## Prácticas concretas
 
@@ -38,9 +41,10 @@ No hay un filtro que detecte todas las inyecciones. Los clasificadores ayudan, p
 - **Valida en la herramienta, no en el prompt.** Si un reembolso no puede superar el importe del pedido, compruébalo en código. El prompt es una sugerencia; el código es una regla.
 - **Aísla la ejecución.** Código generado y [[glosario/uso-del-ordenador|uso del ordenador]] siempre en un [[glosario/sandbox|sandbox]] o contenedor sin credenciales ni red abierta.
 - **Marca el contenido externo.** Envuelve los datos no confiables en etiquetas (`<documento_externo>`) y di en el sistema que su contenido nunca son instrucciones. Reduce el riesgo, no lo elimina.
-- **Controla las salidas.** Lista blanca de dominios para enlaces e imágenes, revisión de destinatarios antes de enviar correos. Muchas exfiltraciones salen por una URL con datos en los parámetros.
+- **Controla las salidas.** Lista blanca de dominios para enlaces e imágenes, revisión de destinatarios antes de enviar correos. Muchas exfiltraciones salen por una URL con datos en los parámetros. Y recuerda que una lista blanca es en sí una capacidad: Anthropic cuenta el caso de un dominio permitido, su propia API, usado con la clave de un atacante para sacar datos ([*How we contain Claude across products*](https://www.anthropic.com/engineering/how-we-contain-claude), mayo de 2026).
 - **Nunca pongas secretos en el contexto.** Las claves viven en la herramienta, no en el prompt. Lo que está en el contexto puede acabar en la respuesta.
-- **Prueba ataques.** Ten casos de inyección en tu [[glosario/conjunto-de-evaluacion|conjunto de evaluación]] y ejecútalos con cada cambio.
+- **Trata servidores MCP y skills como dependencias.** Una descripción de herramienta puede llevar instrucciones ocultas ([[glosario/envenenamiento-de-herramientas|envenenamiento de herramientas]]) o cambiar después de que la aprobaras ([[glosario/rug-pull|rug pull]]), como documentó Invariant Labs en abril de 2025. En febrero de 2026, Snyk analizó casi 4.000 skills de dos registros públicos y confirmó decenas de maliciosas. Instala solo de fuentes de confianza, fija versiones, revisa scripts y descripciones antes de habilitarlas y vuelve a revisarlas al actualizar ([[docs/seguridad/04-mcp-y-skills-de-terceros]], [[radar/2026-10-26-skills-cadena-de-suministro]]).
+- **Prueba ataques.** Ten casos de inyección en tu [[glosario/conjunto-de-evaluacion|conjunto de evaluación]] y ejecútalos con cada cambio. Que sean adaptativos: un atacante real reescribe el ataque hasta que pasa.
 
 > [!peligro] El prompt de sistema no es un control de acceso
 > «No reveles nunca datos de otros clientes» ayuda, pero un atacante puede saltárselo. Si la herramienta puede devolver datos de otros clientes, asume que en algún momento lo hará.
@@ -51,12 +55,13 @@ No hay un filtro que detecte todas las inyecciones. Los clasificadores ayudan, p
 - Las herramientas usan la misma credencial de administrador que tu backend.
 - El agente puede ejecutar acciones irreversibles sin que nadie las confirme.
 - Lee correos o webs y además puede enviar mensajes o hacer peticiones HTTP a cualquier sitio.
+- Instalas servidores MCP o skills de un registro público sin leer qué hacen ni fijar la versión.
 - No tienes ni un caso de inyección en tus evals.
 - Las trazas no registran qué herramientas se llamaron con qué argumentos, así que no podrías investigar un incidente ([[disciplinas/observabilidad]]).
 
 ## Cómo empezar mañana
 
-1. Haz una tabla de tus herramientas con tres columnas: qué lee, qué escribe, si es reversible.
+1. Haz una tabla de tus herramientas con tres columnas: qué lee, qué escribe, si es reversible. Marca en cada sesión del agente cuáles de las tres patas de la trifecta tiene; si están las tres, rompe una.
 2. Para cada herramienta que escribe algo irreversible, añade una aprobación o un límite en código.
 3. Cambia las credenciales de las herramientas de lectura por unas de solo lectura.
 4. Escribe cinco casos de inyección indirecta (un documento con instrucciones escondidas) y añádelos a tus evals.
@@ -67,3 +72,4 @@ No hay un filtro que detecte todas las inyecciones. Los clasificadores ayudan, p
 - [[cursos/seguridad-y-prompt-injection/03-defensas-en-capas]]
 - [[roadmap/100-produccion/04-seguridad-y-prompt-injection]]
 - [[radar/2026-10-20-inyeccion-por-herramientas]]
+- [[biblioteca/patrones-contra-inyeccion]]

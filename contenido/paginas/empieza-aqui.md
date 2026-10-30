@@ -2,9 +2,9 @@
 titulo: Empieza aquí
 descripcion: Elige tu ruta según lo que ya sabes, haz el test de nivel de tres preguntas y aprende a moverte por MoreContext sin perderte.
 creado: 2026-07-01
-actualizado: 2026-10-24
+actualizado: 2026-10-29
 tags: [inicio, rutas]
-relacionados: ["[[roadmap/index]]", "[[glosario/index]]", "[[paginas/manifiesto]]"]
+relacionados: ["[[roadmap/index]]", "[[cursos/ruta-en-video/index]]", "[[cursos/langchain-y-langgraph/index]]", "[[glosario/index]]", "[[paginas/manifiesto]]"]
 ---
 
 MoreContext tiene mucho contenido y no hace falta leerlo todo. Esta página te dice **por dónde empezar según tu punto de partida**, con pasos concretos y en orden. Si no sabes qué perfil eres, haz primero el test de nivel de más abajo.
@@ -40,6 +40,7 @@ Tienes un prototipo que funciona en tu máquina. Te preocupan la calidad, el cos
 3. Haz visible lo que pasa con [[roadmap/100-produccion/01-observabilidad-y-trazas]].
 4. Baja la factura con [[roadmap/100-produccion/02-costes-y-prompt-caching]] y [[recetas/reintentos-y-limites-de-tasa]].
 5. Revisa riesgos con [[roadmap/100-produccion/04-seguridad-y-prompt-injection]] y pasa la lista de [[modelos/09-checklist-produccion]] antes de desplegar.
+6. Si tu agente trabaja solo durante horas o toca código, dale un entorno controlado: procedimientos en [[roadmap/50-skills/index|skills]] (nivel 50), trabajo guiado por [[roadmap/70-flujos-con-especificacion/index|especificaciones]] (nivel 70) y un [[roadmap/90-harness/index|harness]] con permisos, hooks y presupuesto (nivel 90). Para construir el tuyo paso a paso, sigue el curso [[cursos/harness-engineering/index]].
 
 ### Trabajo en producto o gestión
 
@@ -49,7 +50,21 @@ No vas a escribir el código, pero decides qué se construye y cómo se mide.
 2. Aprende a distinguir un workflow de un agente en [[patrones/01-workflows-vs-agentes]] y usa [[patrones/09-elegir-patron]] para las conversaciones de diseño.
 3. Lee [[disciplinas/evals]]: sin un conjunto de prueba no hay forma de decir si una versión es mejor que otra.
 4. Diseña la experiencia con [[disciplinas/ux-de-agentes]] y decide dónde aprueba una persona con [[disciplinas/humano-en-el-bucle]].
-5. Repasa riesgos con [[disciplinas/seguridad]].
+5. Repasa riesgos con [[disciplinas/seguridad]]. Para decidir dónde invertir y cómo medir el resultado, sigue el curso [[cursos/ia-en-la-empresa/index]].
+
+## Otras formas de recorrerlo
+
+### Si prefieres aprender con vídeos
+
+La [[cursos/ruta-en-video/index|ruta en vídeo]] ordena vídeos públicos en fases, de qué es la IA hasta harness engineering y plataformas de agentes. Cada fase dice qué ver entero, qué ver por encima y qué es opcional, y te manda a la lección de MoreContext donde lo practicas en código.
+
+### Si quieres hacerlo con open source
+
+Todo lo que se enseña con el SDK de Anthropic se puede hacer con piezas abiertas. Aprende antes el mecanismo con una ruta de arriba y luego elige:
+
+1. Frameworks: el curso [[cursos/langchain-y-langgraph/index]] (MIT) y la referencia [[docs/frameworks/index]], que empieza por [[docs/frameworks/01-elegir-framework|cuándo merece la pena un framework]].
+2. Modelos de pesos abiertos en tu máquina o tu servidor: el curso [[cursos/agentes-con-modelos-abiertos/index]] y la referencia [[docs/modelos-abiertos/index]].
+3. Para elegir piezas (inferencia, bases vectoriales, trazas, evals), el directorio de [[herramientas/index|herramientas]] indica la licencia de cada una y si es open source, de pesos abiertos o comercial.
 
 ## Test de nivel
 
@@ -77,4 +92,5 @@ A dónde ir según tus respuestas:
 - **Glosario.** Cada término técnico enlaza la primera vez a su definición en el [[glosario/index|glosario]]. Si una palabra te frena, síguela, lee la definición y vuelve.
 - **Progreso.** Puedes marcar como completadas las lecciones del roadmap y de los cursos. Se guarda en tu navegador, sin cuenta.
 - **Secciones.** El [[roadmap/index|roadmap]] y los cursos se leen en orden. La [[docs/index|documentación]], las [[recetas/index|recetas]] y los [[patrones/index|patrones]] se consultan cuando los necesitas.
+- **Cuando algo falla.** En [[problemas/index|problemas frecuentes]] buscas por el síntoma (un error 400, un agente que no para) y llegas a la causa y el arreglo. Las [[plantillas/index|plantillas]] te dan prompts, specs y configuraciones listas para copiar.
 - **Como bóveda de Obsidian.** Todo el contenido son archivos markdown enlazados. Si quieres usarlo como segundo cerebro o proponer cambios, mira [[paginas/contribuir]].

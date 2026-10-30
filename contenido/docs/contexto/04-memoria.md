@@ -2,6 +2,7 @@
 titulo: Memoria
 descripcion: Cómo dar a una aplicación o agente memoria que sobreviva entre sesiones, con tipos de memoria, herramientas de lectura y escritura, y riesgos.
 creado: 2026-08-22
+actualizado: 2026-10-29
 orden: 4
 nivel: avanzado
 tags: [contexto, memoria, agentes]
@@ -23,7 +24,9 @@ La lección [[roadmap/30-contexto-y-rag/06-memoria-entre-sesiones]] lo construye
 | Episódica | Almacén externo | Indefinida o con caducidad | Resumen de la sesión del martes y lo que quedó pendiente |
 | De tarea | Archivo de estado o notas del agente | Lo que dure la tarea | Plan, pasos hechos, siguiente paso |
 
-La memoria de trabajo y la compactación se tratan en [[docs/contexto/01-ventana-de-contexto]] y en [[glosario/compactacion]]. Este artículo se centra en la memoria que **sobrevive a la sesión**.
+La clasificación de semántica, episódica y procedimental viene de las ciencias cognitivas y la aplicó a agentes Sumers et al., 2023, [*Cognitive Architectures for Language Agents*](https://arxiv.org/abs/2309.02427) (CoALA); ver [[glosario/tipos-de-memoria]]. La idea de que el propio modelo gestione qué entra y qué sale de su contexto, como un sistema operativo con memoria virtual, es de Packer et al., 2023, [*MemGPT*](https://arxiv.org/abs/2310.08560). En un agente de código, la memoria procedimental son los archivos de instrucciones y las skills ([[docs/claude-code/01-memoria-claude-md-y-agents-md]]).
+
+La memoria de trabajo y la compactación se tratan en [[docs/contexto/01-ventana-de-contexto]], [[docs/contexto/05-compactacion-y-limpieza-en-el-servidor]] y [[glosario/compactacion]]. Este artículo se centra en la memoria que **sobrevive a la sesión**.
 
 ## Cómo se escribe y se lee
 
@@ -233,18 +236,106 @@ console.log(await turno("ana", [{ role: "user", content: "Trabajo siempre con Ty
 
 Dos detalles de diseño: el prompt de sistema cambia cuando cambian las memorias, así que **pon el bloque de memorias después del punto de caché** si cacheas el resto ([[docs/contexto/02-prompt-caching]]). Y el tope `MAX_MEMORIAS` evita que el contexto crezca sin límite; con muchas memorias, cambia la carga al inicio por una búsqueda.
 
-Algunos proveedores ofrecen herramientas de memoria ya definidas. Consulta la [documentación oficial](https://platform.claude.com/docs) si prefieres no mantener la tuya.
+## La herramienta de memoria de Anthropic
+
+Si prefieres no diseñar tus herramientas, la API de Claude define una (GA): `{"type": "memory_20250818", "name": "memory"}`. El modelo la usa como un pequeño sistema de archivos bajo `/memories`, con los comandos `view`, `create`, `str_replace`, `insert`, `delete` y `rename`. **Se ejecuta en tu código**: tú decides dónde se guardan los archivos (disco, base de datos, un *bucket*) y cómo se aíslan por usuario.
+
+El SDK de Python trae una implementación sobre disco, `BetaLocalFilesystemMemoryTool`, que valida las rutas (nada fuera de `/memories`, sin enlaces simbólicos que escapen), y una clase base, `BetaAbstractMemoryTool`, para escribir la tuya sobre otro almacén:
+
+```python title="memoria_anthropic.py"
+import anthropic
+from anthropic.tools import BetaLocalFilesystemMemoryTool
+
+MODEL = "claude-sonnet-5-5"
+MAX_PASOS = 10
+client = anthropic.Anthropic()
+
+def turno(usuario: str, mensajes: list[dict]) -> str:
+    memoria = BetaLocalFilesystemMemoryTool(base_path=f"./memoria/{usuario}")  # valida rutas bajo /memories
+    for _ in range(MAX_PASOS):
+        resp = client.messages.create(
+            model=MODEL, max_tokens=2048, tools=[memoria.to_dict()], messages=mensajes,
+        )
+        mensajes.append({"role": "assistant", "content": resp.content})
+        if resp.stop_reason != "tool_use":
+            return "".join(b.text for b in resp.content if b.type == "text")
+        resultados = []
+        for b in resp.content:
+            if b.type != "tool_use":
+                continue
+            try:
+                salida, error = memoria.call(b.input), False   # view, create, str_replace…
+            except Exception as e:                            # ruta inválida, archivo inexistente…
+                salida, error = f"Error: {e}", True
+            resultados.append({"type": "tool_result", "tool_use_id": b.id, "content": salida, "is_error": error})
+        mensajes.append({"role": "user", "content": resultados})
+    return "[límite de pasos]"
+
+print(turno("ana", [{"role": "user", "content": "Trabajo siempre con TypeScript y Node 24. Recuérdalo."}]))
+```
+
+> [!peligro] Valida las rutas
+> El `input` de cada comando trae una ruta que decide el modelo, y lo que lee el modelo puede venir de una inyección. Si implementas tu propio almacén, rechaza cualquier ruta que salga de `/memories` (`../`, rutas absolutas, enlaces simbólicos): es un *path traversal* clásico. La implementación del SDK ya lo hace.
+
+Si usas Claude Managed Agents, la memoria es un recurso de la plataforma (*memory stores*) que se conecta a las sesiones: ver [[docs/agentes/04-managed-agents]].
+
+## Con LangGraph
+
+LangGraph separa dos memorias que en el código a mano se mezclan:
+
+- El ***checkpointer*** ([[glosario/checkpointer]]) guarda el estado de **una conversación** (`thread_id`): es la memoria de trabajo persistida, la que permite reanudar.
+- El ***store*** guarda datos **entre conversaciones**, con espacios de nombres (`("preferencias", user_id)`): es la memoria semántica o episódica.
+
+```python title="memoria_lg.py"
+from dataclasses import dataclass
+from langchain.agents import create_agent
+from langchain.chat_models import init_chat_model
+from langchain.tools import ToolRuntime, tool
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.memory import InMemoryStore  # en producción: PostgresStore
+
+MODEL = "anthropic:claude-sonnet-5-5"
+
+@dataclass
+class Contexto:
+    user_id: str
+
+@tool
+def recordar(hecho: str, runtime: ToolRuntime[Contexto]) -> str:
+    """Guarda un hecho duradero sobre el usuario (preferencias, decisiones, contexto estable)."""
+    espacio = ("memorias", runtime.context.user_id)
+    runtime.store.put(espacio, str(len(runtime.store.search(espacio)) + 1), {"hecho": hecho})
+    return "Guardado."
+
+@tool
+def buscar_memoria(runtime: ToolRuntime[Contexto]) -> str:
+    """Devuelve los hechos guardados del usuario."""
+    items = runtime.store.search(("memorias", runtime.context.user_id))
+    return "\n".join(i.value["hecho"] for i in items) or "Sin memorias."
+
+agente = create_agent(
+    init_chat_model(MODEL, max_tokens=1024),
+    tools=[recordar, buscar_memoria],
+    context_schema=Contexto,
+    store=InMemoryStore(),        # entre conversaciones
+    checkpointer=InMemorySaver(), # dentro de una conversación
+)
+config = {"configurable": {"thread_id": "ana-lunes"}}
+salida = agente.invoke({"messages": [("user", "Trabajo siempre con TypeScript.")]}, config, context=Contexto(user_id="ana"))
+```
+
+El aislamiento por usuario sale del espacio de nombres, y lo pones tú desde el contexto de la ejecución, no desde lo que diga el modelo. Detalle en [[docs/frameworks/05-langgraph]] y [[cursos/langchain-y-langgraph/06-memoria-y-persistencia]].
 
 ## Memoria de tarea en agentes largos
 
-Para un agente que trabaja horas, la memoria más útil es un **archivo de estado** que el propio agente actualiza: objetivo, plan, pasos completados, decisiones y siguiente paso. Si el contexto se compacta o la sesión se reinicia, leer ese archivo basta para retomar. Ver [[cursos/context-engineering/04-contexto-para-agentes-largos]] y [[radar/2026-07-28-agentes-de-larga-duracion]].
+Para un agente que trabaja horas, la memoria más útil es un **archivo de estado** que el propio agente actualiza: objetivo, plan, pasos completados, decisiones y siguiente paso. Si el contexto se compacta o la sesión se reinicia, leer ese archivo basta para retomar. Anthropic lo describe con un agente inicializador que crea la lista de funcionalidades y un archivo de progreso que cada sesión lee y actualiza ([*Effective harnesses for long-running agents*](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents), 2025; patrón en [[patrones/10-inicializador-y-agente-de-trabajo]]). Ver también [[cursos/context-engineering/04-contexto-para-agentes-largos]] y [[radar/2026-07-28-agentes-de-larga-duracion]].
 
 ## Errores frecuentes
 
 - **Guardarlo todo.** La memoria se llena de detalles irrelevantes que el modelo luego intenta usar. Describe en la herramienta qué merece guardarse.
 - **Sin forma de borrar ni corregir.** Las preferencias cambian; las memorias contradictorias confunden. Ofrece `olvidar` y fecha cada memoria.
 - **Datos personales sin control.** Lo que guardas es responsabilidad tuya: informa, permite ver y borrar, y no guardes datos sensibles.
-- **Memoria envenenada.** Un documento o una web con instrucciones puede llevar al modelo a guardar una «preferencia» maliciosa que afecte a sesiones futuras. Trata la memoria como entrada no confiable: [[docs/seguridad/01-prompt-injection]].
+- **Memoria envenenada.** Un documento o una web con instrucciones puede llevar al modelo a guardar una «preferencia» maliciosa que afecte a sesiones futuras: la inyección pasa de una conversación a todas. Trata la memoria como entrada no confiable, revisa lo que se escribe (o pide confirmación para ciertos hechos) y permite auditarla: [[docs/seguridad/01-prompt-injection]].
 - **Mezclar usuarios.** La memoria va siempre aislada por usuario (y por organización, si aplica).
 
 ## Ver también
@@ -252,4 +343,5 @@ Para un agente que trabaja horas, la memoria más útil es un **archivo de estad
 - [[roadmap/30-contexto-y-rag/06-memoria-entre-sesiones]]: la lección.
 - [[cursos/context-engineering/03-compactacion-y-memoria]]: compactación y memoria juntas.
 - [[patrones/02-llamada-aumentada]]: la memoria como parte de la llamada aumentada.
-- [[glosario/memoria]] y [[glosario/compactacion]].
+- [[glosario/memoria]], [[glosario/tipos-de-memoria]] y [[glosario/compactacion]].
+- [[recetas/reanudar-un-agente-tras-un-reinicio]]: memoria de trabajo persistida con un *checkpointer*.

@@ -2,6 +2,7 @@
 titulo: Agente autónomo
 descripcion: El modelo decide en un bucle qué herramientas usar y cuándo parar, guiado por lo que le devuelve el entorno, con límites, puntos de control humanos y sandbox.
 creado: 2026-08-12
+actualizado: 2026-10-29
 tags: [patrones, agentes, bucle-agentico, herramientas]
 aliases: [Autonomous agent, Agente]
 orden: 8
@@ -94,6 +95,8 @@ def agente(objetivo: str, max_pasos: int = 20) -> str:
             return "Respuesta truncada por max_tokens. Sube el límite o divide la tarea."
         if resp.stop_reason == "refusal":
             return "El modelo se negó a continuar con esta tarea."
+        if resp.stop_reason == "model_context_window_exceeded":
+            return "El historial ya no cabe en la ventana. Compacta o divide la tarea."
         if resp.stop_reason != "tool_use":
             return f"Parada inesperada: {resp.stop_reason}"
 
@@ -126,9 +129,85 @@ Fíjate en tres decisiones. El rechazo humano vuelve al modelo como `tool_result
 2. **Transparencia**: que el agente muestre su plan y sus pasos; te permite depurar y al usuario confiar. Ver [[roadmap/40-primer-agente/04-planificar-antes-de-actuar]].
 3. **Cuidar la interfaz agente-ordenador** (lo que el artículo llama ACI): documentar y probar las herramientas con el mismo cuidado que una interfaz para personas. El artículo recomienda diseñarlas para que sea difícil usarlas mal; por ejemplo, pedir rutas absolutas en lugar de relativas. Lo amplía [[disciplinas/diseno-de-herramientas]].
 
+## Con LangGraph
+
+El mismo agente como grafo en LangGraph (MIT): un nodo llama al modelo, una arista condicional va a `aprobar` si hay `tool_calls`, el nodo `aprobar` pausa con `interrupt()` antes de una acción sensible y `ToolNode` ejecuta las herramientas. El *checkpointer* guarda el estado en cada paso, así que la pausa puede durar lo que tarde la persona. Necesitas `pip install langgraph langchain langchain-anthropic`.
+
+```python title="agente_langgraph.py"
+from langchain.chat_models import init_chat_model
+from langchain.messages import SystemMessage, ToolMessage
+from langchain.tools import tool
+from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.graph import END, START, MessagesState, StateGraph
+from langgraph.prebuilt import ToolNode
+from langgraph.types import Command, interrupt
+
+MODEL = "anthropic:claude-sonnet-5-5"
+REQUIEREN_APROBACION = {"relanzar_tarea"}
+
+
+@tool
+def leer_log(tarea: str) -> str:
+    """Devuelve las últimas líneas del log de una tarea programada."""
+    return "02:00 ERROR conexión rechazada: tabla ventas bloqueada"
+
+
+@tool
+def relanzar_tarea(tarea: str) -> str:
+    """Relanza una tarea programada. Tiene efectos: solo tras diagnosticar la causa."""
+    return f"Tarea {tarea} relanzada."
+
+
+TOOLS = [leer_log, relanzar_tarea]
+SYSTEM = SystemMessage("Eres un agente de operaciones. Investiga con las herramientas antes de concluir.")
+
+
+def construir(modelo=None, checkpointer=None):
+    llm = (modelo or init_chat_model(MODEL, max_tokens=4096)).bind_tools(TOOLS)
+
+    def modelo_(state: MessagesState):
+        return {"messages": [llm.invoke([SYSTEM, *state["messages"]])]}
+
+    def decidir(state: MessagesState):
+        return "aprobar" if state["messages"][-1].tool_calls else END
+
+    def aprobar(state: MessagesState):
+        llamadas = state["messages"][-1].tool_calls
+        sensibles = [c for c in llamadas if c["name"] in REQUIEREN_APROBACION]
+        if sensibles and interrupt({"aprobar": sensibles}) != "si":   # pausa hasta Command(resume=…)
+            rechazos = [ToolMessage("Una persona rechazó esta acción. Propón otra vía o para.",
+                                    tool_call_id=c["id"], status="error") for c in llamadas]
+            return Command(goto="modelo", update={"messages": rechazos})
+        return Command(goto="herramientas")
+
+    g = StateGraph(MessagesState)
+    g.add_node("modelo", modelo_)
+    g.add_node("aprobar", aprobar, destinations=("herramientas", "modelo"))
+    g.add_node("herramientas", ToolNode(TOOLS, handle_tool_errors=True))  # excepción → ToolMessage de error
+    g.add_edge(START, "modelo")
+    g.add_conditional_edges("modelo", decidir, ["aprobar", END])
+    g.add_edge("herramientas", "modelo")
+    return g.compile(checkpointer=checkpointer or InMemorySaver())
+
+
+if __name__ == "__main__":
+    grafo = construir()
+    config = {"configurable": {"thread_id": "incidencia-42"}, "recursion_limit": 40}  # tope de superpasos
+    out = grafo.invoke({"messages": [("user", "El informe diario de ventas no se generó. Averigua por qué.")]},
+                       config, version="v2")
+    while out.interrupts:
+        print("Pendiente:", out.interrupts[0].value)
+        out = grafo.invoke(Command(resume=input("¿Aprobar? [si/no] ")), config, version="v2")
+    print(out.value["messages"][-1].content)
+```
+
+Tres detalles. `interrupt()` necesita *checkpointer* y `thread_id`, y al reanudar el nodo `aprobar` se ejecuta otra vez desde el principio: el código anterior al `interrupt` debe poder repetirse. `handle_tool_errors=True` hace que una excepción vuelva al modelo como mensaje de error; sin él, `ToolNode` solo captura argumentos inválidos y el resto rompe el grafo. Y el `recursion_limit` por defecto de LangGraph es tan alto que no sirve de tope: ponlo tú. Con `InMemorySaver` la pausa vive en memoria; para sobrevivir a un reinicio usa `SqliteSaver` o `PostgresSaver` ([[recetas/reanudar-un-agente-tras-un-reinicio]]).
+
+**Qué esconde el framework**: el bucle, la persistencia y la reanudación. Si no necesitas un grafo propio, `create_agent` de LangChain ya es este grafo, y la aprobación se añade con `HumanInTheLoopMiddleware`. Lo desarrollan [[recetas/aprobacion-humana-con-langgraph]] y [[cursos/langchain-y-langgraph/07-humano-en-el-bucle-con-interrupt]]; si la reanudación falla, mira [[problemas/langgraph-no-reanuda-tras-interrupt]].
+
 ## Coste y latencia
 
-Coste y latencia altos y, sobre todo, **variables**: cada paso es una llamada que reenvía todo el historial, que además crece. Dos ejecuciones de la misma tarea pueden costar muy distinto. Controla el gasto con `max_pasos`, `max_tokens`, [[glosario/prompt-caching|prompt caching]] del prefijo (herramientas y sistema) y [[glosario/compactacion|compactación]] en tareas largas. Registra cada traza para saber dónde se van los pasos: [[roadmap/100-produccion/01-observabilidad-y-trazas]].
+Coste y latencia altos y, sobre todo, **variables**: cada paso es una llamada que reenvía todo el historial, que además crece. Dos ejecuciones de la misma tarea pueden costar muy distinto. Controla el gasto con `max_pasos`, `max_tokens`, [[glosario/prompt-caching|prompt caching]] del prefijo (herramientas y sistema) y [[glosario/compactacion|compactación]] en tareas largas. Si el agente no termina nunca, repasa [[problemas/el-agente-no-para]]. Registra cada traza para saber dónde se van los pasos: [[roadmap/100-produccion/01-observabilidad-y-trazas]].
 
 ## Patrones relacionados
 
@@ -136,3 +215,5 @@ Coste y latencia altos y, sobre todo, **variables**: cada paso es una llamada qu
 - [[patrones/06-orquestador-trabajadores]]: un agente puede delegar en subagentes con contexto propio.
 - [[patrones/07-evaluador-optimizador]]: los tests y comprobaciones del entorno hacen de evaluador.
 - [[patrones/09-elegir-patron]]: para confirmar que necesitas este peldaño.
+- [[patrones/10-inicializador-y-agente-de-trabajo]] y [[patrones/12-bucle-ralph]]: cuando la tarea dura más que una ventana de contexto.
+- [[patrones/13-ejecutor-y-asesor]]: un agente barato que consulta a un modelo más capaz en los pasos difíciles.

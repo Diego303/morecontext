@@ -2,6 +2,7 @@
 titulo: Control de costes y prompt caching
 descripcion: Dónde se va el dinero en un agente, cómo cachear el prefijo con cache_control y cómo comprobar con usage que la caché funciona de verdad.
 creado: 2026-10-15
+actualizado: 2026-10-29
 orden: 2
 minutos: 35
 tipo: practica
@@ -47,7 +48,7 @@ Si el prefijo fijo pesa poco frente a los resultados de herramientas, la caché 
 
 ## Poner la caché: `cache_control`
 
-Marca un bloque con `"cache_control": {"type": "ephemeral"}` y se cachea todo el prefijo hasta ese bloque inclusive. Puedes poner hasta 4 puntos de corte por petición.
+Marca un bloque con `"cache_control": {"type": "ephemeral"}` y se cachea todo el prefijo hasta ese bloque inclusive. Puedes poner hasta 4 puntos de corte por petición. Cada punto de corte busca coincidencias como mucho 20 bloques hacia atrás (los `tool_use` consecutivos cuentan como uno, igual que los `tool_result` consecutivos), así que en un bucle largo conviene que el corte avance con la conversación, como hace este código.
 
 ```python tab="Python" title="cache.py"
 import anthropic
@@ -108,13 +109,25 @@ console.log(resp.usage);
 
 Con el corte en el último mensaje, cada paso del bucle escribe en caché el historial hasta ese punto y el paso siguiente lo lee. Quitar la marca después evita superar el límite de 4 puntos de corte cuando el historial crece.
 
-Si no quieres gestionar los puntos de corte a mano, también puedes poner `cache_control` en el nivel superior de la petición y dejar que la caché sea automática. Es la forma más simple de empezar; pasa a puntos de corte explícitos cuando quieras controlar exactamente qué se cachea.
+Si no quieres gestionar los puntos de corte a mano, pon `cache_control={"type": "ephemeral"}` en el **nivel superior** de la petición. Es la caché automática: coloca un punto de corte en el último bloque cacheable y lo va moviendo según crece la conversación, que es justo lo que hace a mano el corte 3. Es la forma más simple de empezar. Ten en cuenta que ocupa uno de los 4 puntos de corte: con ella, te quedan tres explícitos (aquí, herramientas y sistema).
+
+```python title="cache_automatica.py"
+from cache import MODEL, SYSTEM, TOOLS, client
+
+def paso(mensajes: list):
+    return client.messages.create(model=MODEL, max_tokens=1024, tools=TOOLS, system=SYSTEM,
+                                  messages=mensajes,
+                                  cache_control={"type": "ephemeral"})   # el corte del historial, automático
+```
+
+Con LangChain, `AnthropicPromptCachingMiddleware` (de `langchain_anthropic.middleware`) añadido a `create_agent` hace lo mismo: marca el sistema y la última herramienta, y pasa la caché automática al modelo para el historial. Recuerda pasar `max_tokens` al modelo; sin él, `ChatAnthropic` usa el máximo del modelo.
 
 ### Duración y mínimos
 
 - La entrada en caché dura 5 minutos por defecto y el plazo se renueva cada vez que se lee. Para tráfico espaciado existe `{"type": "ephemeral", "ttl": "1h"}`.
-- Hay un mínimo de tokens para cachear que depende del modelo. Por debajo, la petición funciona igual pero no se cachea nada. Consulta el mínimo de tu modelo en la [documentación oficial](https://platform.claude.com/docs).
-- Escribir en caché cuesta algo más que la entrada normal y leer cuesta mucho menos. Los multiplicadores exactos están en la página de precios: úsalos en tu cálculo en lugar de copiarlos de memoria.
+- Hay un mínimo de tokens para cachear: 512 en los modelos actuales (Opus 5.5, Sonnet 5.5, Haiku 5.5 y Fable 5.1, a octubre de 2026); más en modelos anteriores. Por debajo, la petición funciona igual pero no se cachea nada.
+- Escribir en caché cuesta algo más que la entrada normal (1,25 veces con el plazo de 5 minutos y 2 veces con el de 1 hora) y leer cuesta mucho menos, con un multiplicador que depende del modelo (0,05 veces en Opus 5.5 y Sonnet 5.5, a octubre de 2026). Comprueba los valores vigentes en la [página de precios](https://platform.claude.com/docs) antes de calcular.
+- Para que la primera petición real ya lea de caché, puedes precalentarla con una llamada con `max_tokens=0`: escribe la caché sin generar nada (no funciona con *streaming* ni con salidas estructuradas).
 
 ## Comprobar que funciona
 
@@ -137,7 +150,9 @@ for i in range(2):
 Lo esperado: en la primera, `cache_creation_input_tokens` mayor que cero; en la segunda, `cache_read_input_tokens` con ese mismo tamaño. Si ambas salen a cero, el prefijo no llega al mínimo o algo cambia entre llamadas. En producción, sigue la tasa de lectura de caché en tus métricas: una caída brusca suele coincidir con un despliegue que tocó el prefijo.
 
 > [!aviso] Lo que rompe la caché sin que te enteres
-> Una fecha u hora en el prompt de sistema, un ID de petición en las instrucciones, herramientas en distinto orden entre llamadas o un JSON de herramientas generado con claves en orden variable. Todo lo que cambia va al final, en el mensaje del usuario, nunca en el prefijo.
+> Una fecha u hora en el prompt de sistema, un ID de petición en las instrucciones, herramientas en distinto orden entre llamadas o un JSON de herramientas generado con claves en orden variable. Todo lo que cambia va al final, en el mensaje del usuario, nunca en el prefijo. Si necesitas cambiar instrucciones a mitad de conversación, usa un [[glosario/mensaje-de-sistema-intermedio|mensaje de sistema intermedio]] en `messages` en lugar de editar `system`; y las herramientas con `defer_loading: true` no forman parte del prefijo, así que añadirlas no lo invalida.
+
+Cuando la tasa de lectura baje y no sepas por qué, pide a la API que te lo diga. Con `diagnostics={"previous_message_id": id_anterior}` la respuesta trae `diagnostics.cache_miss_reason` con el tipo de cambio (`system_changed`, `tools_changed`, `messages_changed`, `model_changed`…). Lo tienes paso a paso en [[recetas/diagnosticar-fallos-de-cache]] y, por síntomas, en [[problemas/la-cache-no-se-aprovecha]].
 
 ## Otras palancas de coste
 
@@ -147,7 +162,9 @@ La caché ataca el prefijo. El resto se controla así:
 2. **`max_tokens` como límite duro** de salida por llamada y [[glosario/esfuerzo|`effort`]] como orientación en modelos con razonamiento. Ajusta cada uno a lo que el paso necesita.
 3. **El modelo adecuado por paso.** Clasificar o extraer no suele necesitar el modelo más capaz. Mide con tus evals antes de cambiar ([[modelos/05-elegir-modelo-por-tarea]]).
 4. **Menos pasos.** Cada paso evitado ahorra un historial entero de entrada.
-5. **Procesamiento por lotes** para trabajo que no necesita respuesta inmediata, si tu proveedor lo ofrece: consulta condiciones y descuentos en su documentación.
+5. **Procesamiento por lotes** para trabajo que no necesita respuesta inmediata. La Batch API de Anthropic cobra la mitad y el descuento se suma al de la caché (a octubre de 2026), a cambio de entregar los resultados en un plazo de hasta 24 horas: sirve para evals nocturnas y procesos de fondo, no para un usuario esperando.
+
+En un sistema multiagente, mide también el coste **por subagente**: una media global esconde al subagente que se dispara. La receta [[recetas/coste-por-subagente]] lo saca de `usage` y de las trazas.
 
 ## Límites de gasto
 
@@ -169,7 +186,7 @@ class Presupuesto:
             raise PresupuestoAgotado()
 ```
 
-Crea un `Presupuesto` por petición y llama a `cargar(resp.usage)` tras cada paso. Cuando salte, responde al usuario con lo que tengas y regístralo en la traza. Añade un contador por usuario y día en tu almacén para cortar el abuso. Por encima de todo, configura en la consola de tu proveedor un límite de gasto de la cuenta.
+Crea un `Presupuesto` por petición y llama a `cargar(resp.usage)` tras cada paso. Cuando salte, responde al usuario con lo que tengas y regístralo en la traza. Añade un contador por usuario y día en tu almacén para cortar el abuso. Por encima de todo, configura en la consola de tu proveedor un límite de gasto de la cuenta. Si usas el Claude Agent SDK, `max_budget_usd` corta la ejecución por coste estimado.
 
 ## Errores frecuentes
 
@@ -192,8 +209,8 @@ Crea un `Presupuesto` por petición y llama a `cargar(resp.usage)` tras cada pas
 ## Resumen
 
 - En un agente, casi toda la entrada de cada paso repite el paso anterior: es lo que se cachea.
-- `cache_control: {"type": "ephemeral"}` en un bloque cachea el prefijo hasta ahí, en orden `tools` → `system` → `messages`, con hasta 4 cortes.
-- Comprueba siempre con `cache_creation_input_tokens` y `cache_read_input_tokens`.
+- `cache_control: {"type": "ephemeral"}` en un bloque cachea el prefijo hasta ahí, en orden `tools` → `system` → `messages`, con hasta 4 cortes; en el nivel superior activa la caché automática, que ocupa uno.
+- Comprueba siempre con `cache_creation_input_tokens` y `cache_read_input_tokens`; si falla, `diagnostics` te dice qué cambió.
 - Todo lo variable va al final; cualquier cambio en el prefijo invalida la caché desde ese punto.
 - Pon límites de tokens y pasos por petición, por usuario y en la cuenta.
 
@@ -202,3 +219,4 @@ Crea un `Presupuesto` por petición y llama a `cargar(resp.usage)` tras cada pas
 - [[roadmap/100-produccion/03-latencia]]
 - [[recetas/recortar-costes-con-prompt-caching]]
 - [[radar/2026-07-21-prompt-caching-palanca-de-coste]]
+- [[recetas/diagnosticar-fallos-de-cache]]

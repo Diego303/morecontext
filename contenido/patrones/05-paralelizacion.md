@@ -2,6 +2,7 @@
 titulo: Paralelización
 descripcion: Lanza varias llamadas a la vez y combina sus resultados en código, ya sea repartiendo subtareas independientes (seccionado) o repitiendo la misma tarea para votar.
 creado: 2026-07-22
+actualizado: 2026-10-29
 tags: [patrones, workflows, paralelismo, guardrails]
 aliases: [Parallelization, Seccionado, Votación]
 orden: 5
@@ -116,6 +117,70 @@ Para salidas tan cortas, el formato libre con `startswith` funciona; si necesita
 
 > [!aviso] El umbral es una decisión de producto
 > En la votación, elegir "basta un voto" o "hace falta mayoría" cambia el equilibrio entre falsos positivos y falsos negativos. Decídelo con datos etiquetados, no a ojo.
+
+## Con LangGraph
+
+LangGraph (MIT) hace el seccionado con `Send`: una función devuelve una lista de `Send("nodo", estado_de_la_rama)` y el grafo lanza una rama por elemento, en paralelo. Las ramas escriben en el mismo campo, así que ese campo necesita un **reductor** que combine en lugar de sobrescribir. Necesitas `pip install langgraph langchain langchain-anthropic`.
+
+```python title="paralelizacion_langgraph.py"
+import operator
+from typing import Annotated, TypedDict
+
+from langchain.chat_models import init_chat_model
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Send
+
+MODEL = "anthropic:claude-sonnet-5-5"
+ASPECTOS = {
+    "datos_personales": "¿El texto contiene datos personales de terceros?",
+    "promesas": "¿El texto promete reembolsos, plazos o condiciones fuera de la política?",
+    "tono": "¿El tono es grosero, condescendiente o poco profesional?",
+}
+
+
+class Estado(TypedDict, total=False):
+    borrador: str
+    veredictos: Annotated[dict, operator.or_]   # reductor: cada rama añade su clave sin pisar las demás
+    a_revision: list[str]
+
+
+class Rama(TypedDict):                           # lo que recibe cada rama vía Send
+    borrador: str
+    aspecto: str
+
+
+def construir(modelo=None):
+    llm = modelo or init_chat_model(MODEL, max_tokens=512)
+
+    def repartir(state: Estado):                 # fan-out: una rama por aspecto
+        return [Send("revisar", {"borrador": state["borrador"], "aspecto": a}) for a in ASPECTOS]
+
+    def revisar(rama: Rama):
+        r = llm.invoke("Respondes solo 'ok' o 'problema'.\n"
+                       f"{ASPECTOS[rama['aspecto']]}\n<texto>\n{rama['borrador']}\n</texto>")
+        return {"veredictos": {rama["aspecto"]: r.text.strip().lower().startswith("problema")}}
+
+    def agregar(state: Estado):                  # la regla de agregación sigue siendo código
+        return {"a_revision": [a for a, problema in state["veredictos"].items() if problema]}
+
+    g = StateGraph(Estado)
+    g.add_node("revisar", revisar)
+    g.add_node("agregar", agregar)
+    g.add_conditional_edges(START, repartir, ["revisar"])
+    g.add_edge("revisar", "agregar")             # agregar espera a que terminen todas las ramas
+    g.add_edge("agregar", END)
+    return g.compile()
+
+
+if __name__ == "__main__":
+    out = construir().invoke({"borrador": "Te devolvemos el doble del importe mañana mismo."},
+                             {"max_concurrency": 3})
+    print("A revisión humana:" if out["a_revision"] else "OK", out["a_revision"])
+```
+
+`agregar` no se ejecuta hasta que terminan todas las ramas, y `max_concurrency` en la configuración limita cuántas van a la vez, útil con los [[problemas/error-429-limite-de-tasa|límites de tasa]]. Para la votación basta con cambiar `repartir` para que envíe la misma tarea con *prompts* distintos.
+
+**Qué esconde el framework**: la concurrencia (hilos o tareas `async`) y la espera a todas las ramas. Lo que no esconde es la trampa del reductor: sin `Annotated[..., operator.or_]` (o `operator.add` para listas), las ramas se pisan y solo queda una. Tienes un ejemplo mayor en [[recetas/map-reduce-con-send]].
 
 ## Coste y latencia
 

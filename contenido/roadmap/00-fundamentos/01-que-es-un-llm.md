@@ -2,6 +2,7 @@
 titulo: "Qué es un LLM y qué no es"
 descripcion: "Qué hace un modelo de lenguaje por dentro, por qué genera texto token a token y qué consecuencias prácticas tiene eso para lo que construyes."
 creado: 2026-09-02
+actualizado: 2026-10-29
 orden: 1
 minutos: 25
 tipo: teoria
@@ -38,11 +39,28 @@ flowchart LR
 
 Se detiene cuando elige un token especial de fin, cuando llega al límite de longitud que tú fijas con [[glosario/max-tokens|max_tokens]] o cuando aparece una secuencia de parada que hayas definido.
 
-Eso es todo el mecanismo visible. Lo que lo hace útil es la escala del entrenamiento: estos modelos han aprendido de cantidades enormes de texto y código, y para predecir bien el siguiente token han tenido que capturar gramática, hechos, estilos, patrones de razonamiento y convenciones de programación. Después se ajustan para seguir instrucciones y mantener una conversación.
+Eso es todo el mecanismo visible. Lo que lo hace útil es la escala del entrenamiento: estos modelos han aprendido de cantidades enormes de texto y código, y para predecir bien el siguiente token han tenido que capturar gramática, hechos, estilos, patrones de razonamiento y convenciones de programación. Después se ajustan para seguir instrucciones y mantener una conversación. Cómo se hace cada fase lo cuenta [[roadmap/00-fundamentos/06-como-se-entrena-un-llm]].
+
+### Probabilidades, no respuestas
+
+El paso 2 es el que conviene mirar de cerca. Ante «El perro corre por el», el modelo no tiene guardada una continuación. Calcula una distribución sobre todo su vocabulario, algo así (los números son ilustrativos):
+
+```text
+# salida de ejemplo
+parque   0,42
+campo    0,21
+jardín   0,12
+bosque   0,08
+…        (miles de tokens más, con probabilidades pequeñas)
+```
+
+Esa distribución sale de miles de millones de [[glosario/parametros|parámetros]] ajustados en el entrenamiento, no de una tabla de reglas del tipo «si aparece *perro*, escribe *animal*». Por eso el mismo mecanismo sirve para redactar, traducir, resumir o escribir código.
+
+Y de aquí sale la idea que más vas a usar en este roadmap: **el modelo produce la continuación más plausible, que no siempre es la correcta**. «Plausible» quiere decir «parecida a lo que suele venir después de un texto así». Cuando el patrón dominante en los datos coincide con la verdad, acierta. Cuando no, o cuando no hay datos, escribe algo que suena igual de bien y es falso.
 
 ## Qué hay dentro, en una página
 
-La arquitectura que usan casi todos los LLM actuales es el [[glosario/transformer|transformer]], presentado en [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (Vaswani et al., 2017). Su pieza central, la atención, permite que cada token «mire» a todos los anteriores para decidir qué es relevante. Por eso un modelo puede relacionar una pregunta del final con un dato que pusiste al principio.
+La arquitectura que usan casi todos los LLM actuales es el [[glosario/transformer|transformer]], presentado en [Attention Is All You Need](https://arxiv.org/abs/1706.03762) (Vaswani et al., 2017). Su pieza central, la atención, permite que cada token «mire» a todos los anteriores para decidir qué es relevante. Por eso un modelo puede relacionar una pregunta del final con un dato que pusiste al principio. Si quieres ver cómo se llegó ahí desde las redes recurrentes, está en [[cursos/la-ia-por-dentro/07-de-las-rnn-al-transformer]], y el artículo comentado en [[biblioteca/attention-is-all-you-need]].
 
 No necesitas más detalle para construir con ellos. Lo que sí necesitas es entender tres consecuencias directas de este diseño.
 
@@ -58,7 +76,7 @@ Cada petición a la API es independiente. Si en la segunda llamada quieres que �
 
 ### 3. La salida es probabilística
 
-Con la misma entrada, dos llamadas pueden dar respuestas distintas. Parámetros como la [[glosario/temperatura|temperatura]] regulan cuánto se aleja el modelo de la opción más probable, pero no conviertas eso en tu mecanismo de fiabilidad. Si necesitas una salida estable, se consigue con instrucciones claras, ejemplos, formatos estrictos y validación en tu código, que es justo lo que trabaja el [[roadmap/10-prompting/index|nivel 10]].
+Con la misma entrada, dos llamadas pueden dar respuestas distintas: en el paso 3 el modelo no siempre elige el token más probable, sino que muestrea de la distribución. En muchos proveedores y en los modelos abiertos, la [[glosario/temperatura|temperatura]] regula cuánto se aleja de la opción más probable. En la API de Claude ese parámetro ya no existe (se eliminó en la versión `2026-10-21`), y aunque exista no conviene que sea tu mecanismo de fiabilidad. Una salida estable se consigue con instrucciones claras, ejemplos, formatos estrictos y validación en tu código, que es justo lo que trabaja el [[roadmap/10-prompting/index|nivel 10]].
 
 ## Qué hace bien y qué no
 
@@ -72,7 +90,7 @@ Con esas tres propiedades en mente, el reparto queda bastante claro.
 | Traducir y adaptar tono | Hechos muy concretos o recientes | Cualquier regla exacta y conocida |
 | Escribir y explicar código | Decisiones con consecuencias (añade revisión humana) | Comparar fechas |
 
-La columna central es donde está casi todo el trabajo de este roadmap. Un modelo combinado con el contexto correcto y unas pocas herramientas resuelve problemas que antes requerían meses de desarrollo. Un modelo solo, al que se le pide que «sepa» cosas que no puede saber, produce errores difíciles de detectar.
+La columna central es donde está casi todo el trabajo de este roadmap. Un modelo combinado con el contexto correcto y unas pocas herramientas resuelve problemas que con código convencional serían muy difíciles de programar, como entender un correo escrito de cualquier manera. Un modelo solo, al que se le pide que «sepa» cosas que no puede saber, produce errores difíciles de detectar.
 
 > [!aviso] La fluidez no es una señal de verdad
 > Una respuesta segura y bien redactada puede ser falsa. Cuando algo importa, verifica con código, con fuentes o con una persona. Las lecciones de [[roadmap/30-contexto-y-rag/05-respuestas-con-citas|respuestas con citas]] y de [[roadmap/80-evals/index|evals]] existen por esto.
@@ -86,6 +104,7 @@ Ayuda a fijar algunas ideas erróneas habituales:
 - **No es una calculadora.** Puede razonar sobre números, pero para operaciones exactas dale una función.
 - **No aprende de tus conversaciones** mientras lo usas por API. Cambiar su comportamiento de forma permanente requiere [[glosario/fine-tuning|fine-tuning]], y casi nunca es el primer paso: con buen prompt y buen contexto se llega mucho más lejos.
 - **No es un agente por sí mismo.** Un [[glosario/agente|agente]] es un programa tuyo que llama al modelo en bucle y ejecuta las acciones que este propone. Llegarás ahí en el [[roadmap/40-primer-agente/index|nivel 40]].
+- **No es el producto que usas.** Claude Code, un chat o un asistente de un editor son herramientas construidas alrededor de un modelo. Separar esas capas evita muchas confusiones: lo verás en [[roadmap/00-fundamentos/07-empresa-modelo-herramienta]].
 
 ## Errores frecuentes
 
@@ -116,6 +135,7 @@ Ayuda a fijar algunas ideas erróneas habituales:
 ## Resumen
 
 - Un LLM genera texto prediciendo el siguiente token, una y otra vez.
+- Produce la continuación más plausible, que no siempre es la correcta.
 - No consulta fuentes ni recuerda entre llamadas: todo lo que necesita saber tiene que ir en la petición.
 - Su salida es probabilística; la fiabilidad se construye con instrucciones, formato y validación.
 - Las alucinaciones nacen del propio mecanismo y se reducen dándole el contexto correcto.
@@ -124,5 +144,6 @@ Ayuda a fijar algunas ideas erróneas habituales:
 ## Para seguir
 
 - [[roadmap/00-fundamentos/02-tokens]]: la unidad con la que se mide todo lo anterior.
+- [[roadmap/00-fundamentos/06-como-se-entrena-un-llm]]: de dónde salen esas probabilidades.
 - [[glosario/alucinacion]] y [[glosario/transformer]] para ampliar los conceptos.
 - [[patrones/02-llamada-aumentada]]: el modelo combinado con recuperación, herramientas y memoria.

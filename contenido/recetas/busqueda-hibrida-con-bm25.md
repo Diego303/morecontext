@@ -2,6 +2,7 @@
 titulo: Búsqueda híbrida con BM25 y embeddings
 descripcion: Combina búsqueda por palabras clave con BM25 y búsqueda vectorial con embeddings, y fusiona los dos rankings con Reciprocal Rank Fusion en Python.
 creado: 2026-08-27
+actualizado: 2026-10-29
 nivel: intermedio
 minutos: 35
 tema: rag
@@ -85,7 +86,19 @@ class BuscadorHibrido:
         return [(doc, round(p, 4), self.documentos[doc]) for doc, p in mejores]
 ```
 
-4. **Conecta tu proveedor** sustituyendo el cuerpo de `embed()`. Calcula los embeddings de los documentos una vez al indexar y guárdalos; en cada consulta solo calculas el de la pregunta.
+4. **Conecta tu proveedor** sustituyendo el cuerpo de `embed()`. Calcula los embeddings de los documentos una vez al indexar y guárdalos; en cada consulta solo calculas el de la pregunta. Anthropic no ofrece modelo de embeddings: usa el de otro proveedor o uno abierto. Con [[docs/modelos-abiertos/01-ollama|Ollama]] en local queda así (opciones y modelos en [[docs/modelos-abiertos/04-embeddings-y-rerankers]]):
+
+```python title="embed_local.py"
+import ollama
+
+MODELO_EMBEDDINGS = "bge-m3"  # descárgalo antes con `ollama pull bge-m3`
+
+
+def embed(textos: list[str]) -> list[list[float]]:
+    return [list(v) for v in ollama.embed(model=MODELO_EMBEDDINGS, input=textos).embeddings]
+```
+
+Pásalo como `BuscadorHibrido(docs, embed_fn=embed)`.
 
 ## Cómo comprobar que funciona
 
@@ -134,14 +147,15 @@ error E-4012
 
 - El documento con «E-4012» sale primero con unos 2/61 puntos: es el primero en los dos rankings.
 - Con el `embed` falso, «¿cómo devuelvo un pedido?» no encuentra el documento de devoluciones, porque «devuelvo» y «devoluciones» son palabras distintas. Con embeddings reales debería subir. Es justo lo que aporta la parte vectorial.
-- Para medir de verdad: 30 consultas con su documento correcto y compara el *recall@5* (¿está el correcto entre los 5 primeros?) de BM25 solo, vectorial solo e híbrida. Lo explica [[cursos/rag-a-fondo/04-evaluar-un-rag]].
+- Para medir de verdad: 30 consultas con su documento correcto y compara el *recall@5* (¿está el correcto entre los 5 primeros?) de BM25 solo, vectorial solo e híbrida. Lo explica [[cursos/rag-a-fondo/10-evaluar-un-rag]].
 
 ## Variaciones
 
+- **RRF a fondo.** Por qué `k = 60`, cómo fusionar más de dos rankings y cómo dar pesos: [[recetas/fusionar-rankings-con-rrf]].
 - **Pesos.** Si en tu dominio pesan más los términos exactos, multiplica la contribución de BM25: `puntos += peso / (rrf_k + posicion)`.
 - **Stemming y palabras vacías.** Una librería de *stemming* en español hace que «devuelvo» y «devolver» compartan raíz. Quitar «el», «de», «la» reduce ruido en consultas largas.
 - **Reranking.** Fusiona 50 candidatos y pasa los 20 primeros por un modelo de [[glosario/reranking|reranking]] antes de quedarte con 5 ([[roadmap/30-contexto-y-rag/04-reranking]]).
-- **Escala.** Este índice vive en memoria. Con cientos de miles de trozos, usa un [[glosario/vector-store|vector store]] o un motor de búsqueda con soporte de BM25 y vectores, y aplica RRF sobre sus resultados.
+- **Escala.** Este índice vive en memoria. Con cientos de miles de trozos, usa un [[glosario/vector-store|vector store]] o un motor de búsqueda con soporte de BM25 y vectores, y aplica RRF sobre sus resultados. Hay dos recetas con bases abiertas: [[recetas/busqueda-hibrida-con-qdrant]] (denso y *sparse* con RRF en el servidor) y [[recetas/rag-local-con-pgvector]] (vectores y `tsvector` en PostgreSQL).
 - **Recuperación contextual.** Añadir a cada trozo una frase de contexto antes de indexarlo mejora las dos búsquedas ([[glosario/recuperacion-contextual]]).
 
 ## Errores típicos

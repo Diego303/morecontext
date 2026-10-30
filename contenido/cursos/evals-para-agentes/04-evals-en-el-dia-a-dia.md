@@ -2,6 +2,7 @@
 titulo: Evals en el día a día
 descripcion: Un ejecutor de evals con varias pruebas por tarea y comparación con la línea base, umbrales de regresión, qué ejecutar en cada PR y cada noche, y cómo convertir fallos de producción en tareas.
 creado: 2026-10-14
+actualizado: 2026-10-29
 orden: 4
 minutos: 55
 tipo: proyecto
@@ -127,7 +128,7 @@ if __name__ == "__main__":
     sys.exit(1 if problemas else 0)
 ```
 
-Los umbrales de arriba son un punto de partida: ajústalos a tu ruido. Para conocerlo, ejecuta el banco dos veces **sin cambiar nada** y mira cuánto varían las métricas. Si el éxito varía 4 puntos entre dos ejecuciones idénticas, un umbral de 3 puntos fallará por azar. En ese caso sube los intentos, añade tareas o amplía el umbral. Las métricas de seguridad no tienen tolerancia.
+Los umbrales de arriba son un punto de partida: ajústalos a tu ruido. Para conocerlo, ejecuta el banco dos veces **sin cambiar nada** y mira cuánto varían las métricas. Si el éxito varía 4 puntos entre dos ejecuciones idénticas, un umbral de 3 puntos fallará por azar. En ese caso sube los intentos, añade tareas o amplía el umbral. Fija también los recursos del entorno (CPU, memoria, tiempo máximo por tarea): Anthropic midió que en evals agénticas de código solo eso mueve el resultado varios puntos. Las métricas de seguridad no tienen tolerancia.
 
 Cuando un cambio mejora de verdad, **actualiza la línea base en el mismo PR**, para que el siguiente cambio se compare con la versión nueva.
 
@@ -135,8 +136,8 @@ Cuando un cambio mejora de verdad, **actualiza la línea base en el mismo PR**, 
 
 | Momento | Qué | Por qué |
 |---|---|---|
-| Cada PR que toca prompts, herramientas o modelo | categorías afectadas + todas las de seguridad, 3 intentos | feedback en minutos y coste acotado |
-| Cada noche | banco completo con 5 o más intentos | detecta regresiones que el subconjunto no ve |
+| Cada PR que toca prompts, herramientas o modelo | evals de regresión de las categorías afectadas + todas las de seguridad, 3 intentos | feedback en minutos y coste acotado |
+| Cada noche | banco completo con 5 o más intentos, incluidas las evals de capacidad | detecta regresiones que el subconjunto no ve y mide el avance |
 | Antes de desplegar | banco completo + tareas reservadas | protege contra el sobreajuste al banco visible |
 | Al cambiar de modelo | todo, y revisión humana de una muestra | los cambios de modelo mueven muchas cosas a la vez |
 
@@ -147,7 +148,7 @@ Controla el coste con dos palancas. El [[glosario/prompt-caching|prompt caching]
 Las evals y la [[glosario/observabilidad|observabilidad]] se alimentan mutuamente. El ciclo semanal que funciona:
 
 1. **Recoge señales**: valoraciones negativas de usuarios, escaladas a humanos, ejecuciones que acabaron por límite de pasos, errores de herramientas.
-2. **Lee las trazas** de una muestra. Clasifica la causa del fallo.
+2. **Lee las trazas** de una muestra. Clasifica la causa del fallo (anota el primer error de cada traza y agrupa; ver [[recetas/analisis-de-errores-de-trazas]]).
 3. **Convierte en tarea** cada fallo nuevo: entrada real (anonimizada), entorno que lo reproduce, criterio de éxito.
 4. **Comprueba que falla** con la versión actual. Si pasa, la tarea no captura el problema; ajústala.
 5. **Arregla** el agente y verifica que la tarea pasa sin romper las demás.
@@ -156,6 +157,10 @@ Así el banco crece con los problemas que importan, en lugar de con los que imag
 
 > [!aviso] Datos personales
 > Las consultas reales llevan nombres, correos y números de pedido. Anonimízalos antes de entrar en un dataset que vive en el repositorio y que verá más gente.
+
+## Con herramientas abiertas
+
+El ejecutor de esta lección cabe en dos archivos y lo controlas entero. Si prefieres no mantenerlo, hay herramientas open source que hacen la parte repetitiva (cargar casos, ejecutar, calificar, comparar): [[herramientas/promptfoo|promptfoo]] (MIT, configuración en YAML y ejecución con `npx`), [[herramientas/deepeval|DeepEval]] (pruebas al estilo `pytest`) e [[herramientas/inspect-ai|Inspect AI]] (tareas, *solvers* y *scorers* en Python, con proveedores locales). La receta [[recetas/evals-con-promptfoo]] monta un banco con la primera, y [[docs/modelos-abiertos/08-evals-abiertas]] las compara. Lo que ninguna te ahorra es lo de este curso: tareas bien definidas, entorno reproducible, graders validados y el hábito de leer trazas.
 
 ## Leer los resultados
 
@@ -186,5 +191,6 @@ Los números dicen dónde mirar. Las conclusiones salen de leer ejecuciones:
 ## Para seguir
 
 - [[recetas/evals-de-regresion-en-ci]]
-- [[disciplinas/evals]]
+- [[recetas/evals-con-promptfoo]]
 - [[roadmap/100-produccion/01-observabilidad-y-trazas]]
+- [[disciplinas/evals]]

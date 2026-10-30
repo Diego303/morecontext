@@ -2,6 +2,7 @@
 titulo: El bucle agéntico
 descripcion: Referencia del bucle que convierte una llamada al modelo en un agente, con el manejo de cada stop_reason y los límites que lo hacen seguro.
 creado: 2026-10-15
+actualizado: 2026-10-29
 orden: 1
 nivel: intermedio
 tags: [agentes, bucle, stop-reason, herramientas]
@@ -39,8 +40,11 @@ El historial crece en cada vuelta. El mensaje `assistant` se añade tal cual lle
 | `tool_use` | El modelo pide ejecutar una o más herramientas. | Ejecutar cada `tool_use`, devolver todos los `tool_result` en un único mensaje `user` y volver a llamar. |
 | `max_tokens` | Se alcanzó el límite de [[glosario/max-tokens|max_tokens]] a mitad de respuesta. | La respuesta está cortada. Si había un `tool_use` incompleto, no lo ejecutes. Sube el límite o pide continuar; cuenta los reintentos. |
 | `stop_sequence` | Apareció una de tus `stop_sequences`. | Tratarlo como fin controlado. `resp.stop_sequence` dice cuál. |
-| `pause_turn` | El servidor pausó un turno largo, típico con [[docs/herramientas/03-herramientas-del-servidor|herramientas del lado del servidor]]. | Añadir la respuesta tal cual como mensaje `assistant` y volver a llamar para que continúe. No añadas un mensaje `user` nuevo. |
-| `refusal` | El modelo se niega a continuar por motivos de seguridad. | No reintentes en bucle. Registra el caso, devuelve un mensaje claro al usuario y termina. |
+| `pause_turn` | El servidor pausó un turno largo, típico con [[docs/herramientas/03-herramientas-del-servidor|herramientas del lado del servidor]]. | Añadir la respuesta tal cual como mensaje `assistant` y volver a llamar con las mismas `tools` para que continúe. No añadas un mensaje `user` nuevo. |
+| `refusal` | El modelo se niega a continuar por motivos de seguridad. Llega con HTTP 200 y `stop_details.category` (`cyber`, `bio`, `general_harms`…). | No reintentes en bucle. Registra la categoría, devuelve un mensaje claro al usuario y termina, o pasa a un modelo de respaldo. |
+| `model_context_window_exceeded` | La entrada más la salida no caben en la ventana de contexto; la respuesta se cortó al llenarla. | Compacta o recorta el historial antes de seguir: la siguiente llamada tampoco cabrá. |
+
+Con la compactación en el servidor y `pause_after_compaction`, aparece además `compaction` (beta). El detalle de cada caso, con los rechazos y los *fallbacks*, está en [[docs/fundamentos/06-motivos-de-parada-y-rechazos]].
 
 > [!aviso] El caso que más se olvida
 > Un bucle que solo distingue `tool_use` de «lo demás» trata un `max_tokens` como respuesta final y entrega texto cortado. Maneja cada valor de forma explícita y lanza un error ante uno desconocido.
@@ -99,6 +103,8 @@ def agente(pregunta: str) -> str:
             raise RuntimeError("Respuesta cortada: sube max_tokens o divide la tarea")
         elif resp.stop_reason == "refusal":
             return "No puedo ayudar con esta petición."
+        elif resp.stop_reason == "model_context_window_exceeded":
+            raise RuntimeError("Contexto lleno: compacta o recorta el historial")
         else:
             raise RuntimeError(f"stop_reason desconocido: {resp.stop_reason}")
     raise RuntimeError(f"Sin terminar tras {MAX_PASOS} pasos")
@@ -155,6 +161,8 @@ export async function agente(pregunta: string): Promise<string> {
         throw new Error("Respuesta cortada: sube max_tokens o divide la tarea");
       case "refusal":
         return "No puedo ayudar con esta petición.";
+      case "model_context_window_exceeded":
+        throw new Error("Contexto lleno: compacta o recorta el historial");
       default:
         throw new Error(`stop_reason desconocido: ${resp.stop_reason}`);
     }
@@ -176,15 +184,60 @@ Un agente sin límites puede gastar sin parar. Pon al menos estos:
 | Límite | Para qué | Valor de partida |
 |---|---|---|
 | Pasos máximos | Cortar bucles en los que el modelo no avanza. | Entre 10 y 30 según la tarea; mide y ajusta. |
-| Tokens acumulados | Poner techo al gasto de una tarea. | Suma en cada vuelta `usage.input_tokens`, `usage.output_tokens` y los dos campos de caché (`cache_creation_input_tokens`, `cache_read_input_tokens`). |
+| Tokens acumulados | Poner techo al gasto de una tarea. | Suma en cada vuelta `usage.input_tokens`, `usage.output_tokens` y los dos campos de caché (`cache_creation_input_tokens`, `cache_read_input_tokens`). Si quieres que el modelo sepa cuánto le queda, añade `output_config.task_budget` (beta, orientativo: no corta nada). |
 | Tiempo total | Evitar tareas colgadas. | El que tolere tu usuario. |
 | Errores seguidos | Parar si la misma herramienta falla una y otra vez. | 3 errores consecutivos. |
 
-Cuando salte un límite, no tires el trabajo: devuelve lo conseguido hasta entonces y deja claro que la tarea quedó a medias. La lección [[roadmap/40-primer-agente/03-condiciones-de-parada]] desarrolla cómo elegir estos valores.
+Cuando salte un límite, no tires el trabajo: devuelve lo conseguido hasta entonces y deja claro que la tarea quedó a medias. La lección [[roadmap/40-primer-agente/03-condiciones-de-parada]] desarrolla cómo elegir estos valores, y [[problemas/el-agente-no-para]] cubre el caso en que no saltan.
+
+Para que el agente entregue un resultado estructurado al final, no fuerces una herramienta `entregar` con `tool_choice`: en Opus 5.5, Sonnet 5.5 y Fable 5.1 da 400. Haz la última llamada con `output_config.format` ([[recetas/entregar-resultado-sin-forzar-herramienta]]).
 
 ## Razonamiento dentro del bucle
 
-Si activas el razonamiento adaptativo con `thinking={"type": "adaptive"}`, la respuesta trae bloques `thinking` antes de los `tool_use`. Añade `resp.content` completo al historial, sin filtrar ni editar esos bloques: el modelo los necesita para seguir su propio hilo entre una herramienta y la siguiente. El detalle está en [[docs/prompting/04-razonamiento]].
+En los modelos 5.x el razonamiento es adaptativo aunque no lo pidas, así que la respuesta puede traer bloques `thinking` (vacíos por defecto, con su firma) antes de los `tool_use`. Añade `resp.content` completo al historial, sin filtrar ni editar esos bloques: el modelo los necesita para seguir su propio hilo entre una herramienta y la siguiente. El detalle está en [[docs/prompting/04-razonamiento]].
+
+## Con LangGraph
+
+El mismo bucle como grafo de LangGraph (MIT): un nodo que llama al modelo, un nodo que ejecuta herramientas y una arista condicional que decide si se vuelve al modelo o se termina.
+
+```python title="agente_lg.py"
+from langchain.chat_models import init_chat_model
+from langchain.messages import SystemMessage
+from langchain.tools import tool
+from langgraph.graph import END, START, MessagesState, StateGraph
+from langgraph.prebuilt import ToolNode, tools_condition
+
+MODEL = "anthropic:claude-sonnet-5-5"
+MAX_PASOS = 10
+
+@tool
+def buscar_docs(consulta: str) -> str:
+    """Busca en la documentación interna. Devuelve hasta 5 fragmentos con su título."""
+    return f"Sin resultados para «{consulta}»"  # sustituye por tu buscador
+
+TOOLS = [buscar_docs]
+SYSTEM = SystemMessage("Responde con la documentación interna. Si no encuentras nada, dilo.")
+llm = init_chat_model(MODEL, max_tokens=2048).bind_tools(TOOLS)
+
+def modelo(state: MessagesState):
+    return {"messages": [llm.invoke([SYSTEM, *state["messages"]])]}
+
+g = StateGraph(MessagesState)
+g.add_node("modelo", modelo)
+g.add_node("tools", ToolNode(TOOLS))
+g.add_edge(START, "modelo")
+g.add_conditional_edges("modelo", tools_condition)  # ¿hay tool_calls? → "tools"; si no → END
+g.add_edge("tools", "modelo")
+agente = g.compile()
+
+salida = agente.invoke(
+    {"messages": [("user", "¿Cómo se configura el SSO?")]},
+    config={"recursion_limit": 2 * MAX_PASOS + 1},  # cada vuelta son dos pasos del grafo
+)
+print(salida["messages"][-1].text)
+```
+
+Lo que esconde el framework: la conversión de bloques (`tool_use` pasa a ser `AIMessage.tool_calls` y `tool_result` un `ToolMessage`), el reparto de resultados y el historial. Lo que **no** hace por ti: tratar cada `stop_reason` (`tools_condition` solo mira si hay `tool_calls`; un corte por `max_tokens` termina el grafo como si fuera una respuesta, así que revisa `response_metadata["stop_reason"]`), poner un límite útil (el `recursion_limit` por defecto es muy alto; al superarlo lanza `GraphRecursionError`) y devolver los errores al modelo (el `ToolNode` solo captura los de argumentos inválidos). A cambio te da *checkpointer*, interrupciones y *streaming*. La versión de alto nivel es `create_agent` de LangChain ([[docs/herramientas/01-uso-de-herramientas]]); referencia completa en [[docs/frameworks/05-langgraph]] y comparativa en [[docs/frameworks/01-elegir-framework]].
 
 ## Errores frecuentes
 
@@ -200,3 +253,5 @@ Si activas el razonamiento adaptativo con `thinking={"type": "adaptive"}`, la re
 - [[docs/agentes/02-subagentes]]: cuando un bucle no basta.
 - [[patrones/08-agente-autonomo]]: el patrón y cuándo usarlo.
 - [[roadmap/40-primer-agente/06-depurar-con-trazas]]: cómo leer lo que hizo tu agente.
+- [[docs/frameworks/03-claude-agent-sdk]]: el bucle de Claude Code como biblioteca, ya hecho.
+- [[docs/agentes/04-managed-agents]]: el bucle alojado por Anthropic.

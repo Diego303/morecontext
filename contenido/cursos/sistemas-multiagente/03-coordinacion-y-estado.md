@@ -2,6 +2,7 @@
 titulo: Coordinación y estado compartido
 descripcion: Dónde vive el estado en un sistema multiagente, cómo evitar conflictos entre agentes y por qué pasar referencias a artefactos en lugar de contenido.
 creado: 2026-09-29
+actualizado: 2026-10-29
 orden: 3
 minutos: 45
 tipo: practica
@@ -10,7 +11,7 @@ objetivos:
   - Implementar un almacén de artefactos en disco con escritura atómica y referencias ligeras
   - Diseñar la coordinación con un solo escritor por recurso y un plan persistente del orquestador
 requiere: ["[[cursos/sistemas-multiagente/02-disenar-subagentes]]"]
-relacionados: ["[[roadmap/60-multiagente/03-pasar-contexto-entre-agentes]]", "[[glosario/memoria]]", "[[cursos/context-engineering/03-compactacion-y-memoria]]", "[[sistemas/investigacion-multiagente]]"]
+relacionados: ["[[roadmap/60-multiagente/03-pasar-contexto-entre-agentes]]", "[[glosario/memoria]]", "[[cursos/context-engineering/03-compactacion-y-memoria]]", "[[sistemas/investigacion-multiagente]]", "[[glosario/checkpointer]]"]
 tags: [agentes, multiagente, estado]
 ---
 
@@ -58,7 +59,9 @@ Cuando varios agentes escriben en el mismo sitio a la vez aparecen los problemas
 - Solo el orquestador escribe el plan.
 - Si dos agentes necesitan modificar lo mismo (por ejemplo, el mismo archivo de código), no los lances en paralelo. Serialízalos o divide el recurso.
 
-Esto explica por qué la investigación se paraleliza bien y la edición de código no tanto: buscar es leer, y la lectura no entra en conflicto.
+Esto explica por qué la investigación se paraleliza bien y la edición de código no tanto: buscar es leer, y la lectura no entra en conflicto. Cognition lo resume en *[Multi-Agents: What's Actually Working](https://cognition.com/blog/multi-agents-working)* (abr. 2026): las escrituras van por un solo hilo y los agentes adicionales aportan inteligencia, no acciones ([[radar/2026-10-28-multiagente-un-solo-escritor]]).
+
+Hay una alternativa sin orquestador cuando las tareas son muchas e independientes: que cada agente **reclame** la suya. En el experimento de Nicholas Carlini con 16 instancias de Claude escribiendo un compilador de C (*[Building a C compiler with a team of parallel Claudes](https://www.anthropic.com/engineering/building-c-compiler)*, feb. 2026), cada agente tomaba una tarea creando un archivo de bloqueo en una carpeta compartida y sincronizaba por git. Funciona si un verificador muy bueno (allí, los tests y un compilador de referencia) reparte fallos distintos a cada agente. En código, cada agente en su propio [[glosario/worktree|worktree]] ([[recetas/features-en-paralelo-con-worktrees]]).
 
 ## El almacén de artefactos
 
@@ -134,6 +137,58 @@ Gracias a que el plan marca cada tarea como `pendiente`, `hecha` o `fallida`, si
 ## Idempotencia y reintentos
 
 Un subagente que falla a mitad puede haber hecho parte del trabajo. Si lo reintentas, no debería duplicar efectos. Para tareas de lectura (buscar, analizar) basta con descartar el artefacto parcial. Para tareas con efectos (crear un ticket, escribir en una base de datos), usa una clave de idempotencia derivada del identificador de la tarea y comprueba si ya existe antes de actuar. Los reintentos de red los tienes en [[recetas/reintentos-y-limites-de-tasa]].
+
+## Con LangGraph
+
+LangGraph resuelve dos piezas de esta lección en el *runtime*. Los **reductores** del estado hacen de «un solo escritor»: cada trabajador devuelve su parte y `operator.add` las concatena, así que nadie sobrescribe a nadie. Y el **[[glosario/checkpointer|checkpointer]]** guarda el estado al final de cada superpaso bajo un `thread_id`, que es el `plan.json` de arriba sin escribirlo tú. El reparto en paralelo es `Send`, un mensaje por subtarea hacia el mismo nodo:
+
+```python tab="LangGraph" title="orquestador_langgraph.py"
+import operator
+from typing import Annotated, TypedDict
+
+from langgraph.graph import END, START, StateGraph
+from langgraph.types import Send
+
+
+class Estado(TypedDict):
+    tareas: list[dict]                          # [{"id": "t1", "brief": {...}}, ...]
+    refs: Annotated[list[dict], operator.add]   # cada trabajador añade la suya; nadie pisa a nadie
+
+
+class EstadoTarea(TypedDict):                   # lo que recibe cada trabajador vía Send
+    tarea: dict
+
+
+def construir(lanzar_subagente, almacen, checkpointer=None):
+    def repartir(state: Estado):
+        return [Send("trabajar", {"tarea": t}) for t in state["tareas"]]
+
+    def trabajar(state: EstadoTarea):
+        t = state["tarea"]
+        entrega = lanzar_subagente(t["brief"])                    # dict con hallazgos y lagunas
+        ref = almacen.guardar_artefacto(autor=t["id"], contenido=entrega)
+        return {"refs": [{"tarea": t["id"], "ref": ref, "n_hallazgos": len(entrega["hallazgos"])}]}
+
+    g = StateGraph(Estado)
+    g.add_node("trabajar", trabajar)
+    g.add_conditional_edges(START, repartir, ["trabajar"])
+    g.add_edge("trabajar", END)
+    return g.compile(checkpointer=checkpointer)
+```
+
+```python nocheck title="uso (fragmento)"
+from langgraph.checkpoint.sqlite import SqliteSaver
+
+config = {"configurable": {"thread_id": "2026-09-29-vectores"}}
+with SqliteSaver.from_conn_string("ejecucion/grafo.db") as cp:
+    grafo = construir(lanzar_subagente, almacen, cp)
+    try:
+        grafo.invoke({"tareas": tareas, "refs": []}, config)
+    except Exception:
+        grafo.invoke(None, config)  # reanuda: solo se repiten las tareas que fallaron
+```
+
+Probado con un subagente falso que falla en una de tres tareas: la primera ejecución lanza la excepción, y `invoke(None, config)` desde otro proceso con el mismo archivo relanza **solo** la tarea fallida y conserva las referencias de las otras dos. Es [[glosario/ejecucion-duradera|ejecución duradera]]: el *checkpointer* guarda también lo que ya escribieron los trabajadores que terminaron. `lanzar_subagente` puede ser el subagente de [[cursos/sistemas-multiagente/02-disenar-subagentes]] o su versión con `create_agent`; si un nodo es un grafo compilado, LangGraph lo trata como subgrafo y su estado queda dentro del mismo *checkpoint*. Lo que el framework no decide es lo importante: qué va en el estado compartido (referencias y resúmenes, no artefactos enteros) y quién escribe cada recurso. Más en [[cursos/langchain-y-langgraph/08-multiagente-con-langgraph]] y [[recetas/reanudar-un-agente-tras-un-reinicio]].
 
 > [!consejo] Empieza con archivos
 > Un directorio con JSON por artefacto y un `plan.json` resuelve la mayoría de sistemas y se inspecciona con un editor. Pasa a una base de datos cuando necesites concurrencia real entre procesos, consultas o varias máquinas.
