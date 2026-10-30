@@ -1,10 +1,10 @@
 ---
 // Paleta de búsqueda (Ctrl/⌘+K y «/»). La lógica está en src/scripts/buscador.ts (Pagefind).
-import Icono from './Icono.astro';
+import { svgMarca } from '../../scripts/icono-marca';
 ---
 <dialog id="buscador" class="buscador" aria-label="Buscar en MoreContext" data-pagefind-ignore="all">
   <div class="bus-in">
-    <Icono nombre="buscar" tamano={18} />
+    <span class="bus-icono"><Fragment set:html={svgMarca(18)} /></span>
     <input type="search" aria-label="Buscar en MoreContext" placeholder="busca un concepto, una lección, un patrón…"
       autocomplete="off" spellcheck="false" enterkeyhint="go" aria-controls="bus-resultados" />
     <form method="dialog"><button class="bus-cerrar" type="submit" aria-label="Cerrar la búsqueda"><kbd>Esc</kbd></button></form>

@@ -18,7 +18,10 @@ const cargarFuentes = () => (fuentes ??= ([500, 700] as const).map((weight) => (
   data: fs.readFileSync(path.join(FUENTES, `jetbrains-mono-latin-${weight}-normal.woff`)),
 })));
 
-const MARCA = `data:image/svg+xml;base64,${Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect width="24" height="24" rx="0.5" fill="${C.yellow}"/><path d="M8 5H5v14h3M16 5h3v14h-3M12 9.25v6M9 12.25h6" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="square"/></svg>`).toString('base64')}`;
+// Icono [+] v1 del kit de marca (scripts/marca/): la sombra amarilla ya forma parte del SVG.
+const MARCA = `data:image/svg+xml;base64,${fs.readFileSync(path.resolve('scripts/marca/morecontext-icon.svg')).toString('base64')}`;
+// La cara ocupa 23,6 de las 26 unidades: a 62 px mide unos 56 px, como el [+] anterior
+const LADO_MARCA = 62;
 
 type Nodo = { type: string; props: Record<string, unknown> & { children?: unknown } };
 const h = (type: string, style: Record<string, unknown>, children?: unknown, extra: Record<string, unknown> = {}): Nodo =>
@@ -37,7 +40,7 @@ export async function imagenOg(titulo: string, seccion: string): Promise<Buffer>
     backgroundColor: C.void, backgroundSize: '40px 40px',
     backgroundImage: `linear-gradient(to right, ${linea} 1px, transparent 1px), linear-gradient(to bottom, ${linea} 1px, transparent 1px)` }, [
     h('div', { display: 'flex', alignItems: 'center', gap: 20 }, [
-      h('div', { display: 'flex', width: 56, height: 56, boxShadow: `4px 4px 0 ${C.ink}` }, h('img', { width: 56, height: 56 }, undefined, { src: MARCA, width: 56, height: 56 })),
+      h('img', { width: LADO_MARCA, height: LADO_MARCA }, undefined, { src: MARCA, width: LADO_MARCA, height: LADO_MARCA }),
       h('div', { fontSize: 36, fontWeight: 700, color: C.text, letterSpacing: -0.36 }, 'morecontext'),
     ]),
     h('div', { display: 'flex', fontSize: tam, fontWeight: 700, color: C.text, lineHeight: 1.12, letterSpacing: -tam * 0.02, maxWidth: 1024, lineClamp: 3 }, t),

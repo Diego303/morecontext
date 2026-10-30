@@ -2,6 +2,8 @@
 // Las pestañas se sincronizan en toda la web por su etiqueta («Python», «TypeScript», «LangGraph»…).
 // Se recuerdan varias etiquetas por orden de uso (la más reciente primero): así elegir «LangGraph» en un
 // grupo de frameworks no hace olvidar que preferías «TypeScript» en los grupos de lenguajes.
+import { marcarCopiado, svgMarca } from './icono-marca';
+
 const CLAVE = 'mc.pestanas';
 const CLAVE_ANTIGUA = 'mc.pestana';
 const MAX_RECORDADAS = 12;
@@ -67,20 +69,29 @@ function montar(bloque: HTMLElement) {
   const archivo = document.createElement('span');
   archivo.className = 'code__file';
   archivo.textContent = paneles[0]?.dataset.file || paneles[0]?.dataset.lang || '';
+  // Botón Copiar: [+] animado (pasa a [✓] al copiar) y etiqueta. Solo cambia el texto de la etiqueta,
+  // nunca el del botón, que borraría el icono.
   const copiar = document.createElement('button');
-  copiar.type = 'button'; copiar.className = 'code__copy'; copiar.textContent = 'Copiar';
+  copiar.type = 'button'; copiar.className = 'code__copy';
+  copiar.innerHTML = svgMarca(14, { check: true }) + '<span class="code__copy-t" aria-live="polite">Copiar</span>';
+  const etiqueta = copiar.querySelector<HTMLElement>('.code__copy-t')!;
+  const icono = copiar.querySelector<SVGElement>('.mc-icon');
+  let vuelta = 0;
   copiar.addEventListener('click', async () => {
     const visible = paneles.find((p) => !p.hidden)?.querySelector('pre');
     if (!visible) return;
     try {
       await navigator.clipboard.writeText(visible.innerText);
-      copiar.textContent = 'Copiado'; copiar.classList.add('is-ok');
+      etiqueta.textContent = 'Copiado'; copiar.classList.add('is-ok');
+      marcarCopiado(icono);
     } catch {
+      // Sin portapapeles: se selecciona el texto, sin animación ni check (no se ha copiado nada)
       const r = document.createRange(); r.selectNodeContents(visible);
       const s = getSelection(); s?.removeAllRanges(); s?.addRange(r);
-      copiar.textContent = 'Seleccionado';
+      etiqueta.textContent = 'Seleccionado';
     }
-    setTimeout(() => { copiar.textContent = 'Copiar'; copiar.classList.remove('is-ok'); }, 1600);
+    clearTimeout(vuelta);   // dos clics seguidos: cuenta desde el último
+    vuelta = window.setTimeout(() => { etiqueta.textContent = 'Copiar'; copiar.classList.remove('is-ok'); }, 1600);
   });
   barra.append(archivo, copiar);
   bloque.prepend(barra);

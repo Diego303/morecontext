@@ -132,30 +132,43 @@ Los **corchetes** representan la *ventana de contexto* (lo que el modelo ve; tam
 ```
 ┌──────────┐
 │          │
-│   [+]    │   tinta negra sobre amarillo neón
-│          │   sombra dura 2–4 px desplazada abajo-derecha
-└──────────┘
+│   [+]    │   cara blanca con borde negro
+│          │▒  sombra dura amarilla integrada, abajo a la derecha
+└──────────┘▒
+ ▒▒▒▒▒▒▒▒▒▒▒
 ```
 
-**Especificación**
-- Contenedor: cuadrado, fondo `--accent-yellow #fde047`, radio 2 px (`radius-sm`). Nunca círculo, nunca radio grande.
-- Glifo: `[+]` en **JetBrains Mono Bold (700)**, color `#000000`, centrado óptico (el "+" se baja ~2 % para compensar los corchetes).
-- Sombra (solo en usos sobre fondo oscuro y tamaños ≥ 32 px): `2px 2px 0 #27272a` en UI, `4px 4px 0 #000` en piezas grandes.
-- Área de respeto: el 25 % del lado del cuadrado alrededor.
-- Construcción recomendada en 24 × 24 unidades: cuadrado 24 × 24; corchetes de 3 u de grosor, 14 u de alto; "+" de 3 u de grosor y 8 u de brazo; separación corchete–"+" de 2 u.
+Versión 1 del icono (kit `morecontext-icono-v1`, su `README` está en `docs/marca/morecontext-icono-v1/`). Imita el botón principal de la web: **cara blanca con borde negro y una sombra dura amarilla desplazada abajo a la derecha**. La sombra forma parte del propio icono (está dibujada en el SVG), **no se añade con CSS**: con `box-shadow` saldría doble.
 
-**Variantes del icono**
-| Variante | Uso |
+**Construcción** (retícula de 26 × 26 unidades)
+| Elemento | Medida |
 |---|---|
-| Amarillo + negro (principal) | App, favicon, avatar, OG |
-| Negro + amarillo (invertida) | Sobre fondos amarillos o claros |
-| Línea (corchetes en blanco, + en amarillo, sin fondo) | Marcas de agua, slides, cabeceras de vídeo |
-| Monocromo blanco | Fondos fotográficos u oscuros complejos |
-| Monocromo negro | Impresión a una tinta |
+| Cara `#fafafa` | 23,6 × 23,6, desde (0, 0) |
+| Borde `#000` | 1,2 (1,6 en la versión pequeña) |
+| Sombra `#fde047` | desplazada 3 unidades a la derecha y 3 hacia abajo |
+| Corchetes | 3 de ancho × 14 de alto, trazo 2,2 (2,8 en la versión pequeña), terminaciones rectas |
+| `+` | brazos de 6, trazo 2,2, bajado unas 0,25 unidades para compensar los corchetes |
+
+- La cara ocupa 23,6 de las 26 unidades: al mismo tamaño de caja se ve un 9 % más pequeña que un icono sin sombra. El logo del header mide 31 px para que la cara mida 28.
+- Colores fijos de marca, escritos en el SVG: cara `#fafafa`, tinta `#000`, sombra `#fde047`. Solo los estados animados de la web cambian la sombra (verde al copiar, §14).
+- Área de respeto: al menos el 25 % del lado del icono alrededor.
+- **La sombra va siempre abajo a la derecha.** No se cambia de lado, no se desenfoca y no se cambia de color (salvo los estados animados).
+- No se escribe `[+]` con una fuente: siempre los SVG del kit.
+
+**Archivos** (kit `morecontext-icono-v1`)
+| Archivo | Uso |
+|---|---|
+| `morecontext-icon.svg` | Icono principal, desde 24 px (en la web: `Icono.astro`, OG de cada página) |
+| `morecontext-icon-small.svg` | Por debajo de 24 px: borde y trazos más gruesos |
+| `morecontext-icon-mono-black.svg` / `-mono-white.svg` | Una tinta: impresión, fondos fotográficos |
+| `morecontext-logo-dark.svg` / `-light.svg` | Logotipo `[+] morecontext` (nombre convertido en trazos) para fondo oscuro / claro; la OG por defecto usa el oscuro |
+| `web/` | `favicon.ico` (16, 32, 48), `favicon.svg`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `site.webmanifest`: van tal cual en `public/` |
+
+**Icono animado.** En la portada (hero), la paleta de búsqueda y el botón Copiar el icono va en línea, con sus piezas como clases `mc-*` para que el CSS pueda moverlas: `svgMarca()` en `src/scripts/icono-marca.ts` y los estados en `src/styles/icono-marca.css` (kit `morecontext-animaciones-v1`, §14). A 14 y 18 px usa la geometría normal: la pequeña se empasta animada.
 
 **Tamaños mínimos**
-- Favicon 16 px: simplificar a `[+]` con grosor aumentado, sin sombra.
-- UI: 24–32 px (el header usa 28 px).
+- 16 px con la versión pequeña (favicon); 24 px con el principal. El logotipo completo, a no menos de 20 px de alto.
+- UI: el header y el pie usan 31 px (cara de 28 px).
 - App / avatar: 512 px de máster, exportar 180, 192, 256, 512.
 
 ### 4.2 Conceptos alternativos del icono (para explorar)
@@ -183,8 +196,10 @@ Recomendación: `[+]`. Legible a 16 px, se escribe con el teclado y explica el n
 - Redondear el cuadrado o convertirlo en círculo.
 - Añadir sombras difusas, brillos o efecto neón borroso.
 - Escribir el wordmark en otra fuente o en mayúsculas.
-- Rotar el icono o el wordmark.
-- Colocar el icono amarillo sobre fondos amarillos o blancos sin borde.
+- Rotar o deformar el icono o el wordmark.
+- Añadir una sombra con CSS (`box-shadow`) al icono: ya la lleva dentro.
+- Cambiar la sombra de lado, desenfocarla o cambiarle el color fuera de los estados animados.
+- Sobre fondo blanco, usar el logotipo oscuro: va el claro (`morecontext-logo-light.svg`), cuyo borde negro separa la cara del fondo.
 
 ---
 
@@ -495,10 +510,22 @@ Movimiento **mecánico y breve**, como piezas de un instrumento.
 | Marcador del índice | `top` 250 ms `ease` |
 | Llegar a un ancla | contorno discontinuo amarillo que se desvanece en 1.6 s |
 
+### Icono `[+]` animado
+
+Tres animaciones del kit `morecontext-animaciones-v1` (su `README` está en `docs/marca/morecontext-animaciones-v1/`), y ninguna más: ni giro, ni pulsación, ni «sin resultados». El icono va en línea (`svgMarca()` en `src/scripts/icono-marca.ts`) y los estados están en `src/styles/icono-marca.css`. Los desplazamientos van en unidades del `viewBox` (26 × 26), así que escalan con el tamaño del icono.
+
+| Animación | Dónde | Disparador | Duración |
+|---|---|---|---|
+| **Elevación** (`.mc-lift`) | `[+]` del hero de la portada | `:hover` (solo con `@media (hover: hover)`): la cara sube 1,2 u y la sombra baja 0,8 u. `:active`: la cara baja 2,4 u sobre su sombra y vuelve al soltar. Es decorativo: ni botón, ni enlace, ni foco | 140 ms (`ease`); al pulsar, inmediato |
+| **Buscando** (`.is-searching`) | Icono del cuadro de la paleta de búsqueda | Búsqueda en curso que tarda más de 150 ms (con `aria-busy` en los resultados); se apaga al llegar los resultados, si no hay o al cerrar la paleta | 900 ms en bucle: los corchetes se abren 1,6 u y el `+` gira un cuarto |
+| **Copiado** `[+] → [✓]` (`.is-copied`) | Botón Copiar de los bloques de código | Copia correcta (si solo se selecciona el texto, no se anima) | 1,6 s: el `+` gira y desaparece, aparece el `✓`, la sombra pasa a `--accent-green` y todo vuelve |
+
+El color nunca va solo: el copiado se acompaña del texto «Copiado» (anunciado con `aria-live`).
+
 Reglas:
 - Nada aparece desde `opacity:0`. El contenido se ve completo al cargar.
 - Sin parallax, sin rebotes, sin transiciones de página.
-- Con `prefers-reduced-motion: reduce` se desactiva todo.
+- Con `prefers-reduced-motion: reduce` se desactiva todo. Al copiar se sigue viendo `[✓]` con la sombra verde, sin animar.
 
 ---
 
@@ -517,9 +544,8 @@ Reglas:
 ## 16. Aplicaciones de marca
 
 ### Favicon y app
-- `favicon.svg` y `favicon.ico` (16, 32, 48): `[+]` negro sobre amarillo, sin sombra.
-- `apple-touch-icon.png` 180 px, `icon-192.png`, `icon-512.png` (máscara segura: glifo dentro del 80 % central).
-- `theme-color`: `#0f0f11`.
+- Del kit `morecontext-icono-v1` (`web/`), tal cual en `public/`: `favicon.ico` (16, 32, 48), `favicon.svg`, `apple-touch-icon.png` (180), `icon-192.png`, `icon-512.png`, `icon-maskable-512.png` y `site.webmanifest`. No se generan: `scripts/og.mjs` solo hace la imagen OG por defecto.
+- En el `<head>`: `favicon.ico` con `sizes="48x48"`, `favicon.svg`, `apple-touch-icon`, el manifiesto y `theme-color` `#0f0f11`.
 
 ### Imagen para compartir (Open Graph, 1200 × 630)
 - Fondo `#0f0f11` con retícula al 15 %.
@@ -567,7 +593,7 @@ Reglas:
 - [ ] Icono `[+]` en SVG (principal, invertido, línea, mono blanco, mono negro)
 - [ ] Wordmark `morecontext` en SVG (oscuro y claro)
 - [ ] Lockups: horizontal, con eslogan, solo icono
-- [ ] Construcción del icono sobre cuadrícula 24 × 24
+- [ ] Construcción del icono sobre cuadrícula 26 × 26 (v1, `docs/marca/morecontext-icono-v1/README.md`)
 - [ ] Área de respeto y tamaños mínimos
 
 **Web**
@@ -641,16 +667,16 @@ Reglas:
 }
 ```
 
-### Icono `[+]` de referencia (SVG)
+### Icono `[+]` de referencia (SVG, v1)
+`morecontext-icon.svg` del kit `morecontext-icono-v1` (`docs/marca/`):
 ```svg
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="512" height="512">
-  <rect width="24" height="24" rx="0.5" fill="#fde047"/>
-  <!-- corchete izquierdo -->
-  <path d="M8 5H5v14h3" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="square"/>
-  <!-- corchete derecho -->
-  <path d="M16 5h3v14h-3" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="square"/>
-  <!-- más -->
-  <path d="M12 9.25v6M9 12.25h6" fill="none" stroke="#000" stroke-width="2.2" stroke-linecap="square"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 26" width="208" height="208">
+  <!-- sombra amarilla en L, desplazada 3 u abajo a la derecha -->
+  <path d="M23.6 3H26V26H3V23.6H23.6Z" fill="#fde047"/>
+  <!-- cara blanca con borde negro -->
+  <rect x="0.6" y="0.6" width="22.4" height="22.4" fill="#fafafa" stroke="#000000" stroke-width="1.2"/>
+  <!-- corchetes y más -->
+  <path d="M7.8 4.8H4.8v14h3M15.8 4.8h3v14h-3M11.8 9.05v6M8.8 12.05h6" fill="none" stroke="#000000" stroke-width="2.2" stroke-linecap="square"/>
 </svg>
 ```
 

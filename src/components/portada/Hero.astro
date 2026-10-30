@@ -3,6 +3,7 @@
 import { SITIO } from '../../config/sitio';
 import { fechaISO } from '../../lib/contenido';
 import Icono from '../base/Icono.astro';
+import { svgMarca } from '../../scripts/icono-marca';
 interface Props { cifras: { niveles: number; lecciones: number; horas: number; terminos: number; revisado: Date; revisadoTexto: string } }
 const { cifras } = Astro.props;
 const RAPIDAS = ['tool use', 'RAG', 'MCP', 'evals', 'ventana de contexto', 'prompt injection'];
@@ -11,7 +12,7 @@ const RAPIDAS = ['tool use', 'RAG', 'MCP', 'evals', 'ventana de contexto', 'prom
   <div class="wrap">
     <p class="edition"><span>la guía abierta de agentes de IA</span><span>en español</span><span>revisado el <time datetime={fechaISO(cifras.revisado)}>{cifras.revisadoTexto}</time></span></p>
     <h1 class="wm" id="h-inicio" aria-label={SITIO.nombre}>
-      <Icono nombre="marca" tamano={80} />
+      <span class="wm-mark mc-lift" aria-hidden="true"><Fragment set:html={svgMarca(80)} /></span>
       <span aria-hidden="true"><span class="more">more</span><span class="hl">context</span></span>
     </h1>
     <p class="slogan">{SITIO.eslogan}</p>
